@@ -205,18 +205,6 @@ public class Queries {
         }
     }
 
-    static boolean isSessionBlacklisted(Start start, String sessionHandle) throws SQLException {
-        String QUERY = "SELECT session_handle FROM " + Config.getConfig(start).getSessionInfoTable()
-                + " WHERE session_handle = ?";
-
-        try (Connection con = ConnectionPool.getConnection(start);
-             PreparedStatement pst = con.prepareStatement(QUERY)) {
-            pst.setString(1, sessionHandle);
-            ResultSet result = pst.executeQuery();
-            return !result.next();
-        }
-    }
-
     static SessionInfo getSessionInfo_Transaction(Start start, Connection con, String sessionHandle)
             throws SQLException {
         String QUERY = "SELECT session_handle, user_id, refresh_token_hash_2, session_data, expires_at, " +
