@@ -71,8 +71,7 @@ do
     someTestsRan=true
     
     response=`curl -s -X GET \
-    "https://api.supertokens.io/0/plugin-interface/dependency/core/latest?password=$SUPERTOKENS_API_KEY&planType=FREE
-    &mode=DEV&version=$piVersion" \
+    "https://api.supertokens.io/0/plugin-interface/dependency/core/latest?password=$SUPERTOKENS_API_KEY&planType=FREE&mode=DEV&version=$piVersion" \
     -H 'api-version: 0'`
     if [[ `echo $response | jq .core` == "null" ]]
     then
@@ -82,8 +81,7 @@ do
     coreVersionX2=$(echo $response | jq .core | tr -d '"')
     
     response=`curl -s -X GET \
-    "https://api.supertokens.io/0/core/latest?password=$SUPERTOKENS_API_KEY&planType=FREE&mode=DEV&version
-    =$coreVersionX2" \
+    "https://api.supertokens.io/0/core/latest?password=$SUPERTOKENS_API_KEY&planType=FREE&mode=DEV&version=$coreVersionX2" \
     -H 'api-version: 0'`
     if [[ `echo $response | jq .tag` == "null" ]]
     then
@@ -93,17 +91,17 @@ do
     coreVersionTag=$(echo $response | jq .tag | tr -d '"')
 
     cd ../../
-    git clone git@bitbucket.org:vrai-labs/com-root.git
-    cd com-root
+    git clone git@github.com:supertokens/supertokens-root.git
+    cd supertokens-root
     pluginX=$(cut -d'.' -f1 <<<"$pluginVersion")
     pluginY=$(cut -d'.' -f2 <<<"$pluginVersion")
     echo -e "core,$coreVersionX2\nplugin-interface,$piVersion\nmysql-plugin,$pluginX.$pluginY" > modules.txt
     ./loadModules
-    cd com-core
+    cd supertokens-core
     git checkout $coreVersionTag
-    cd ../com-plugin-interface
+    cd ../supertokens-plugin-interface
     git checkout $currTag
-    cd ../com-mysql-plugin
+    cd ../supertokens-mysql-plugin
     git checkout dev-v$pluginVersion
     cd ../
     echo $SUPERTOKENS_API_KEY > apiPassword
@@ -117,7 +115,7 @@ do
         exit 1
     fi
     cd ../
-    rm -rf com-root
+    rm -rf supertokens-root
     cd project/.circleci
 done <<< `cat pluginInterfaceExactVersionsOutput`
 
