@@ -3,6 +3,10 @@
 
 # MySQL plugin for SuperTokens Community
 
+<a href="https://supertokens.io/discord">
+<img src="https://img.shields.io/discord/603466164219281420.svg?logo=discord"
+    alt="chat on Discord"></a>
+
 ## About
 This plugin is responsible for interfacing between SuperTokens Community version and an instance of MySQL.
 
