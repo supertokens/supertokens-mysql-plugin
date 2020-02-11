@@ -20,11 +20,11 @@ mysql_config_version: 0
 
 # (COMPULSORY) string value. The MySQL user to use to query the database.
 # If the relevant tables are not already created by you, this user should have the
-# ability to create new tables. To see the tables needed, visit: TODO
+# ability to create new tables. To see the tables needed, visit: https://supertokens.io/docs/community/getting-started/database-setup/mysql
 # mysql_user:
 
 
-# (COMPULSORY) string value. Password for the MySQL instance. If you do not have a password
+# (COMPULSORY) string value. Password for the MySQL user. If you have not set a password
 # make this an empty string.
 # mysql_password:
 
