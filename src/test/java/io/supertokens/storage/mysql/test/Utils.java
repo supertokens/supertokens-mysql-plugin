@@ -18,6 +18,7 @@
 package io.supertokens.storage.mysql.test;
 
 import io.supertokens.Main;
+import io.supertokens.pluginInterface.PluginInterfaceTesting;
 import io.supertokens.storage.mysql.Start;
 import org.apache.tomcat.util.http.fileupload.FileUtils;
 import org.junit.rules.TestRule;
