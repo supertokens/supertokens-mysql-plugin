@@ -1,1 +1,1 @@
-docker run --rm  --name mysql -e 'MYSQL_ROOT_PASSWORD=root' -d -p 3306:3306 -v ~/Desktop/temp:/var/lib/mysql mysql --default_authentication_plugin=mysql_native_password
+docker run --rm -d -p 3306:3306 --name mysql --volume ~/Desktop/db/mysql:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=root mysql --default_authentication_plugin=mysql_native_password

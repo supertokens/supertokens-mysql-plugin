@@ -31,6 +31,7 @@ import io.supertokens.storage.mysql.config.Config;
 import io.supertokens.storage.mysql.output.Logging;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.SQLTransactionRollbackException;
@@ -347,24 +348,6 @@ public class Start extends SQLStorage {
     }
 
     @Override
-    public JsonObject getSessionData(String sessionHandle) throws StorageQueryException {
-        try {
-            return Queries.getSessionData(this, sessionHandle);
-        } catch (SQLException e) {
-            throw new StorageQueryException(e);
-        }
-    }
-
-    @Override
-    public int updateSessionData(String sessionHandle, JsonObject updatedData) throws StorageQueryException {
-        try {
-            return Queries.updateSessionData(this, sessionHandle, updatedData);
-        } catch (SQLException e) {
-            throw new StorageQueryException(e);
-        }
-    }
-
-    @Override
     public void deleteAllExpiredSessions() throws StorageQueryException {
         try {
             Queries.deleteAllExpiredSessions(this);
@@ -403,6 +386,25 @@ public class Start extends SQLStorage {
     @Override
     public void setStorageLayerEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    @Override
+    public SessionInfo getSession(String sessionHandle) throws StorageQueryException {
+        try {
+            return Queries.getSession(this, sessionHandle);
+        } catch (SQLException e) {
+            throw new StorageQueryException(e);
+        }
+    }
+
+    @Override
+    public int updateSession(String sessionHandle, @Nullable JsonObject sessionData, @Nullable JsonObject jwtPayload)
+            throws StorageQueryException {
+        try {
+            return Queries.updateSession(this, sessionHandle, sessionData, jwtPayload);
+        } catch (SQLException e) {
+            throw new StorageQueryException(e);
+        }
     }
 
     @Override
