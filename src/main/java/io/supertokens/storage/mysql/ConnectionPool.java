@@ -44,7 +44,7 @@ class ConnectionPool extends ResourceDistributor.SingletonResource {
 
         config.setDriverClassName("org.mariadb.jdbc.Driver");
         config.setJdbcUrl("jdbc:mysql://" + userConfig.getHostName() + ":" + userConfig.getPort() + "/"
-                + userConfig.getDatabaseName());
+                + userConfig.getDatabaseName() + "?allowPublicKeyRetrieval=true");
         config.setUsername(userConfig.getUser());
         if (!userConfig.getPassword().equals("")) {
             config.setPassword(userConfig.getPassword());
