@@ -470,4 +470,9 @@ public class Start extends SQLStorage {
         Runtime.getRuntime().addShutdownHook(shutdownHook);
     }
 
+    @Override
+    public boolean canBeUsed(String configFilePath) {
+        return Config.canBeUsed(this, configFilePath);
+    }
+
 }
