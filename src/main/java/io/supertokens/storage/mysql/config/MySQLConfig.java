@@ -51,9 +51,6 @@ public class MySQLConfig {
     @JsonProperty
     private String mysql_session_info_table_name = "session_info";
 
-    @JsonProperty
-    private String mysql_past_tokens_table_name = "past_tokens";
-
     public int getConnectionPoolSize() {
         return mysql_connection_pool_size;
     }
@@ -84,10 +81,6 @@ public class MySQLConfig {
 
     public String getSessionInfoTable() {
         return mysql_session_info_table_name;
-    }
-
-    public String getPastTokensTable() {
-        return mysql_past_tokens_table_name;
     }
 
     void validateAndInitialise() {
