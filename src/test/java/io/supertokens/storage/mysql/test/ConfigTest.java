@@ -71,14 +71,12 @@ public class ConfigTest {
         String[] args = {"../"};
 
         Utils.setValueInConfig("mysql_connection_pool_size", "5");
-        Utils.setValueInConfig("mysql_past_tokens_table_name", "\"temp_name\"");
 
         TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
 
         MySQLConfig config = Config.getConfig((Start) StorageLayer.getStorageLayer(process.getProcess()));
         assertEquals(config.getConnectionPoolSize(), 5);
-        assertEquals(config.getPastTokensTable(), "temp_name");
 
         process.kill();
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
@@ -263,13 +261,11 @@ public class ConfigTest {
 
         Utils.setValueInConfig("mysql_key_value_table_name", "key_value_table");
         Utils.setValueInConfig("mysql_session_info_table_name", "session_info_table");
-        Utils.setValueInConfig("mysql_past_tokens_table_name", "past_tokens_table");
 
         TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
         MySQLConfig config = Config.getConfig((Start) StorageLayer.getStorageLayer(process.getProcess()));
 
-        assertEquals("change in PastTokensTable name not reflected", config.getPastTokensTable(), "past_tokens_table");
         assertEquals("change in KeyValueTable name not reflected", config.getKeyValueTable(), "key_value_table");
         assertEquals("change in SessionInfoTable name not reflected", config.getSessionInfoTable(),
                 "session_info_table");
@@ -285,7 +281,6 @@ public class ConfigTest {
         assertEquals("Config keyValue table does not match default", config.getKeyValueTable(), "key_value");
         assertEquals("Config hostName does not match default ", config.getHostName(), "localhost");
         assertEquals("Config port does not match default", config.getPort(), 3306);
-        assertEquals("Config pastTokensTable does not match default", config.getPastTokensTable(), "past_tokens");
         assertEquals("Config sessionInfoTable does not match default", config.getSessionInfoTable(), "session_info");
         assertEquals("Config user does not match default", config.getUser(), "root");
         assertEquals("Config password does not match default", config.getPassword(), "root");
