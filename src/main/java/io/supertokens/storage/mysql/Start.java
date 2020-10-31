@@ -179,7 +179,7 @@ public class Start extends SQLStorage {
         try {
             con = ConnectionPool.getConnection(this);
             defaultTransactionIsolation = con.getTransactionIsolation();
-            con.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ);
+            con.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
             con.setAutoCommit(false);
             return logic.mainLogicAndCommit(new TransactionConnection(con));
         } catch (Exception e) {
