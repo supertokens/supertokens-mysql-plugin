@@ -171,8 +171,11 @@ public class Start extends SQLStorage {
     private <T> T startTransactionHelper(TransactionLogic<T> logic)
             throws StorageQueryException, StorageTransactionLogicException, SQLException {
         Connection con = null;
+        Integer defaultTransactionIsolation = null;
         try {
             con = ConnectionPool.getConnection(this);
+            defaultTransactionIsolation = con.getTransactionIsolation();
+            con.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ);
             con.setAutoCommit(false);
             return logic.mainLogicAndCommit(new TransactionConnection(con));
         } catch (Exception e) {
@@ -182,6 +185,9 @@ public class Start extends SQLStorage {
             throw e;
         } finally {
             if (con != null) {
+                if (defaultTransactionIsolation != null) {
+                    con.setTransactionIsolation(defaultTransactionIsolation);
+                }
                 con.setAutoCommit(true);
                 con.close();
             }
