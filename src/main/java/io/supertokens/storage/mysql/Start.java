@@ -154,6 +154,7 @@ public class Start extends SQLStorage {
             try {
                 return startTransactionHelper(logic);
             } catch (SQLException | StorageQueryException e) {
+                // check according to: https://github.com/supertokens/supertokens-mysql-plugin/pull/2
                 if ((e instanceof SQLTransactionRollbackException ||
                         e.getMessage().toLowerCase().contains("deadlock")) &&
                         tries < 3) {
