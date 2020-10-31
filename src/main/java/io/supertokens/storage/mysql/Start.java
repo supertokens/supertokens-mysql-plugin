@@ -157,6 +157,10 @@ public class Start extends SQLStorage {
                 if ((e instanceof SQLTransactionRollbackException ||
                         e.getMessage().toLowerCase().contains("deadlock")) &&
                         tries < 3) {
+                    try {
+                        Thread.sleep((long) (10 + (Math.random() * 20)));
+                    } catch (InterruptedException ignored) {
+                    }
                     ProcessState.getInstance(this).addState(ProcessState.PROCESS_STATE.DEADLOCK_FOUND, e);
                     continue;   // this because deadlocks are not necessarily a result of faulty logic. They can happen
                 }
@@ -185,10 +189,10 @@ public class Start extends SQLStorage {
             throw e;
         } finally {
             if (con != null) {
+                con.setAutoCommit(true);
                 if (defaultTransactionIsolation != null) {
                     con.setTransactionIsolation(defaultTransactionIsolation);
                 }
-                con.setAutoCommit(true);
                 con.close();
             }
         }
