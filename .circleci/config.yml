@@ -9,7 +9,7 @@ jobs:
           name: starting mysql
           command: |
             (cd / && ./runMySQL.sh)
-            mysql -u root --password=root -e "CREATE DATABASE auth_session;"
+            mysql -u root --password=root -e "CREATE DATABASE supertokens;"
       - run:
           name: running tests
           command: (cd .circleci/ && ./doTests.sh)
