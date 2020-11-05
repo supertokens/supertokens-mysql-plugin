@@ -35,6 +35,7 @@ import java.io.File;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+
 public class ConfigTest {
 
     @Rule
@@ -261,6 +262,8 @@ public class ConfigTest {
 
         Utils.setValueInConfig("mysql_key_value_table_name", "key_value_table");
         Utils.setValueInConfig("mysql_session_info_table_name", "session_info_table");
+        Utils.setValueInConfig("mysql_email_password_users_table_name", "users");
+        Utils.setValueInConfig("mysql_email_password_pswd_reset_tokens_table_name", "password_reset");
 
         TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
@@ -269,6 +272,9 @@ public class ConfigTest {
         assertEquals("change in KeyValueTable name not reflected", config.getKeyValueTable(), "key_value_table");
         assertEquals("change in SessionInfoTable name not reflected", config.getSessionInfoTable(),
                 "session_info_table");
+        assertEquals("change in table name not reflected", config.getUsersTable(), "users");
+        assertEquals("change in table name not reflected", config.getPasswordResetTokensTable(),
+                "password_reset");
 
         process.kill();
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
@@ -277,13 +283,16 @@ public class ConfigTest {
     public static void checkConfig(MySQLConfig config) {
 
         assertEquals("Config connectionPoolSize did not match default", config.getConnectionPoolSize(), 10);
-        assertEquals("Config databaseName does not match default", config.getDatabaseName(), "auth_session");
+        assertEquals("Config databaseName does not match default", config.getDatabaseName(), "supertokens");
         assertEquals("Config keyValue table does not match default", config.getKeyValueTable(), "key_value");
         assertEquals("Config hostName does not match default ", config.getHostName(), "localhost");
         assertEquals("Config port does not match default", config.getPort(), 3306);
         assertEquals("Config sessionInfoTable does not match default", config.getSessionInfoTable(), "session_info");
         assertEquals("Config user does not match default", config.getUser(), "root");
         assertEquals("Config password does not match default", config.getPassword(), "root");
+        assertEquals("Config keyValue table does not match default", config.getUsersTable(), "email_password_users");
+        assertEquals("Config keyValue table does not match default", config.getPasswordResetTokensTable(),
+                "email_password_pswd_reset_tokens");
     }
 
 }

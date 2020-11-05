@@ -30,7 +30,7 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.Objects;
 
-class ConnectionPool extends ResourceDistributor.SingletonResource {
+public class ConnectionPool extends ResourceDistributor.SingletonResource {
 
     private static final String RESOURCE_KEY = "io.supertokens.storage.mysql.ConnectionPool";
     private final HikariDataSource ds;
@@ -85,7 +85,7 @@ class ConnectionPool extends ResourceDistributor.SingletonResource {
         return (ConnectionPool) start.getResourceDistributor().getResource(RESOURCE_KEY);
     }
 
-    static void initPool(Start start) {
+    public static void initPool(Start start) {
         if (getInstance(start) != null) {
             return;
         }
@@ -136,7 +136,7 @@ class ConnectionPool extends ResourceDistributor.SingletonResource {
         }
     }
 
-    static Connection getConnection(Start start) throws SQLException {
+    public static Connection getConnection(Start start) throws SQLException {
         if (getInstance(start) == null) {
             throw new QuitProgramFromPluginException("Please call initPool before getConnection");
         }
@@ -146,7 +146,7 @@ class ConnectionPool extends ResourceDistributor.SingletonResource {
         return getInstance(start).ds.getConnection();
     }
 
-    static void close(Start start) {
+    public static void close(Start start) {
         if (getInstance(start) == null) {
             return;
         }
