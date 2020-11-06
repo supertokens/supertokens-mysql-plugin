@@ -52,10 +52,10 @@ public class MySQLConfig {
     private String mysql_session_info_table_name = "session_info";
 
     @JsonProperty
-    private String mysql_email_password_users_table_name = "email_password_users";
+    private String mysql_emailpassword_users_table_name = "emailpassword_users";
 
     @JsonProperty
-    private String mysql_email_password_pswd_reset_tokens_table_name = "email_password_pswd_reset_tokens";
+    private String mysql_emailpassword_pswd_reset_tokens_table_name = "emailpassword_pswd_reset_tokens";
 
     public int getConnectionPoolSize() {
         return mysql_connection_pool_size;
@@ -90,11 +90,11 @@ public class MySQLConfig {
     }
 
     public String getUsersTable() {
-        return mysql_email_password_users_table_name;
+        return mysql_emailpassword_users_table_name;
     }
 
     public String getPasswordResetTokensTable() {
-        return mysql_email_password_pswd_reset_tokens_table_name;
+        return mysql_emailpassword_pswd_reset_tokens_table_name;
     }
 
     void validateAndInitialise() {
