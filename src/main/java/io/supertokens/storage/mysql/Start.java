@@ -421,11 +421,13 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage {
         } catch (SQLException e) {
             if (e.getMessage()
                     .contains("Duplicate entry") &&
-                    e.getMessage().endsWith("for key '" + Config.getConfig(this).getUsersTable() + ".email'")) {
+                    (e.getMessage().endsWith("'" + Config.getConfig(this).getUsersTable() + ".email'") ||
+                            e.getMessage().endsWith("'email'"))) {
                 throw new DuplicateEmailException();
             } else if (e.getMessage()
                     .contains("Duplicate entry") &&
-                    e.getMessage().endsWith("for key '" + Config.getConfig(this).getUsersTable() + ".PRIMARY'")) {
+                    (e.getMessage().endsWith("'" + Config.getConfig(this).getUsersTable() + ".PRIMARY'") ||
+                            e.getMessage().endsWith("'PRIMARY'"))) {
                 throw new DuplicateUserIdException();
             }
             throw new StorageQueryException(e);
@@ -464,8 +466,9 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage {
         } catch (SQLException e) {
             if (e.getMessage()
                     .contains("Duplicate entry") &&
-                    e.getMessage().endsWith(
-                            "for key '" + Config.getConfig(this).getPasswordResetTokensTable() + ".PRIMARY'")) {
+                    (e.getMessage()
+                            .endsWith("'" + Config.getConfig(this).getPasswordResetTokensTable() + ".PRIMARY'") ||
+                            e.getMessage().endsWith("'PRIMARY'"))) {
                 throw new DuplicatePasswordResetTokenException();
             }
             throw new StorageQueryException(e);
