@@ -21,6 +21,7 @@ import io.supertokens.pluginInterface.emailpassword.UserInfo;
 import io.supertokens.storage.mysql.ConnectionPool;
 import io.supertokens.storage.mysql.Start;
 import io.supertokens.storage.mysql.config.Config;
+import io.supertokens.storage.mysql.utils.RowMapper;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -99,10 +100,9 @@ public class EmailPasswordQueries {
             pst.setString(1, userId);
             ResultSet result = pst.executeQuery();
             List<PasswordResetTokenInfo> temp = new ArrayList<>();
+            RowMapper<PasswordResetTokenInfo> rowMapper = RowMapper.getPasswordResetTokenInfoMapper();
             while (result.next()) {
-                temp.add(new PasswordResetTokenInfo(result.getString("user_id"),
-                        result.getString("token"),
-                        result.getLong("token_expiry")));
+                temp.add(rowMapper.map(result));
             }
             PasswordResetTokenInfo[] finalResult = new PasswordResetTokenInfo[temp.size()];
             for (int i = 0; i < temp.size(); i++) {
@@ -124,10 +124,9 @@ public class EmailPasswordQueries {
             pst.setString(1, userId);
             ResultSet result = pst.executeQuery();
             List<PasswordResetTokenInfo> temp = new ArrayList<>();
+            RowMapper<PasswordResetTokenInfo> rowMapper = RowMapper.getPasswordResetTokenInfoMapper();
             while (result.next()) {
-                temp.add(new PasswordResetTokenInfo(result.getString("user_id"),
-                        result.getString("token"),
-                        result.getLong("token_expiry")));
+                temp.add(rowMapper.map(result));
             }
             PasswordResetTokenInfo[] finalResult = new PasswordResetTokenInfo[temp.size()];
             for (int i = 0; i < temp.size(); i++) {
@@ -144,10 +143,9 @@ public class EmailPasswordQueries {
              PreparedStatement pst = con.prepareStatement(QUERY)) {
             pst.setString(1, token);
             ResultSet result = pst.executeQuery();
+            RowMapper<PasswordResetTokenInfo> rowMapper = RowMapper.getPasswordResetTokenInfoMapper();
             if (result.next()) {
-                return new PasswordResetTokenInfo(result.getString("user_id"),
-                        result.getString("token"),
-                        result.getLong("token_expiry"));
+                return rowMapper.map(result);
             }
         }
         return null;
@@ -191,10 +189,9 @@ public class EmailPasswordQueries {
              PreparedStatement pst = con.prepareStatement(QUERY)) {
             pst.setString(1, id);
             ResultSet result = pst.executeQuery();
+            RowMapper<UserInfo> rowMapper = RowMapper.getUserInfoMapper();
             if (result.next()) {
-                return new UserInfo(result.getString("user_id"), result.getString("email"),
-                        result.getString("password_hash"),
-                        result.getLong("time_joined"));
+                return rowMapper.map(result);
             }
         }
         return null;
@@ -207,10 +204,9 @@ public class EmailPasswordQueries {
              PreparedStatement pst = con.prepareStatement(QUERY)) {
             pst.setString(1, email);
             ResultSet result = pst.executeQuery();
+            RowMapper<UserInfo> rowMapper = RowMapper.getUserInfoMapper();
             if (result.next()) {
-                return new UserInfo(result.getString("user_id"), result.getString("email"),
-                        result.getString("password_hash"),
-                        result.getLong("time_joined"));
+                return rowMapper.map(result);
             }
         }
         return null;
