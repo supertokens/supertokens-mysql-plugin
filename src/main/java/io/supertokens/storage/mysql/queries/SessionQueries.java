@@ -18,10 +18,12 @@ package io.supertokens.storage.mysql.queries;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import io.supertokens.pluginInterface.emailpassword.UserInfo;
 import io.supertokens.pluginInterface.session.SessionInfo;
 import io.supertokens.storage.mysql.ConnectionPool;
 import io.supertokens.storage.mysql.Start;
 import io.supertokens.storage.mysql.config.Config;
+import io.supertokens.storage.mysql.utils.RowMapper;
 
 import javax.annotation.Nullable;
 import java.sql.Connection;
@@ -71,13 +73,10 @@ public class SessionQueries {
         try (PreparedStatement pst = con.prepareStatement(QUERY)) {
             pst.setString(1, sessionHandle);
             ResultSet result = pst.executeQuery();
+            RowMapper<SessionInfo> rowMapper = RowMapper.getSessionInfoMapper();
+
             if (result.next()) {
-                return new SessionInfo(result.getString("session_handle"), result.getString("user_id"),
-                        result.getString("refresh_token_hash_2"),
-                        new JsonParser().parse(result.getString("session_data")).getAsJsonObject(),
-                        result.getLong("expires_at"),
-                        new JsonParser().parse(result.getString("jwt_user_payload")).getAsJsonObject(),
-                        result.getLong("created_at_time"));
+                return rowMapper.map(result);
             }
         }
         return null;
@@ -174,13 +173,9 @@ public class SessionQueries {
              PreparedStatement pst = con.prepareStatement(QUERY)) {
             pst.setString(1, sessionHandle);
             ResultSet result = pst.executeQuery();
+            RowMapper<SessionInfo> rowMapper = RowMapper.getSessionInfoMapper();
             if (result.next()) {
-                return new SessionInfo(result.getString("session_handle"), result.getString("user_id"),
-                        result.getString("refresh_token_hash_2"),
-                        new JsonParser().parse(result.getString("session_data")).getAsJsonObject(),
-                        result.getLong("expires_at"),
-                        new JsonParser().parse(result.getString("jwt_user_payload")).getAsJsonObject(),
-                        result.getLong("created_at_time"));
+                return rowMapper.map(result);
             }
         }
         return null;
