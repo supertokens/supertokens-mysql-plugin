@@ -22,6 +22,7 @@ import io.supertokens.pluginInterface.mapper.RowMapper;
 import io.supertokens.storage.mysql.ConnectionPool;
 import io.supertokens.storage.mysql.Start;
 import io.supertokens.storage.mysql.config.Config;
+import io.supertokens.storage.mysql.utils.RowMapper;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
