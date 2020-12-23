@@ -17,13 +17,11 @@
 package io.supertokens.storage.mysql.queries;
 
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import io.supertokens.pluginInterface.emailpassword.UserInfo;
+import io.supertokens.pluginInterface.mapper.RowMapper;
 import io.supertokens.pluginInterface.session.SessionInfo;
 import io.supertokens.storage.mysql.ConnectionPool;
 import io.supertokens.storage.mysql.Start;
 import io.supertokens.storage.mysql.config.Config;
-import io.supertokens.storage.mysql.utils.RowMapper;
 
 import javax.annotation.Nullable;
 import java.sql.Connection;
