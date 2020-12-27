@@ -17,7 +17,8 @@
 package io.supertokens.storage.mysql.queries;
 
 import io.supertokens.pluginInterface.KeyValueInfo;
-import io.supertokens.pluginInterface.mapper.RowMapper;
+import io.supertokens.pluginInterface.RowMapper;
+import io.supertokens.pluginInterface.exceptions.StorageQueryException;
 import io.supertokens.storage.mysql.ConnectionPool;
 import io.supertokens.storage.mysql.ProcessState;
 import io.supertokens.storage.mysql.Start;
@@ -114,7 +115,7 @@ public class GeneralQueries {
         }
     }
 
-    public static KeyValueInfo getKeyValue(Start start, String key) throws SQLException {
+    public static KeyValueInfo getKeyValue(Start start, String key) throws SQLException, StorageQueryException{
         String QUERY = "SELECT value, created_at_time FROM "
                 + Config.getConfig(start).getKeyValueTable() + " WHERE name = ?";
 
@@ -122,24 +123,22 @@ public class GeneralQueries {
              PreparedStatement pst = con.prepareStatement(QUERY)) {
             pst.setString(1, key);
             ResultSet result = pst.executeQuery();
-            RowMapper<KeyValueInfo> mapper = RowMapper.getKeyValueInfoMapper();
-            if (result.next()) {
-                return mapper.map(result);
+            if(result.next()){
+                return KeyValueInfoRowMapper.getInstance().mapOrThrow(result);
             }
         }
         return null;
     }
 
-    public static KeyValueInfo getKeyValue_Transaction(Start start, Connection con, String key) throws SQLException {
+    public static KeyValueInfo getKeyValue_Transaction(Start start, Connection con, String key) throws SQLException, StorageQueryException{
         String QUERY = "SELECT value, created_at_time FROM "
                 + Config.getConfig(start).getKeyValueTable() + " WHERE name = ? FOR UPDATE";
 
         try (PreparedStatement pst = con.prepareStatement(QUERY)) {
             pst.setString(1, key);
             ResultSet result = pst.executeQuery();
-            RowMapper<KeyValueInfo> mapper = RowMapper.getKeyValueInfoMapper();
-            if (result.next()) {
-                return mapper.map(result);
+            if(result.next()){
+                return KeyValueInfoRowMapper.getInstance().mapOrThrow(result);
             }
         }
         return null;
@@ -154,6 +153,22 @@ public class GeneralQueries {
              PreparedStatement create = con.prepareStatement(CREATE_QUERY)) {
             drop.executeUpdate();
             create.executeUpdate();
+        }
+    }
+
+    private static class KeyValueInfoRowMapper implements RowMapper<KeyValueInfo, ResultSet> {
+        private static final KeyValueInfoRowMapper INSTANCE = new KeyValueInfoRowMapper();
+
+        private KeyValueInfoRowMapper(){
+        }
+
+        private static KeyValueInfoRowMapper getInstance(){
+            return INSTANCE;
+        }
+
+        @Override
+        public KeyValueInfo map(ResultSet result) throws Exception {
+            return new KeyValueInfo(result.getString("value"), result.getLong("created_at_time"));
         }
     }
 }

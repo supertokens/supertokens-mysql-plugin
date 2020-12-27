@@ -16,9 +16,10 @@
 
 package io.supertokens.storage.mysql.queries;
 
+import io.supertokens.pluginInterface.RowMapper;
 import io.supertokens.pluginInterface.emailpassword.PasswordResetTokenInfo;
 import io.supertokens.pluginInterface.emailpassword.UserInfo;
-import io.supertokens.pluginInterface.mapper.RowMapper;
+import io.supertokens.pluginInterface.exceptions.StorageQueryException;
 import io.supertokens.storage.mysql.ConnectionPool;
 import io.supertokens.storage.mysql.Start;
 import io.supertokens.storage.mysql.config.Config;
@@ -90,7 +91,7 @@ public class EmailPasswordQueries {
     }
 
     public static PasswordResetTokenInfo[] getAllPasswordResetTokenInfoForUser(Start start, String userId)
-            throws SQLException {
+            throws SQLException, StorageQueryException {
         String QUERY =
                 "SELECT user_id, token, token_expiry FROM " + Config.getConfig(start).getPasswordResetTokensTable() +
                         " WHERE user_id = ?";
@@ -100,9 +101,8 @@ public class EmailPasswordQueries {
             pst.setString(1, userId);
             ResultSet result = pst.executeQuery();
             List<PasswordResetTokenInfo> temp = new ArrayList<>();
-            RowMapper<PasswordResetTokenInfo> rowMapper = RowMapper.getPasswordResetTokenInfoMapper();
             while (result.next()) {
-                temp.add(rowMapper.map(result));
+                temp.add(PasswordResetTokenInfoRowMapper.getInstance().mapOrThrow(result));
             }
             PasswordResetTokenInfo[] finalResult = new PasswordResetTokenInfo[temp.size()];
             for (int i = 0; i < temp.size(); i++) {
@@ -114,7 +114,7 @@ public class EmailPasswordQueries {
 
     public static PasswordResetTokenInfo[] getAllPasswordResetTokenInfoForUser_Transaction(Start start, Connection con,
                                                                                            String userId)
-            throws SQLException {
+            throws SQLException, StorageQueryException {
 
         String QUERY =
                 "SELECT user_id, token, token_expiry FROM " + Config.getConfig(start).getPasswordResetTokensTable() +
@@ -124,9 +124,8 @@ public class EmailPasswordQueries {
             pst.setString(1, userId);
             ResultSet result = pst.executeQuery();
             List<PasswordResetTokenInfo> temp = new ArrayList<>();
-            RowMapper<PasswordResetTokenInfo> rowMapper = RowMapper.getPasswordResetTokenInfoMapper();
             while (result.next()) {
-                temp.add(rowMapper.map(result));
+                temp.add(PasswordResetTokenInfoRowMapper.getInstance().mapOrThrow(result));
             }
             PasswordResetTokenInfo[] finalResult = new PasswordResetTokenInfo[temp.size()];
             for (int i = 0; i < temp.size(); i++) {
@@ -136,16 +135,15 @@ public class EmailPasswordQueries {
         }
     }
 
-    public static PasswordResetTokenInfo getPasswordResetTokenInfo(Start start, String token) throws SQLException {
+    public static PasswordResetTokenInfo getPasswordResetTokenInfo(Start start, String token) throws SQLException, StorageQueryException {
         String QUERY = "SELECT user_id, token, token_expiry FROM "
                 + Config.getConfig(start).getPasswordResetTokensTable() + " WHERE token = ?";
         try (Connection con = ConnectionPool.getConnection(start);
              PreparedStatement pst = con.prepareStatement(QUERY)) {
             pst.setString(1, token);
             ResultSet result = pst.executeQuery();
-            RowMapper<PasswordResetTokenInfo> rowMapper = RowMapper.getPasswordResetTokenInfoMapper();
             if (result.next()) {
-                return rowMapper.map(result);
+                return PasswordResetTokenInfoRowMapper.getInstance().mapOrThrow(result);
             }
         }
         return null;
@@ -182,33 +180,65 @@ public class EmailPasswordQueries {
         }
     }
 
-    public static UserInfo getUserInfoUsingId(Start start, String id) throws SQLException {
+    public static UserInfo getUserInfoUsingId(Start start, String id) throws SQLException, StorageQueryException {
         String QUERY = "SELECT user_id, email, password_hash, time_joined FROM "
                 + Config.getConfig(start).getUsersTable() + " WHERE user_id = ?";
         try (Connection con = ConnectionPool.getConnection(start);
              PreparedStatement pst = con.prepareStatement(QUERY)) {
             pst.setString(1, id);
             ResultSet result = pst.executeQuery();
-            RowMapper<UserInfo> rowMapper = RowMapper.getUserInfoMapper();
             if (result.next()) {
-                return rowMapper.map(result);
+                return UserInfoRowMapper.getInstance().mapOrThrow(result);
             }
         }
         return null;
     }
 
-    public static UserInfo getUserInfoUsingEmail(Start start, String email) throws SQLException {
+    public static UserInfo getUserInfoUsingEmail(Start start, String email) throws SQLException, StorageQueryException {
         String QUERY = "SELECT user_id, email, password_hash, time_joined FROM "
                 + Config.getConfig(start).getUsersTable() + " WHERE email = ?";
         try (Connection con = ConnectionPool.getConnection(start);
              PreparedStatement pst = con.prepareStatement(QUERY)) {
             pst.setString(1, email);
             ResultSet result = pst.executeQuery();
-            RowMapper<UserInfo> rowMapper = RowMapper.getUserInfoMapper();
             if (result.next()) {
-                return rowMapper.map(result);
+                return UserInfoRowMapper.getInstance().mapOrThrow(result);
             }
         }
         return null;
+    }
+
+    private static class PasswordResetTokenInfoRowMapper implements RowMapper<PasswordResetTokenInfo, ResultSet> {
+        private static final PasswordResetTokenInfoRowMapper INSTANCE = new PasswordResetTokenInfoRowMapper();
+
+        private PasswordResetTokenInfoRowMapper() {}
+
+        private static PasswordResetTokenInfoRowMapper getInstance() {
+            return INSTANCE;
+        }
+
+        @Override
+        public PasswordResetTokenInfo map(ResultSet result) throws Exception {
+            return new PasswordResetTokenInfo(result.getString("user_id"),
+                result.getString("token"),
+                result.getLong("token_expiry"));
+        }
+    }
+
+    private static class UserInfoRowMapper implements RowMapper<UserInfo, ResultSet> {
+        private static final UserInfoRowMapper INSTANCE = new UserInfoRowMapper();
+
+        private UserInfoRowMapper(){}
+
+        private static UserInfoRowMapper getInstance(){
+            return INSTANCE;
+        }
+
+        @Override
+        public UserInfo map(ResultSet result) throws Exception {
+            return new UserInfo(result.getString("user_id"), result.getString("email"),
+                result.getString("password_hash"),
+                result.getLong("time_joined"));
+        }
     }
 }
