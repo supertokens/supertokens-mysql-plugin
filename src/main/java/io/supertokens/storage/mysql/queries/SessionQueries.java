@@ -18,6 +18,7 @@ package io.supertokens.storage.mysql.queries;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+
 import io.supertokens.pluginInterface.RowMapper;
 import io.supertokens.pluginInterface.exceptions.StorageQueryException;
 import io.supertokens.pluginInterface.session.SessionInfo;
