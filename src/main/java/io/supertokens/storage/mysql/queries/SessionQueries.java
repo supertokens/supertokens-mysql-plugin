@@ -18,12 +18,13 @@ package io.supertokens.storage.mysql.queries;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import io.supertokens.pluginInterface.emailpassword.UserInfo;
+
+import io.supertokens.pluginInterface.RowMapper;
+import io.supertokens.pluginInterface.exceptions.StorageQueryException;
 import io.supertokens.pluginInterface.session.SessionInfo;
 import io.supertokens.storage.mysql.ConnectionPool;
 import io.supertokens.storage.mysql.Start;
 import io.supertokens.storage.mysql.config.Config;
-import io.supertokens.storage.mysql.utils.RowMapper;
 
 import javax.annotation.Nullable;
 import java.sql.Connection;
@@ -66,17 +67,16 @@ public class SessionQueries {
     }
 
     public static SessionInfo getSessionInfo_Transaction(Start start, Connection con, String sessionHandle)
-            throws SQLException {
+            throws SQLException, StorageQueryException{
         String QUERY = "SELECT session_handle, user_id, refresh_token_hash_2, session_data, expires_at, " +
                 "created_at_time, jwt_user_payload FROM "
                 + Config.getConfig(start).getSessionInfoTable() + " WHERE session_handle = ? FOR UPDATE";
         try (PreparedStatement pst = con.prepareStatement(QUERY)) {
             pst.setString(1, sessionHandle);
             ResultSet result = pst.executeQuery();
-            RowMapper<SessionInfo> rowMapper = RowMapper.getSessionInfoMapper();
 
             if (result.next()) {
-                return rowMapper.map(result);
+                return SessionInfoRowMapper.getInstance().mapOrThrow(result);
             }
         }
         return null;
@@ -165,7 +165,7 @@ public class SessionQueries {
     }
 
     public static SessionInfo getSession(Start start, String sessionHandle)
-            throws SQLException {
+            throws SQLException, StorageQueryException {
         String QUERY = "SELECT session_handle, user_id, refresh_token_hash_2, session_data, expires_at, " +
                 "created_at_time, jwt_user_payload FROM "
                 + Config.getConfig(start).getSessionInfoTable() + " WHERE session_handle = ?";
@@ -173,9 +173,8 @@ public class SessionQueries {
              PreparedStatement pst = con.prepareStatement(QUERY)) {
             pst.setString(1, sessionHandle);
             ResultSet result = pst.executeQuery();
-            RowMapper<SessionInfo> rowMapper = RowMapper.getSessionInfoMapper();
             if (result.next()) {
-                return rowMapper.map(result);
+                return SessionInfoRowMapper.getInstance().mapOrThrow(result);
             }
         }
         return null;
@@ -212,6 +211,27 @@ public class SessionQueries {
             }
             pst.setString(currIndex, sessionHandle);
             return pst.executeUpdate();
+        }
+    }
+
+    private static class SessionInfoRowMapper implements RowMapper<SessionInfo, ResultSet> {
+        private static final SessionInfoRowMapper INSTANCE = new SessionInfoRowMapper();
+
+        private SessionInfoRowMapper() {}
+
+        private static SessionInfoRowMapper getInstance() {
+            return INSTANCE;
+        }
+
+        @Override
+        public SessionInfo map(ResultSet result) throws Exception {
+            JsonParser jp = new JsonParser();
+            return new SessionInfo(result.getString("session_handle"), result.getString("user_id"),
+                result.getString("refresh_token_hash_2"),
+                jp.parse(result.getString("session_data")).getAsJsonObject(),
+                result.getLong("expires_at"),
+                jp.parse(result.getString("jwt_user_payload")).getAsJsonObject(),
+                result.getLong("created_at_time"));
         }
     }
 }
