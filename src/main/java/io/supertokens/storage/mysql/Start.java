@@ -21,12 +21,10 @@ import ch.qos.logback.classic.Logger;
 import com.google.gson.JsonObject;
 import io.supertokens.pluginInterface.KeyValueInfo;
 import io.supertokens.pluginInterface.STORAGE_TYPE;
+import io.supertokens.pluginInterface.emailpassword.EmailVerificationTokenInfo;
 import io.supertokens.pluginInterface.emailpassword.PasswordResetTokenInfo;
 import io.supertokens.pluginInterface.emailpassword.UserInfo;
-import io.supertokens.pluginInterface.emailpassword.exceptions.DuplicateEmailException;
-import io.supertokens.pluginInterface.emailpassword.exceptions.DuplicatePasswordResetTokenException;
-import io.supertokens.pluginInterface.emailpassword.exceptions.DuplicateUserIdException;
-import io.supertokens.pluginInterface.emailpassword.exceptions.UnknownUserIdException;
+import io.supertokens.pluginInterface.emailpassword.exceptions.*;
 import io.supertokens.pluginInterface.emailpassword.sqlStorage.EmailPasswordSQLStorage;
 import io.supertokens.pluginInterface.exceptions.QuitProgramFromPluginException;
 import io.supertokens.pluginInterface.exceptions.StorageQueryException;
@@ -417,7 +415,8 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage {
     public void signUp(UserInfo userInfo)
             throws StorageQueryException, DuplicateUserIdException, DuplicateEmailException {
         try {
-            EmailPasswordQueries.signUp(this, userInfo.id, userInfo.email, userInfo.passwordHash, userInfo.timeJoined);
+            EmailPasswordQueries.signUp(this, userInfo.id, userInfo.email, userInfo.passwordHash, userInfo.timeJoined,
+                    userInfo.isEmailVerified);
         } catch (SQLException e) {
             if (e.getMessage()
                     .contains("Duplicate entry") &&
@@ -525,6 +524,57 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage {
         } catch (SQLException e) {
             throw new StorageQueryException(e);
         }
+    }
+
+    @Override
+    public EmailVerificationTokenInfo[] getAllEmailVerificationTokenInfoForUser_Transaction(TransactionConnection con,
+                                                                                            String userId)
+            throws StorageQueryException {
+        // TODO:
+        return new EmailVerificationTokenInfo[0];
+    }
+
+    @Override
+    public void deleteAllEmailVerificationTokensForUser_Transaction(TransactionConnection con, String userId)
+            throws StorageQueryException {
+        // TODO:
+    }
+
+    @Override
+    public void updateUsersIsEmailVerified_Transaction(TransactionConnection con, String userId,
+                                                       boolean isEmailVerified) throws StorageQueryException {
+        // TODO:
+    }
+
+    @Override
+    public UserInfo getUserInfoUsingId_Transaction(TransactionConnection con, String userId)
+            throws StorageQueryException {
+        // TODO:
+        return null;
+    }
+
+    @Override
+    public void addEmailVerificationToken(EmailVerificationTokenInfo emailVerificationInfo)
+            throws StorageQueryException, UnknownUserIdException, DuplicateEmailVerificationTokenException {
+        // TODO:
+    }
+
+    @Override
+    public EmailVerificationTokenInfo getEmailVerificationTokenInfo(String token) throws StorageQueryException {
+        // TODO:
+        return null;
+    }
+
+    @Override
+    public void deleteExpiredEmailVerificationTokens() throws StorageQueryException {
+        // TODO:
+    }
+
+    @Override
+    public EmailVerificationTokenInfo[] getAllEmailVerificationTokenInfoForUser(String userId)
+            throws StorageQueryException {
+        // TODO:
+        return new EmailVerificationTokenInfo[0];
     }
 
     @Override

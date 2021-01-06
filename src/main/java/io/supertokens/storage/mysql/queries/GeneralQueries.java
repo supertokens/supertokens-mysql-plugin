@@ -90,6 +90,22 @@ public class GeneralQueries {
             }
         }
 
+        if (!doesTableExists(start, Config.getConfig(start).getEmailVerificationTokensTable())) {
+            ProcessState.getInstance(start).addState(ProcessState.PROCESS_STATE.CREATING_NEW_TABLE, null);
+            try (Connection con = ConnectionPool.getConnection(start);
+                 PreparedStatement pst = con
+                         .prepareStatement(EmailPasswordQueries.getQueryToCreateEmailVerificationTokensTable(start))) {
+                pst.executeUpdate();
+            }
+            // index
+            try (Connection con = ConnectionPool.getConnection(start);
+                 PreparedStatement pstIndex = con
+                         .prepareStatement(
+                                 EmailPasswordQueries.getQueryToCreateEmailVerificationTokenExpiryIndex(start))) {
+                pstIndex.executeUpdate();
+            }
+        }
+
     }
 
     public static void setKeyValue_Transaction(Start start, Connection con, String key, KeyValueInfo info)
@@ -115,7 +131,7 @@ public class GeneralQueries {
         }
     }
 
-    public static KeyValueInfo getKeyValue(Start start, String key) throws SQLException, StorageQueryException{
+    public static KeyValueInfo getKeyValue(Start start, String key) throws SQLException, StorageQueryException {
         String QUERY = "SELECT value, created_at_time FROM "
                 + Config.getConfig(start).getKeyValueTable() + " WHERE name = ?";
 
@@ -123,21 +139,22 @@ public class GeneralQueries {
              PreparedStatement pst = con.prepareStatement(QUERY)) {
             pst.setString(1, key);
             ResultSet result = pst.executeQuery();
-            if(result.next()){
+            if (result.next()) {
                 return KeyValueInfoRowMapper.getInstance().mapOrThrow(result);
             }
         }
         return null;
     }
 
-    public static KeyValueInfo getKeyValue_Transaction(Start start, Connection con, String key) throws SQLException, StorageQueryException{
+    public static KeyValueInfo getKeyValue_Transaction(Start start, Connection con, String key)
+            throws SQLException, StorageQueryException {
         String QUERY = "SELECT value, created_at_time FROM "
                 + Config.getConfig(start).getKeyValueTable() + " WHERE name = ? FOR UPDATE";
 
         try (PreparedStatement pst = con.prepareStatement(QUERY)) {
             pst.setString(1, key);
             ResultSet result = pst.executeQuery();
-            if(result.next()){
+            if (result.next()) {
                 return KeyValueInfoRowMapper.getInstance().mapOrThrow(result);
             }
         }
@@ -159,10 +176,10 @@ public class GeneralQueries {
     private static class KeyValueInfoRowMapper implements RowMapper<KeyValueInfo, ResultSet> {
         private static final KeyValueInfoRowMapper INSTANCE = new KeyValueInfoRowMapper();
 
-        private KeyValueInfoRowMapper(){
+        private KeyValueInfoRowMapper() {
         }
 
-        private static KeyValueInfoRowMapper getInstance(){
+        private static KeyValueInfoRowMapper getInstance() {
             return INSTANCE;
         }
 
