@@ -58,7 +58,10 @@ public class MySQLConfig {
     private String mysql_emailpassword_pswd_reset_tokens_table_name = "emailpassword_pswd_reset_tokens";
 
     @JsonProperty
-    private String mysql_emailpassword_email_verification_tokens_table_name = "emailpassword_email_verification_tokens";
+    private String mysql_emailverification_tokens_table_name = "emailverification_tokens";
+
+    @JsonProperty
+    private String mysql_emailverification_verified_emails_table_name = "emailverification_verified_emails";
 
     public int getConnectionPoolSize() {
         return mysql_connection_pool_size;
@@ -101,7 +104,11 @@ public class MySQLConfig {
     }
 
     public String getEmailVerificationTokensTable() {
-        return mysql_emailpassword_email_verification_tokens_table_name;
+        return mysql_emailverification_tokens_table_name;
+    }
+
+    public String getEmailVerificationTable() {
+        return mysql_emailverification_verified_emails_table_name;
     }
 
     void validateAndInitialise() {
