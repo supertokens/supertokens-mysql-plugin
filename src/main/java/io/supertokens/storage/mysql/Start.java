@@ -621,11 +621,11 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
             EmailVerificationQueries
                     .updateUsersIsEmailVerified_Transaction(this, sqlCon, userId, email, isEmailVerified);
         } catch (SQLException e) {
-            if (!isEmailVerified || !e.getMessage()
+            if (!isEmailVerified || !(e.getMessage()
                     .contains("Duplicate entry") &&
                     (e.getMessage()
                             .endsWith("'" + Config.getConfig(this).getEmailVerificationTable() + ".PRIMARY'") ||
-                            e.getMessage().endsWith("'PRIMARY'"))) {
+                            e.getMessage().endsWith("'PRIMARY'")))) {
                 throw new StorageQueryException(e);
             }
             // we do not throw an error since the email is already verified
