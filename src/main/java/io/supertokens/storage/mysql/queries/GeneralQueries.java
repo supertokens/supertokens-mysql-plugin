@@ -123,6 +123,23 @@ public class GeneralQueries {
             }
         }
 
+        if (!doesTableExists(start, Config.getConfig(start).getThirdPartyUsersTable())) {
+            ProcessState.getInstance(start).addState(ProcessState.PROCESS_STATE.CREATING_NEW_TABLE, null);
+            try (Connection con = ConnectionPool.getConnection(start);
+                 PreparedStatement pst = con
+                         .prepareStatement(
+                                 ThirdPartyQueries.getQueryToCreateUsersTable(start))) {
+                pst.executeUpdate();
+            }
+            // index
+            try (Connection con = ConnectionPool.getConnection(start);
+                 PreparedStatement pstIndex = con
+                         .prepareStatement(
+                                 ThirdPartyQueries.getQueryToCreateUserPaginationIndex(start))) {
+                pstIndex.executeUpdate();
+            }
+        }
+
     }
 
     public static void setKeyValue_Transaction(Start start, Connection con, String key, KeyValueInfo info)

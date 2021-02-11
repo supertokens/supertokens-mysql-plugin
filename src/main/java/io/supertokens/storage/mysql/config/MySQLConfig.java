@@ -63,6 +63,13 @@ public class MySQLConfig {
     @JsonProperty
     private String mysql_emailverification_verified_emails_table_name = "emailverification_verified_emails";
 
+    @JsonProperty
+    private String mysql_thirdparty_users_table_name = "thirdparty_users";
+
+    public String getThirdPartyUsersTable() {
+        return mysql_thirdparty_users_table_name;
+    }
+
     public int getConnectionPoolSize() {
         return mysql_connection_pool_size;
     }
