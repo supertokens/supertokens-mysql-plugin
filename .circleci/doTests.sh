@@ -93,6 +93,8 @@ do
     cd ../../
     git clone git@github.com:supertokens/supertokens-root.git
     cd supertokens-root
+    update-alternatives --install "/usr/bin/java" "java" `pwd`"/jre-linux/bin/java" 2
+    update-alternatives --auto java
     pluginX=$(cut -d'.' -f1 <<<"$pluginVersion")
     pluginY=$(cut -d'.' -f2 <<<"$pluginVersion")
     echo -e "core,$coreVersionX2\nplugin-interface,$piVersion\nmysql-plugin,$pluginX.$pluginY" > modules.txt
