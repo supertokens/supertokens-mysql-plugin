@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.7.0] - 2021-04-20
+## [1.8.0] - 2021-04-20
 ### Added
 - Added ability to set table name prefix (https://github.com/supertokens/supertokens-core/issues/220)
 
