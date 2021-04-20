@@ -280,6 +280,28 @@ public class ConfigTest {
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
     }
 
+    @Test
+    public void testAddingTableNamePrefixWorks() throws Exception {
+        String[] args = {"../"};
+
+        Utils.setValueInConfig("mysql_key_value_table_name", "key_value_table");
+        Utils.setValueInConfig("mysql_table_names_prefix", "some_prefix");
+
+        TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
+        assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
+        MySQLConfig config = Config.getConfig((Start) StorageLayer.getStorage(process.getProcess()));
+
+        assertEquals("change in KeyValueTable name not reflected", config.getKeyValueTable(), "key_value_table");
+        assertEquals("change in SessionInfoTable name not reflected", config.getSessionInfoTable(),
+                "some_prefix_session_info");
+        assertEquals("change in table name not reflected", config.getUsersTable(), "some_prefix_emailpassword_users");
+        assertEquals("change in table name not reflected", config.getPasswordResetTokensTable(),
+                "some_prefix_emailpassword_pswd_reset_tokens");
+
+        process.kill();
+        assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
+    }
+
     public static void checkConfig(MySQLConfig config) {
 
         assertEquals("Config connectionPoolSize did not match default", config.getConnectionPoolSize(), 10);
