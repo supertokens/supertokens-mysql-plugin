@@ -87,53 +87,18 @@ public class ConfigTest {
     public void testThatInvalidConfigThrowsRightError() throws Exception {
         String[] args = {"../"};
 
-        //'mysql_user is not set properly in the config file
-
-        Utils.commentConfigValue("mysql_user");
-
-        TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
-
-        ProcessState.EventAndException e = process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.INIT_FAILURE);
-        assertNotNull(e);
-        TestCase.assertEquals(e.exception.getMessage(),
-                "'mysql_user' is not set in the config.yaml file. Please set this value and restart SuperTokens");
-
-        process.kill();
-        assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
-
-        Utils.reset();
-
-
-        //'mysql_password is not set properly in the config file
-
-        Utils.commentConfigValue("mysql_password");
-        process = TestingProcessManager.start(args);
-
-        e = process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.INIT_FAILURE);
-        assertNotNull(e);
-        TestCase.assertEquals(e.exception.getMessage(),
-                "'mysql_password' is not set in the config.yaml file. Please set this value and restart SuperTokens");
-
-        process.kill();
-        assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
-
-
-        Utils.reset();
-
-
         //mysql_connection_pool_size is not set properly in the config file
 
         Utils.setValueInConfig("mysql_connection_pool_size", "-1");
-        process = TestingProcessManager.start(args);
+        TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
 
-        e = process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.INIT_FAILURE);
+        ProcessState.EventAndException e = process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.INIT_FAILURE);
         assertNotNull(e);
         TestCase.assertEquals(e.exception.getMessage(),
                 "'mysql_connection_pool_size' in the config.yaml file must be > 0");
 
         process.kill();
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
-
 
     }
 
@@ -205,7 +170,8 @@ public class ConfigTest {
         assertNotNull(e);
         assertEquals(e.exception.getMessage(),
                 "Error connecting to MySQL instance. Please make sure that MySQL is running and that you have " +
-                        "specified the correct values for 'mysql_host' and 'mysql_port' in your config file");
+                        "specified the correct values for ('mysql_host' and 'mysql_port') or for " +
+                        "'mysql_connection_uri'");
 
         process.kill();
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
@@ -302,8 +268,187 @@ public class ConfigTest {
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
     }
 
+    @Test
+    public void testValidConnectionURI() throws Exception {
+        {
+            String[] args = {"../"};
+
+            Utils.setValueInConfig("mysql_connection_uri", "mysql://root:root@localhost:3306/supertokens");
+            Utils.commentConfigValue("mysql_password");
+            Utils.commentConfigValue("mysql_user");
+            Utils.commentConfigValue("mysql_port");
+            Utils.commentConfigValue("mysql_host");
+            Utils.commentConfigValue("mysql_database_name");
+
+            TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
+            assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
+            MySQLConfig config = Config.getConfig((Start) StorageLayer.getStorage(process.getProcess()));
+            checkConfig(config);
+
+            process.kill();
+            assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
+        }
+
+        {
+            Utils.reset();
+            String[] args = {"../"};
+
+            Utils.setValueInConfig("mysql_connection_uri", "mysql://root:root@localhost/supertokens");
+            Utils.commentConfigValue("mysql_password");
+            Utils.commentConfigValue("mysql_user");
+            Utils.commentConfigValue("mysql_port");
+            Utils.commentConfigValue("mysql_host");
+            Utils.commentConfigValue("mysql_database_name");
+
+            TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
+            assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
+            MySQLConfig config = Config.getConfig((Start) StorageLayer.getStorage(process.getProcess()));
+            assertEquals(config.getPort(), -1);
+
+            process.kill();
+            assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
+        }
+
+        {
+            Utils.reset();
+            String[] args = {"../"};
+
+            Utils.setValueInConfig("mysql_connection_uri", "mysql://localhost:3306/supertokens");
+            Utils.commentConfigValue("mysql_port");
+            Utils.commentConfigValue("mysql_host");
+            Utils.commentConfigValue("mysql_database_name");
+
+            TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
+            assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
+            MySQLConfig config = Config.getConfig((Start) StorageLayer.getStorage(process.getProcess()));
+            checkConfig(config);
+
+            process.kill();
+            assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
+        }
+
+        {
+            Utils.reset();
+            String[] args = {"../"};
+
+            Utils.setValueInConfig("mysql_connection_uri", "mysql://root@localhost:3306/supertokens");
+            Utils.commentConfigValue("mysql_user");
+            Utils.commentConfigValue("mysql_port");
+            Utils.commentConfigValue("mysql_host");
+            Utils.commentConfigValue("mysql_database_name");
+
+            TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
+            assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
+            MySQLConfig config = Config.getConfig((Start) StorageLayer.getStorage(process.getProcess()));
+            checkConfig(config);
+
+            process.kill();
+            assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
+        }
+
+        {
+            Utils.reset();
+            String[] args = {"../"};
+
+            Utils.setValueInConfig("mysql_connection_uri", "mysql://root:root@localhost:3306");
+            Utils.commentConfigValue("mysql_password");
+            Utils.commentConfigValue("mysql_user");
+            Utils.commentConfigValue("mysql_port");
+            Utils.commentConfigValue("mysql_host");
+            Utils.commentConfigValue("mysql_database_name");
+
+            TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
+            assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
+            MySQLConfig config = Config.getConfig((Start) StorageLayer.getStorage(process.getProcess()));
+            checkConfig(config);
+
+            process.kill();
+            assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
+        }
+    }
+
+    @Test
+    public void testInvalidConnectionURI() throws Exception {
+        {
+            String[] args = {"../"};
+
+            Utils.setValueInConfig("mysql_connection_uri", ":/localhost:3306/supertokens");
+
+            TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
+            ProcessState.EventAndException e = process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.INIT_FAILURE);
+            assertNotNull(e);
+            assertEquals(
+                    "The provided mysql connection URI has an incorrect format. Please use a format like " +
+                            "mysql://[user[:[password]]@]host[:port][/dbname][?attr1=val1&attr2=val2...",
+                    e.exception.getMessage());
+
+            process.kill();
+            assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
+        }
+
+        {
+            Utils.reset();
+            String[] args = {"../"};
+
+            Utils.setValueInConfig("mysql_connection_uri", "mysql://root:wrongPassword@localhost:3306/supertokens");
+            Utils.commentConfigValue("mysql_password");
+            Utils.commentConfigValue("mysql_user");
+            Utils.commentConfigValue("mysql_port");
+            Utils.commentConfigValue("mysql_host");
+            Utils.commentConfigValue("mysql_database_name");
+
+            TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
+            ProcessState.EventAndException e = process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.INIT_FAILURE);
+            assertNotNull(e);
+
+            TestCase.assertTrue(e.exception.getMessage().contains("Could not connect to address"));
+
+
+            process.kill();
+            assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
+        }
+    }
+
+    @Test
+    public void testValidConnectionURIAttributes() throws Exception {
+        {
+            String[] args = {"../"};
+
+            Utils.setValueInConfig("mysql_connection_uri", "mysql://root:root@localhost:3306/supertokens?key1=value1");
+
+            TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
+            assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
+            MySQLConfig config = Config.getConfig((Start) StorageLayer.getStorage(process.getProcess()));
+            assertEquals(config.getConnectionAttributes(), "key1=value1&allowPublicKeyRetrieval=true");
+
+            process.kill();
+            assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
+        }
+
+        {
+            Utils.reset();
+            String[] args = {"../"};
+
+            Utils.setValueInConfig("mysql_connection_uri",
+                    "mysql://root:root@localhost:3306/supertokens?key1=value1&allowPublicKeyRetrieval=false&key2" +
+                            "=value2");
+
+            TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
+            assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
+            MySQLConfig config = Config.getConfig((Start) StorageLayer.getStorage(process.getProcess()));
+            assertEquals(config.getConnectionAttributes(), "key1=value1&allowPublicKeyRetrieval=false&key2=value2");
+
+            process.kill();
+            assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
+        }
+    }
+
     public static void checkConfig(MySQLConfig config) {
 
+        assertEquals("Config getAttributes did not match default", config.getConnectionAttributes(),
+                "allowPublicKeyRetrieval=true");
+        assertEquals("Config getSchema did not match default", config.getConnectionScheme(),
+                "mysql");
         assertEquals("Config connectionPoolSize did not match default", config.getConnectionPoolSize(), 10);
         assertEquals("Config databaseName does not match default", config.getDatabaseName(), "supertokens");
         assertEquals("Config keyValue table does not match default", config.getKeyValueTable(), "key_value");

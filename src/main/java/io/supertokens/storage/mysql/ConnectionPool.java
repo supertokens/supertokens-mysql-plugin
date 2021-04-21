@@ -41,12 +41,33 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
         }
         HikariConfig config = new HikariConfig();
         MySQLConfig userConfig = Config.getConfig(start);
-
         config.setDriverClassName("org.mariadb.jdbc.Driver");
-        config.setJdbcUrl("jdbc:mysql://" + userConfig.getHostName() + ":" + userConfig.getPort() + "/"
-                + userConfig.getDatabaseName() + "?allowPublicKeyRetrieval=true");
-        config.setUsername(userConfig.getUser());
-        if (!userConfig.getPassword().equals("")) {
+
+        String scheme = userConfig.getConnectionScheme();
+
+        String hostName = userConfig.getHostName();
+
+        String port = userConfig.getPort() + "";
+        if (!port.equals("-1")) {
+            port = ":" + port;
+        } else {
+            port = "";
+        }
+
+        String databaseName = userConfig.getDatabaseName();
+
+        String attributes = userConfig.getConnectionAttributes();
+        if (!attributes.equals("")) {
+            attributes = "?" + attributes;
+        }
+
+        config.setJdbcUrl("jdbc:" + scheme + "://" + hostName + port + "/" + databaseName + attributes);
+
+        if (userConfig.getUser() != null) {
+            config.setUsername(userConfig.getUser());
+        }
+
+        if (userConfig.getPassword() != null && !userConfig.getPassword().equals("")) {
             config.setPassword(userConfig.getPassword());
         }
         config.setMaximumPoolSize(userConfig.getConnectionPoolSize());
@@ -97,8 +118,7 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
         long maxTryTime = System.currentTimeMillis() + getTimeToWaitToInit(start);
         String errorMessage = "Error connecting to MySQL instance. Please make sure that MySQL is running and that " +
                 "you have" +
-                " specified the correct values for 'mysql_host' and 'mysql_port' in your " +
-                "config file";
+                " specified the correct values for ('mysql_host' and 'mysql_port') or for 'mysql_connection_uri'";
         try {
             while (true) {
                 try {
