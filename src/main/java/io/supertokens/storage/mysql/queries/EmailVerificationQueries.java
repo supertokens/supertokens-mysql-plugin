@@ -34,13 +34,13 @@ public class EmailVerificationQueries {
 
     static String getQueryToCreateEmailVerificationTable(Start start) {
         return "CREATE TABLE IF NOT EXISTS " + Config.getConfig(start).getEmailVerificationTable() + " ("
-                + "user_id CHAR(36) NOT NULL," + "email VARCHAR(256) NOT NULL,"
+                + "user_id VARCHAR(128) NOT NULL," + "email VARCHAR(256) NOT NULL,"
                 + "PRIMARY KEY (user_id, email));";
     }
 
     static String getQueryToCreateEmailVerificationTokensTable(Start start) {
         return "CREATE TABLE IF NOT EXISTS " + Config.getConfig(start).getEmailVerificationTokensTable() + " ("
-                + "user_id CHAR(36) NOT NULL," + "email VARCHAR(256) NOT NULL,"
+                + "user_id VARCHAR(128) NOT NULL," + "email VARCHAR(256) NOT NULL,"
                 + "token VARCHAR(128) NOT NULL UNIQUE,"
                 + "token_expiry BIGINT UNSIGNED NOT NULL," +
                 "PRIMARY KEY (user_id, email, token))";
