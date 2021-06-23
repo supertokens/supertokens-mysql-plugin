@@ -729,11 +729,11 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
                 throw new DuplicateThirdPartyUserException();
             } else if (e.getMessage()
                     .contains("Duplicate entry") &&
-                    (e.getMessage()
+                    ((e.getMessage()
                             .endsWith("'" + Config.getConfig(this).getThirdPartyUsersTable() + ".user_id'") ||
-                            e.getMessage()
-                                    .endsWith("'" + Config.getConfig(this).getUsersTable() + ".user_id'") ||
-                            e.getMessage().endsWith("'user_id'"))) {
+                            e.getMessage().endsWith("'user_id'")) || (e.getMessage()
+                            .endsWith("'" + Config.getConfig(this).getUsersTable() + ".PRIMARY'") ||
+                            e.getMessage().endsWith("'PRIMARY'")))) {
                 throw new io.supertokens.pluginInterface.thirdparty.exception.DuplicateUserIdException();
             }
             throw new StorageQueryException(e);
