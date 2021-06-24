@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.9.0] - 2021-06-20
 ### Added
 - Fixes issue: https://github.com/supertokens/supertokens-core/issues/258
+- Changes for pagination and count queries: https://github.com/supertokens/supertokens-core/issues/259
 
 ## [1.8.0] - 2021-04-20
 ### Added

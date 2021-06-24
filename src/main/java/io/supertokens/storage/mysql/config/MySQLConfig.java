@@ -186,6 +186,9 @@ public class MySQLConfig {
         return mysql_database_name;
     }
 
+    public String getUsersTable() {
+        return addPrefixToTableName("all_auth_recipe_users");
+    }
 
     public String getKeyValueTable() {
         String tableName = "key_value";
@@ -203,7 +206,7 @@ public class MySQLConfig {
         return addPrefixToTableName(tableName);
     }
 
-    public String getUsersTable() {
+    public String getEmailPasswordUsersTable() {
         String tableName = "emailpassword_users";
         if (mysql_emailpassword_users_table_name != null) {
             return mysql_emailpassword_users_table_name;
