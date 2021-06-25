@@ -56,7 +56,7 @@ public class GeneralQueries {
     static String getQueryToCreateUsersTable(Start start) {
         return "CREATE TABLE IF NOT EXISTS " + Config.getConfig(start).getUsersTable() + " ("
                 + "user_id CHAR(36) NOT NULL," + "recipe_id VARCHAR(128) NOT NULL,"
-                + "time_joined BIGINT NOT NULL," + "PRIMARY KEY (user_id));";
+                + "time_joined BIGINT UNSIGNED NOT NULL," + "PRIMARY KEY (user_id));";
     }
 
     static String getQueryToCreateUserPaginationIndex(Start start) {
