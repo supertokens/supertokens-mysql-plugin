@@ -190,7 +190,7 @@ public class ThirdPartyQueries {
         }
     }
 
-    public static UserInfo[] getUsersFromResult(ResultSet resultSet) throws SQLException, StorageQueryException {
+    private static UserInfo[] getUsersFromResult(ResultSet resultSet) throws SQLException, StorageQueryException {
         List<UserInfo> users = new ArrayList<>();
 
         while (resultSet.next()) {
