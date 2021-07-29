@@ -41,6 +41,7 @@ import io.supertokens.pluginInterface.session.sqlStorage.SessionSQLStorage;
 import io.supertokens.pluginInterface.sqlStorage.TransactionConnection;
 import io.supertokens.pluginInterface.thirdparty.exception.DuplicateThirdPartyUserException;
 import io.supertokens.pluginInterface.thirdparty.sqlStorage.ThirdPartySQLStorage;
+import io.supertokens.pluginInterface.users.DeleteUserResult;
 import io.supertokens.storage.mysql.config.Config;
 import io.supertokens.storage.mysql.output.Logging;
 import io.supertokens.storage.mysql.queries.*;
@@ -825,6 +826,15 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
         try {
             return GeneralQueries.getUsers(this, limit, timeJoinedOrder, includeRecipeIds, userId, timeJoined);
         } catch (SQLException e) {
+            throw new StorageQueryException(e);
+        }
+    }
+
+    @Override
+    public DeleteUserResult deleteUser(@NotNull String userId) throws StorageQueryException {
+        try {
+            return GeneralQueries.deleteUser(this, userId);
+        } catch (StorageTransactionLogicException e) {
             throw new StorageQueryException(e);
         }
     }
