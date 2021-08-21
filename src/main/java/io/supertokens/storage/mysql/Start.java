@@ -45,6 +45,7 @@ import io.supertokens.storage.mysql.config.Config;
 import io.supertokens.storage.mysql.output.Logging;
 import io.supertokens.storage.mysql.queries.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
@@ -249,6 +250,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     }
 
     @Override
+    @TestOnly
     public void deleteAllInformation() throws StorageQueryException {
         try {
             GeneralQueries.deleteAllTables(this);
@@ -531,6 +533,23 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
         try {
             EmailPasswordQueries.updateUsersPassword_Transaction(this, sqlCon, userId, newPassword);
         } catch (SQLException e) {
+            throw new StorageQueryException(e);
+        }
+    }
+
+    @Override
+    public void updateUsersEmail_Transaction(TransactionConnection conn, String userId, String email)
+            throws StorageQueryException, DuplicateEmailException {
+        Connection sqlCon = (Connection) conn.getConnection();
+        try {
+            EmailPasswordQueries.updateUsersEmail_Transaction(this, sqlCon, userId, email);
+        } catch (SQLException e) {
+            if (e.getMessage()
+                    .contains("Duplicate entry") &&
+                    (e.getMessage().endsWith("'" + Config.getConfig(this).getEmailPasswordUsersTable() + ".email'") ||
+                            e.getMessage().endsWith("'email'"))) {
+                throw new DuplicateEmailException();
+            }
             throw new StorageQueryException(e);
         }
     }
