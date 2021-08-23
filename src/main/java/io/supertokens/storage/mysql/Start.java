@@ -759,6 +759,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
             ThirdPartyQueries.signUp(this, userInfo);
         } catch (StorageTransactionLogicException eTemp) {
             Exception e = eTemp.actualException;
+            System.out.println("MESSAGE: " + e.getMessage());
             if (e.getMessage()
                     .contains("Duplicate entry") &&
                     (e.getMessage()
