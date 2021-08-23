@@ -761,7 +761,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
             Exception e = eTemp.actualException;
             if (e.getMessage()
                     .contains("Duplicate entry") &&
-                    e.getMessage().contains("testThirdParty-thirdPartyUserId") &&
+                    e.getMessage().contains(userInfo.thirdParty.userId) &&
                     (e.getMessage()
                             .endsWith("'" + Config.getConfig(this).getThirdPartyUsersTable() + ".PRIMARY'") ||
                             e.getMessage().endsWith("'PRIMARY'"))) {
