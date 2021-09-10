@@ -43,7 +43,7 @@ public class JWTSigningQueries {
             throws SQLException, StorageQueryException {
         String QUERY = "SELECT * FROM "
                 + Config.getConfig(start).getJWTSigningKeysTable()
-                + " ORDER BY created_at DESC FOR UPDATE;";
+                + " ORDER BY created_at DESC FOR UPDATE";
 
         try (PreparedStatement pst = con.prepareStatement(QUERY)) {
             ResultSet result = pst.executeQuery();
