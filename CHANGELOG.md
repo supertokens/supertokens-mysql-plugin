@@ -7,7 +7,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-## [1.10.0] - 2021-0.9-10
+## [1.10.0] - 2021-09-10
 - Added functions and other changes for the JWT recipe
 
 ## [1.9.0] - 2021-06-20
