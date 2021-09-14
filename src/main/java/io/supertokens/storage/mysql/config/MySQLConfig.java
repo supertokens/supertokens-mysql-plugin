@@ -51,6 +51,9 @@ public class MySQLConfig {
     private String mysql_key_value_table_name = null;
 
     @JsonProperty
+    private String mysql_session_access_token_signing_keys_table_name = null;
+
+    @JsonProperty
     private String mysql_session_info_table_name = null;
 
     @JsonProperty
@@ -194,6 +197,15 @@ public class MySQLConfig {
         String tableName = "key_value";
         if (mysql_key_value_table_name != null) {
             return mysql_key_value_table_name;
+        }
+        return addPrefixToTableName(tableName);
+    }
+
+    public String getAccessTokenSigningKeysTable() {
+        String tableName = "session_access_token_signing_keys";
+        System.out.println(mysql_session_access_token_signing_keys_table_name);
+        if (mysql_session_access_token_signing_keys_table_name != null) {
+            return mysql_session_access_token_signing_keys_table_name;
         }
         return addPrefixToTableName(tableName);
     }
