@@ -48,11 +48,6 @@ mysql_config_version: 0
 # mysql_key_value_table_name:
 
 
-# (OPTIONAL | Default: "session_access_token_signing_keys") string value. Specify the name of the table that will store 
-# the secret keys used to sign access tokens.
-# mysql_session_access_token_signing_keys_table_name:
-
-
 # (OPTIONAL | Default: "session_info") string value. Specify the name of the table that will store the
 # session info for users.
 # mysql_session_info_table_name:

@@ -227,7 +227,6 @@ public class ConfigTest {
         String[] args = {"../"};
 
         Utils.setValueInConfig("mysql_key_value_table_name", "key_value_table");
-        Utils.setValueInConfig("mysql_session_access_token_signing_keys_table_name", "session_access_token_signing_keys_table");
         Utils.setValueInConfig("mysql_session_info_table_name", "session_info_table");
         Utils.setValueInConfig("mysql_emailpassword_users_table_name", "users");
         Utils.setValueInConfig("mysql_emailpassword_pswd_reset_tokens_table_name", "password_reset");
@@ -237,8 +236,6 @@ public class ConfigTest {
         MySQLConfig config = Config.getConfig((Start) StorageLayer.getStorage(process.getProcess()));
 
         assertEquals("change in KeyValueTable name not reflected", config.getKeyValueTable(), "key_value_table");
-        assertEquals("change in AccessTokenSigningKeysTable name not reflected", config.getAccessTokenSigningKeysTable(),
-                "session_access_token_signing_keys_table");
         assertEquals("change in SessionInfoTable name not reflected", config.getSessionInfoTable(),
                 "session_info_table");
         assertEquals("change in table name not reflected", config.getEmailPasswordUsersTable(), "users");
