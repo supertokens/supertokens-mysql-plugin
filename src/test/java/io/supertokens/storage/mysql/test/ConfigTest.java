@@ -258,8 +258,6 @@ public class ConfigTest {
         MySQLConfig config = Config.getConfig((Start) StorageLayer.getStorage(process.getProcess()));
 
         assertEquals("change in KeyValueTable name not reflected", config.getKeyValueTable(), "key_value_table");
-        assertEquals("change in AccessTokenSigningKeysTable name not reflected", config.getAccessTokenSigningKeysTable(),
-                "some_prefix_session_access_token_signing_keys");
         assertEquals("change in SessionInfoTable name not reflected", config.getSessionInfoTable(),
                 "some_prefix_session_info");
         assertEquals("change in table name not reflected", config.getEmailPasswordUsersTable(),
