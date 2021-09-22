@@ -36,6 +36,9 @@ import io.supertokens.pluginInterface.emailverification.sqlStorage.EmailVerifica
 import io.supertokens.pluginInterface.exceptions.QuitProgramFromPluginException;
 import io.supertokens.pluginInterface.exceptions.StorageQueryException;
 import io.supertokens.pluginInterface.exceptions.StorageTransactionLogicException;
+import io.supertokens.pluginInterface.jwt.JWTSigningKeyInfo;
+import io.supertokens.pluginInterface.jwt.exceptions.DuplicateKeyIdException;
+import io.supertokens.pluginInterface.jwt.sqlstorage.JWTRecipeSQLStorage;
 import io.supertokens.pluginInterface.session.SessionInfo;
 import io.supertokens.pluginInterface.session.sqlStorage.SessionSQLStorage;
 import io.supertokens.pluginInterface.sqlStorage.TransactionConnection;
@@ -53,9 +56,10 @@ import javax.annotation.Nullable;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.SQLTransactionRollbackException;
+import java.util.List;
 
 public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailVerificationSQLStorage,
-        ThirdPartySQLStorage {
+        ThirdPartySQLStorage, JWTRecipeSQLStorage {
 
     private static final Object appenderLock = new Object();
     public static boolean silent = false;
@@ -894,6 +898,35 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
         try {
             return GeneralQueries.getUsers(this, limit, timeJoinedOrder, includeRecipeIds, userId, timeJoined);
         } catch (SQLException e) {
+            throw new StorageQueryException(e);
+        }
+    }
+
+    @Override
+    public List<JWTSigningKeyInfo> getJWTSigningKeys_Transaction(TransactionConnection con) throws StorageQueryException {
+        Connection sqlCon = (Connection) con.getConnection();
+        try {
+            return JWTSigningQueries.getJWTSigningKeys_Transaction(this, sqlCon);
+        } catch (SQLException e) {
+            throw new StorageQueryException(e);
+        }
+    }
+
+    @Override
+    public void setJWTSigningKey_Transaction(TransactionConnection con, JWTSigningKeyInfo info)
+            throws StorageQueryException, DuplicateKeyIdException {
+        Connection sqlCon = (Connection) con.getConnection();
+        try {
+            JWTSigningQueries.setJWTSigningKeyInfo_Transaction(this, sqlCon, info);
+        } catch (SQLException e) {
+
+            if (e.getMessage().contains("Duplicate entry")
+                    && e.getMessage().contains(info.keyId)
+                    && (e.getMessage().endsWith("'" + Config.getConfig(this).getJWTSigningKeysTable() + ".PRIMARY'")
+                    || e.getMessage().endsWith("'PRIMARY'"))) {
+                throw new DuplicateKeyIdException();
+            }
+
             throw new StorageQueryException(e);
         }
     }

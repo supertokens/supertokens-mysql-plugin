@@ -250,6 +250,10 @@ public class MySQLConfig {
         return addPrefixToTableName(tableName);
     }
 
+    public String getJWTSigningKeysTable() {
+        return addPrefixToTableName("jwt_signing_keys");
+    }
+
     private String addPrefixToTableName(String tableName) {
         if (!mysql_table_names_prefix.trim().equals("")) {
             return mysql_table_names_prefix.trim() + "_" + tableName;
