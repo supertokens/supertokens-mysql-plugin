@@ -8,6 +8,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ## [1.10.0] - 2021-09-10
+
+### Changed
+
+- Updated to match 2.9 plugin interface to support multiple access token signing keys: https://github.com/supertokens/supertokens-core/issues/305
 - Added functions and other changes for the JWT recipe
 
 ## [1.9.0] - 2021-06-20

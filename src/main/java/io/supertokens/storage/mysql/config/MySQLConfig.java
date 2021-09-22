@@ -198,6 +198,10 @@ public class MySQLConfig {
         return addPrefixToTableName(tableName);
     }
 
+    public String getAccessTokenSigningKeysTable() {
+        return addPrefixToTableName("session_access_token_signing_keys");
+    }
+
     public String getSessionInfoTable() {
         String tableName = "session_info";
         if (mysql_session_info_table_name != null) {
