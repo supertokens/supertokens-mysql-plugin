@@ -267,14 +267,14 @@ public class MySQLConfig {
                 URI ignored = URI.create(mysql_connection_uri);
             } catch (Exception e) {
                 throw new QuitProgramFromPluginException(
-                        "The provided mysql connection URI has an incorrect format. Please use a format like " +
-                                "mysql://[user[:[password]]@]host[:port][/dbname][?attr1=val1&attr2=val2...");
+                        "The provided mysql connection URI has an incorrect format. Please use a format like "
+                                + "mysql://[user[:[password]]@]host[:port][/dbname][?attr1=val1&attr2=val2...");
             }
         } else {
             if (this.getUser() == null) {
                 throw new QuitProgramFromPluginException(
-                        "'mysql_user' and 'mysql_connection_uri' are not set. Please set at least one of " +
-                                "these values");
+                        "'mysql_user' and 'mysql_connection_uri' are not set. Please set at least one of "
+                                + "these values");
             }
         }
         if (getConnectionPoolSize() <= 0) {

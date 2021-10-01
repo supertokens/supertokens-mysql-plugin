@@ -16,7 +16,6 @@
 
 package io.supertokens.storage.mysql.queries;
 
-
 import io.supertokens.pluginInterface.RECIPE_ID;
 import io.supertokens.pluginInterface.RowMapper;
 import io.supertokens.pluginInterface.exceptions.StorageQueryException;
@@ -81,7 +80,6 @@ public class ThirdPartyQueries {
         });
     }
 
-
     public static UserInfo getThirdPartyUserInfoUsingId(Start start, String userId)
             throws SQLException, StorageQueryException {
         List<String> input = new ArrayList<>();
@@ -97,10 +95,9 @@ public class ThirdPartyQueries {
             throws SQLException, StorageQueryException {
         List<UserInfo> finalResult = new ArrayList<>();
         if (ids.size() > 0) {
-            StringBuilder QUERY =
-                    new StringBuilder(
-                            "SELECT user_id, third_party_id, third_party_user_id, email, time_joined FROM "
-                                    + Config.getConfig(start).getThirdPartyUsersTable());
+            StringBuilder QUERY = new StringBuilder(
+                    "SELECT user_id, third_party_id, third_party_user_id, email, time_joined FROM "
+                            + Config.getConfig(start).getThirdPartyUsersTable());
             QUERY.append(" WHERE user_id IN (");
             for (int i = 0; i < ids.size(); i++) {
 
@@ -113,7 +110,7 @@ public class ThirdPartyQueries {
             QUERY.append(")");
 
             try (Connection con = ConnectionPool.getConnection(start);
-                 PreparedStatement pst = con.prepareStatement(QUERY.toString())) {
+                    PreparedStatement pst = con.prepareStatement(QUERY.toString())) {
                 for (int i = 0; i < ids.size(); i++) {
                     // i+1 cause this starts with 1 and not 0
                     pst.setString(i + 1, ids.get(i));
@@ -127,15 +124,14 @@ public class ThirdPartyQueries {
         return finalResult;
     }
 
-
     public static UserInfo getThirdPartyUserInfoUsingId(Start start, String thirdPartyId, String thirdPartyUserId)
             throws SQLException, StorageQueryException {
 
         String QUERY = "SELECT user_id, third_party_id, third_party_user_id, email, time_joined FROM "
-                + Config.getConfig(start).getThirdPartyUsersTable() +
-                " WHERE third_party_id = ? AND third_party_user_id = ?";
+                + Config.getConfig(start).getThirdPartyUsersTable()
+                + " WHERE third_party_id = ? AND third_party_user_id = ?";
         try (Connection con = ConnectionPool.getConnection(start);
-             PreparedStatement pst = con.prepareStatement(QUERY)) {
+                PreparedStatement pst = con.prepareStatement(QUERY)) {
             pst.setString(1, thirdPartyId);
             pst.setString(2, thirdPartyUserId);
             ResultSet result = pst.executeQuery();
@@ -147,8 +143,7 @@ public class ThirdPartyQueries {
     }
 
     public static void updateUserEmail_Transaction(Start start, Connection con, String thirdPartyId,
-                                                   String thirdPartyUserId,
-                                                   String newEmail) throws SQLException {
+            String thirdPartyUserId, String newEmail) throws SQLException {
         String QUERY = "UPDATE " + Config.getConfig(start).getThirdPartyUsersTable()
                 + " SET email = ? WHERE third_party_id = ? AND third_party_user_id = ?";
 
@@ -160,13 +155,12 @@ public class ThirdPartyQueries {
         }
     }
 
-    public static UserInfo getUserInfoUsingId_Transaction(Start start, Connection con,
-                                                          String thirdPartyId, String thirdPartyUserId)
-            throws SQLException, StorageQueryException {
+    public static UserInfo getUserInfoUsingId_Transaction(Start start, Connection con, String thirdPartyId,
+            String thirdPartyUserId) throws SQLException, StorageQueryException {
 
         String QUERY = "SELECT user_id, third_party_id, third_party_user_id, email, time_joined FROM "
-                + Config.getConfig(start).getThirdPartyUsersTable() +
-                " WHERE third_party_id = ? AND third_party_user_id = ? FOR UPDATE";
+                + Config.getConfig(start).getThirdPartyUsersTable()
+                + " WHERE third_party_id = ? AND third_party_user_id = ? FOR UPDATE";
         try (PreparedStatement pst = con.prepareStatement(QUERY)) {
             pst.setString(1, thirdPartyId);
             pst.setString(2, thirdPartyUserId);
@@ -178,12 +172,13 @@ public class ThirdPartyQueries {
         return null;
     }
 
-    public static UserInfo[] getThirdPartyUsersByEmail(Start start, @NotNull String email) throws SQLException, StorageQueryException {
-        String sqlQuery = "SELECT user_id, third_party_id, third_party_user_id, email, time_joined FROM " +
-                Config.getConfig(start).getThirdPartyUsersTable() +
-                " WHERE email = ?";
+    public static UserInfo[] getThirdPartyUsersByEmail(Start start, @NotNull String email)
+            throws SQLException, StorageQueryException {
+        String sqlQuery = "SELECT user_id, third_party_id, third_party_user_id, email, time_joined FROM "
+                + Config.getConfig(start).getThirdPartyUsersTable() + " WHERE email = ?";
 
-        try (Connection conn = ConnectionPool.getConnection(start); PreparedStatement statement = conn.prepareStatement(sqlQuery)) {
+        try (Connection conn = ConnectionPool.getConnection(start);
+                PreparedStatement statement = conn.prepareStatement(sqlQuery)) {
             statement.setString(1, email);
 
             return getUsersFromResult(statement.executeQuery());
@@ -203,12 +198,11 @@ public class ThirdPartyQueries {
     @Deprecated
     public static UserInfo[] getThirdPartyUsers(Start start, @NotNull Integer limit, @NotNull String timeJoinedOrder)
             throws SQLException, StorageQueryException {
-        String QUERY =
-                "SELECT user_id, third_party_id, third_party_user_id, email, time_joined FROM " +
-                        Config.getConfig(start).getThirdPartyUsersTable() +
-                        " ORDER BY time_joined " + timeJoinedOrder + ", user_id DESC LIMIT ?";
+        String QUERY = "SELECT user_id, third_party_id, third_party_user_id, email, time_joined FROM "
+                + Config.getConfig(start).getThirdPartyUsersTable() + " ORDER BY time_joined " + timeJoinedOrder
+                + ", user_id DESC LIMIT ?";
         try (Connection con = ConnectionPool.getConnection(start);
-             PreparedStatement pst = con.prepareStatement(QUERY)) {
+                PreparedStatement pst = con.prepareStatement(QUERY)) {
             pst.setInt(1, limit);
             ResultSet result = pst.executeQuery();
             List<UserInfo> temp = new ArrayList<>();
@@ -225,18 +219,14 @@ public class ThirdPartyQueries {
 
     @Deprecated
     public static UserInfo[] getThirdPartyUsers(Start start, @NotNull String userId, @NotNull Long timeJoined,
-                                                @NotNull Integer limit,
-                                                @NotNull String timeJoinedOrder)
-            throws SQLException, StorageQueryException {
+            @NotNull Integer limit, @NotNull String timeJoinedOrder) throws SQLException, StorageQueryException {
         String timeJoinedOrderSymbol = timeJoinedOrder.equals("ASC") ? ">" : "<";
-        String QUERY =
-                "SELECT user_id, third_party_id, third_party_user_id, email, time_joined FROM " +
-                        Config.getConfig(start).getThirdPartyUsersTable() +
-                        " WHERE time_joined " + timeJoinedOrderSymbol +
-                        " ? OR (time_joined = ? AND user_id <= ?) ORDER BY time_joined " + timeJoinedOrder +
-                        ", user_id DESC LIMIT ?";
+        String QUERY = "SELECT user_id, third_party_id, third_party_user_id, email, time_joined FROM "
+                + Config.getConfig(start).getThirdPartyUsersTable() + " WHERE time_joined " + timeJoinedOrderSymbol
+                + " ? OR (time_joined = ? AND user_id <= ?) ORDER BY time_joined " + timeJoinedOrder
+                + ", user_id DESC LIMIT ?";
         try (Connection con = ConnectionPool.getConnection(start);
-             PreparedStatement pst = con.prepareStatement(QUERY)) {
+                PreparedStatement pst = con.prepareStatement(QUERY)) {
             pst.setLong(1, timeJoined);
             pst.setLong(2, timeJoined);
             pst.setString(3, userId);
@@ -256,11 +246,9 @@ public class ThirdPartyQueries {
 
     @Deprecated
     public static long getUsersCount(Start start) throws SQLException {
-        String QUERY =
-                "SELECT COUNT(*) as total FROM " +
-                        Config.getConfig(start).getThirdPartyUsersTable();
+        String QUERY = "SELECT COUNT(*) as total FROM " + Config.getConfig(start).getThirdPartyUsersTable();
         try (Connection con = ConnectionPool.getConnection(start);
-             PreparedStatement pst = con.prepareStatement(QUERY)) {
+                PreparedStatement pst = con.prepareStatement(QUERY)) {
             ResultSet result = pst.executeQuery();
             if (result.next()) {
                 return result.getLong("total");
@@ -281,10 +269,8 @@ public class ThirdPartyQueries {
 
         @Override
         public UserInfo map(ResultSet result) throws Exception {
-            return new UserInfo(result.getString("user_id"),
-                    result.getString("email"),
-                    new UserInfo.ThirdParty(
-                            result.getString("third_party_id"),
+            return new UserInfo(result.getString("user_id"), result.getString("email"),
+                    new UserInfo.ThirdParty(result.getString("third_party_id"),
                             result.getString("third_party_user_id")),
                     result.getLong("time_joined"));
         }

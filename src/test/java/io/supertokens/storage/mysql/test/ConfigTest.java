@@ -35,7 +35,6 @@ import java.io.File;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-
 public class ConfigTest {
 
     @Rule
@@ -53,7 +52,7 @@ public class ConfigTest {
 
     @Test
     public void testThatDefaultConfigLoadsCorrectly() throws Exception {
-        String[] args = {"../"};
+        String[] args = { "../" };
 
         TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
@@ -69,7 +68,7 @@ public class ConfigTest {
 
     @Test
     public void testThatCustomConfigLoadsCorrectly() throws Exception {
-        String[] args = {"../"};
+        String[] args = { "../" };
 
         Utils.setValueInConfig("mysql_connection_pool_size", "5");
 
@@ -85,9 +84,9 @@ public class ConfigTest {
 
     @Test
     public void testThatInvalidConfigThrowsRightError() throws Exception {
-        String[] args = {"../"};
+        String[] args = { "../" };
 
-        //mysql_connection_pool_size is not set properly in the config file
+        // mysql_connection_pool_size is not set properly in the config file
 
         Utils.setValueInConfig("mysql_connection_pool_size", "-1");
         TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
@@ -104,7 +103,7 @@ public class ConfigTest {
 
     @Test
     public void testThatMissingConfigFileThrowsError() throws Exception {
-        String[] args = {"../"};
+        String[] args = { "../" };
 
         ProcessBuilder pb = new ProcessBuilder("rm", "-r", "config.yaml");
         pb.directory(new File(args[0]));
@@ -121,12 +120,11 @@ public class ConfigTest {
         process.kill();
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
 
-
     }
 
     @Test
     public void testCustomLocationForConfigLoadsCorrectly() throws Exception {
-        String[] args = {"../", "configFile=../temp/config.yaml"};
+        String[] args = { "../", "configFile=../temp/config.yaml" };
 
         TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
         ProcessState.EventAndException e = process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.INIT_FAILURE);
@@ -136,9 +134,9 @@ public class ConfigTest {
         process.kill();
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
 
-        //absolute path
+        // absolute path
         File f = new File("../temp/config.yaml");
-        args = new String[]{"../", "configFile=" + f.getAbsolutePath()};
+        args = new String[] { "../", "configFile=" + f.getAbsolutePath() };
 
         process = TestingProcessManager.start(args);
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
@@ -152,7 +150,7 @@ public class ConfigTest {
 
     @Test
     public void testBadPortInput() throws Exception {
-        String[] args = {"../"};
+        String[] args = { "../" };
 
         Utils.setValueInConfig("mysql_port", "8989");
         TestingProcessManager.TestingProcess process = TestingProcessManager.start(args, false);
@@ -169,9 +167,9 @@ public class ConfigTest {
         ProcessState.EventAndException e = process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.INIT_FAILURE, 7000);
         assertNotNull(e);
         assertEquals(e.exception.getMessage(),
-                "Error connecting to MySQL instance. Please make sure that MySQL is running and that you have " +
-                        "specified the correct values for ('mysql_host' and 'mysql_port') or for " +
-                        "'mysql_connection_uri'");
+                "Error connecting to MySQL instance. Please make sure that MySQL is running and that you have "
+                        + "specified the correct values for ('mysql_host' and 'mysql_port') or for "
+                        + "'mysql_connection_uri'");
 
         process.kill();
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
@@ -179,7 +177,7 @@ public class ConfigTest {
 
     @Test
     public void storageDisabledAndThenEnabled() throws Exception {
-        String[] args = {"../"};
+        String[] args = { "../" };
 
         TestingProcessManager.TestingProcess process = TestingProcessManager.start(args, false);
         process.getProcess().waitToInitStorageModule();
@@ -204,7 +202,7 @@ public class ConfigTest {
 
     @Test
     public void testBadHostInput() throws Exception {
-        String[] args = {"../"};
+        String[] args = { "../" };
 
         Utils.setValueInConfig("mysql_host", "random");
 
@@ -212,10 +210,8 @@ public class ConfigTest {
         ProcessState.EventAndException e = process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.INIT_FAILURE);
         assertNotNull(e);
 
-        assertEquals(
-                "Failed to initialize pool: Could not connect to address=(host=random)(port=3306)(type=master) : " +
-                        "Socket fail to connect to host:random, port:3306. random",
-                e.exception.getMessage());
+        assertEquals("Failed to initialize pool: Could not connect to address=(host=random)(port=3306)(type=master) : "
+                + "Socket fail to connect to host:random, port:3306. random", e.exception.getMessage());
 
         process.kill();
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
@@ -224,7 +220,7 @@ public class ConfigTest {
 
     @Test
     public void testThatChangeInTableNameIsCorrect() throws Exception {
-        String[] args = {"../"};
+        String[] args = { "../" };
 
         Utils.setValueInConfig("mysql_key_value_table_name", "key_value_table");
         Utils.setValueInConfig("mysql_session_info_table_name", "session_info_table");
@@ -239,8 +235,7 @@ public class ConfigTest {
         assertEquals("change in SessionInfoTable name not reflected", config.getSessionInfoTable(),
                 "session_info_table");
         assertEquals("change in table name not reflected", config.getEmailPasswordUsersTable(), "users");
-        assertEquals("change in table name not reflected", config.getPasswordResetTokensTable(),
-                "password_reset");
+        assertEquals("change in table name not reflected", config.getPasswordResetTokensTable(), "password_reset");
 
         process.kill();
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
@@ -248,7 +243,7 @@ public class ConfigTest {
 
     @Test
     public void testAddingTableNamePrefixWorks() throws Exception {
-        String[] args = {"../"};
+        String[] args = { "../" };
 
         Utils.setValueInConfig("mysql_key_value_table_name", "key_value_table");
         Utils.setValueInConfig("mysql_table_names_prefix", "some_prefix");
@@ -272,7 +267,7 @@ public class ConfigTest {
     @Test
     public void testValidConnectionURI() throws Exception {
         {
-            String[] args = {"../"};
+            String[] args = { "../" };
 
             Utils.setValueInConfig("mysql_connection_uri", "mysql://root:root@localhost:3306/supertokens");
             Utils.commentConfigValue("mysql_password");
@@ -292,7 +287,7 @@ public class ConfigTest {
 
         {
             Utils.reset();
-            String[] args = {"../"};
+            String[] args = { "../" };
 
             Utils.setValueInConfig("mysql_connection_uri", "mysql://root:root@localhost/supertokens");
             Utils.commentConfigValue("mysql_password");
@@ -312,7 +307,7 @@ public class ConfigTest {
 
         {
             Utils.reset();
-            String[] args = {"../"};
+            String[] args = { "../" };
 
             Utils.setValueInConfig("mysql_connection_uri", "mysql://localhost:3306/supertokens");
             Utils.commentConfigValue("mysql_port");
@@ -330,7 +325,7 @@ public class ConfigTest {
 
         {
             Utils.reset();
-            String[] args = {"../"};
+            String[] args = { "../" };
 
             Utils.setValueInConfig("mysql_connection_uri", "mysql://root@localhost:3306/supertokens");
             Utils.commentConfigValue("mysql_user");
@@ -349,7 +344,7 @@ public class ConfigTest {
 
         {
             Utils.reset();
-            String[] args = {"../"};
+            String[] args = { "../" };
 
             Utils.setValueInConfig("mysql_connection_uri", "mysql://root:root@localhost:3306");
             Utils.commentConfigValue("mysql_password");
@@ -371,7 +366,7 @@ public class ConfigTest {
     @Test
     public void testInvalidConnectionURI() throws Exception {
         {
-            String[] args = {"../"};
+            String[] args = { "../" };
 
             Utils.setValueInConfig("mysql_connection_uri", ":/localhost:3306/supertokens");
 
@@ -379,8 +374,8 @@ public class ConfigTest {
             ProcessState.EventAndException e = process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.INIT_FAILURE);
             assertNotNull(e);
             assertEquals(
-                    "The provided mysql connection URI has an incorrect format. Please use a format like " +
-                            "mysql://[user[:[password]]@]host[:port][/dbname][?attr1=val1&attr2=val2...",
+                    "The provided mysql connection URI has an incorrect format. Please use a format like "
+                            + "mysql://[user[:[password]]@]host[:port][/dbname][?attr1=val1&attr2=val2...",
                     e.exception.getMessage());
 
             process.kill();
@@ -389,7 +384,7 @@ public class ConfigTest {
 
         {
             Utils.reset();
-            String[] args = {"../"};
+            String[] args = { "../" };
 
             Utils.setValueInConfig("mysql_connection_uri", "mysql://root:wrongPassword@localhost:3306/supertokens");
             Utils.commentConfigValue("mysql_password");
@@ -404,7 +399,6 @@ public class ConfigTest {
 
             TestCase.assertTrue(e.exception.getMessage().contains("Could not connect to address"));
 
-
             process.kill();
             assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
         }
@@ -413,7 +407,7 @@ public class ConfigTest {
     @Test
     public void testValidConnectionURIAttributes() throws Exception {
         {
-            String[] args = {"../"};
+            String[] args = { "../" };
 
             Utils.setValueInConfig("mysql_connection_uri", "mysql://root:root@localhost:3306/supertokens?key1=value1");
 
@@ -428,11 +422,11 @@ public class ConfigTest {
 
         {
             Utils.reset();
-            String[] args = {"../"};
+            String[] args = { "../" };
 
             Utils.setValueInConfig("mysql_connection_uri",
-                    "mysql://root:root@localhost:3306/supertokens?key1=value1&allowPublicKeyRetrieval=false&key2" +
-                            "=value2");
+                    "mysql://root:root@localhost:3306/supertokens?key1=value1&allowPublicKeyRetrieval=false&key2"
+                            + "=value2");
 
             TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
             assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
@@ -448,8 +442,7 @@ public class ConfigTest {
 
         assertEquals("Config getAttributes did not match default", config.getConnectionAttributes(),
                 "allowPublicKeyRetrieval=true");
-        assertEquals("Config getSchema did not match default", config.getConnectionScheme(),
-                "mysql");
+        assertEquals("Config getSchema did not match default", config.getConnectionScheme(), "mysql");
         assertEquals("Config connectionPoolSize did not match default", config.getConnectionPoolSize(), 10);
         assertEquals("Config databaseName does not match default", config.getDatabaseName(), "supertokens");
         assertEquals("Config keyValue table does not match default", config.getKeyValueTable(), "key_value");
