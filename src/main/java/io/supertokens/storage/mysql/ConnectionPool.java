@@ -37,7 +37,7 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
 
     private ConnectionPool(Start start) {
         if (!start.enabled) {
-            throw new RuntimeException("Connection refused");   // emulates exception thrown by Hikari
+            throw new RuntimeException("Connection refused"); // emulates exception thrown by Hikari
         }
         HikariConfig config = new HikariConfig();
         MySQLConfig userConfig = Config.getConfig(start);
@@ -116,9 +116,9 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
         Logging.info(start, "Setting up MySQL connection pool.");
         boolean longMessagePrinted = false;
         long maxTryTime = System.currentTimeMillis() + getTimeToWaitToInit(start);
-        String errorMessage = "Error connecting to MySQL instance. Please make sure that MySQL is running and that " +
-                "you have" +
-                " specified the correct values for ('mysql_host' and 'mysql_port') or for 'mysql_connection_uri'";
+        String errorMessage = "Error connecting to MySQL instance. Please make sure that MySQL is running and that "
+                + "you have"
+                + " specified the correct values for ('mysql_host' and 'mysql_port') or for 'mysql_connection_uri'";
         try {
             while (true) {
                 try {

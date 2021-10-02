@@ -34,13 +34,12 @@ public class Logging extends ResourceDistributor.SingletonResource {
     private final Logger errorLogger;
 
     private Logging(Start start, String infoLogPath, String errorLogPath) {
-        this.infoLogger = infoLogPath.equals("null") ?
-                createLoggerForConsole(start, "io.supertokens.storage.mysql.Info." + start.getProcessId()) :
-                createLoggerForFile(start, infoLogPath,
-                        "io.supertokens.storage.mysql.Info." + start.getProcessId());
-        this.errorLogger = errorLogPath.equals("null") ?
-                createLoggerForConsole(start, "io.supertokens.storage.mysql.Error." + start.getProcessId()) :
-                createLoggerForFile(start, errorLogPath,
+        this.infoLogger = infoLogPath.equals("null")
+                ? createLoggerForConsole(start, "io.supertokens.storage.mysql.Info." + start.getProcessId())
+                : createLoggerForFile(start, infoLogPath, "io.supertokens.storage.mysql.Info." + start.getProcessId());
+        this.errorLogger = errorLogPath.equals("null")
+                ? createLoggerForConsole(start, "io.supertokens.storage.mysql.Error." + start.getProcessId())
+                : createLoggerForFile(start, errorLogPath,
                         "io.supertokens.storage.mysql.Error." + start.getProcessId());
     }
 

@@ -72,13 +72,10 @@ public class Config extends ResourceDistributor.SingletonResource {
         try {
             final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
             MySQLConfig config = mapper.readValue(new File(configFilePath), MySQLConfig.class);
-            return config.getUser() != null ||
-                    config.getPassword() != null ||
-                    config.getConnectionURI() != null;
+            return config.getUser() != null || config.getPassword() != null || config.getConnectionURI() != null;
         } catch (Exception e) {
             return false;
         }
     }
-
 
 }
