@@ -186,9 +186,13 @@ public class PasswordlessQueries {
             Connection sqlCon = (Connection) con.getConnection();
 
             try {
+                if (PasswordlessQueries.getDevice_Transaction(start, sqlCon, code.deviceIdHash) == null) {
+                    throw new UnknownDeviceIdHash();
+                }
+
                 PasswordlessQueries.createCode_Transaction(start, sqlCon, code);
                 sqlCon.commit();
-            } catch (SQLException e) {
+            } catch (UnknownDeviceIdHash | SQLException e) {
                 throw new StorageTransactionLogicException(e);
             }
             return null;

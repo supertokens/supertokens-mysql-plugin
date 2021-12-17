@@ -1109,13 +1109,11 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
                 throw (UnknownDeviceIdHash) e.actualException;
             }
             String message = e.actualException.getMessage();
-            if (message.equals("[SQLITE_CONSTRAINT]  Abort due to constraint violation (UNIQUE constraint failed: "
-                    + Config.getConfig(this).getPasswordlessCodesTable() + ".code_id)")) {
+            if (message.contains("code_id")) {
                 throw new DuplicateCodeIdException();
             }
 
-            if (message.equals("[SQLITE_CONSTRAINT]  Abort due to constraint violation (UNIQUE constraint failed: "
-                    + Config.getConfig(this).getPasswordlessCodesTable() + ".link_code_hash)")) {
+            if (message.contains("link_code_hash")) {
                 throw new DuplicateLinkCodeHashException();
             }
             throw new StorageQueryException(e.actualException);
@@ -1182,9 +1180,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
             PasswordlessQueries.updateUserEmail_Transaction(this, sqlCon, userId, email);
         } catch (SQLException e) {
             // TODO: review these exceptions
-            if (e.getMessage()
-                    .equals("[SQLITE_CONSTRAINT]  Abort due to constraint violation (UNIQUE constraint failed: "
-                            + Config.getConfig(this).getPasswordlessUsersTable() + ".email)")) {
+            if (e.getErrorCode() == 1062) {
                 throw new DuplicateEmailException();
             }
 
@@ -1200,9 +1196,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
             PasswordlessQueries.updateUserPhoneNumber_Transaction(this, sqlCon, userId, phoneNumber);
         } catch (SQLException e) {
             // TODO: review these exceptions
-            if (e.getMessage()
-                    .equals("[SQLITE_CONSTRAINT]  Abort due to constraint violation (UNIQUE constraint failed: "
-                            + Config.getConfig(this).getPasswordlessUsersTable() + ".phone_number)")) {
+            if (e.getErrorCode() == 1062) {
                 throw new DuplicatePhoneNumberException();
             }
 
