@@ -69,15 +69,6 @@ public class MySQLConfig {
     private String mysql_thirdparty_users_table_name = null;
 
     @JsonProperty
-    private String passwordless_users_table = null;
-
-    @JsonProperty
-    private String passwordless_device_table = null;
-
-    @JsonProperty
-    private String passwordless_codes_table = null;
-
-    @JsonProperty
     private String mysql_table_names_prefix = "";
 
     @JsonProperty
@@ -261,29 +252,17 @@ public class MySQLConfig {
 
     public String getPasswordlessUsersTable() {
         String tableName = "passwordless_users";
-
-        if (passwordless_users_table != null)
-            return passwordless_users_table;
-
         return addPrefixToTableName(tableName);
 
     }
 
     public String getPasswordlessDevicesTable() {
         String tableName = "passwordless_devices";
-
-        if (passwordless_device_table != null)
-            return passwordless_device_table;
-
         return addPrefixToTableName(tableName);
     }
 
     public String getPasswordlessCodesTable() {
         String tableName = "passwordless_codes";
-
-        if (passwordless_codes_table != null)
-            return passwordless_codes_table;
-
         return addPrefixToTableName(tableName);
     }
 
