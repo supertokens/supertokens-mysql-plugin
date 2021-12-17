@@ -1,1 +1,1 @@
-docker run --rm -d -p 3306:3306 --name mysql --volume ~/Users/siddharthmudgal/supertokens/volumes/db/mysql:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=root mysql
+docker run --rm -d -p 3306:3306 --name mysql --volume ~/Desktop/db/mysql:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=root mysql
