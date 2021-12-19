@@ -7,6 +7,12 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.11.0] - 2021-12-19
+
+### Added
+
+- Delete user functionality
+
 ## [1.10.0] - 2021-09-10
 
 ### Changed
