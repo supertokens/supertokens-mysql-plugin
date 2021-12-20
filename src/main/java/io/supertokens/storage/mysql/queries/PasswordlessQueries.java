@@ -100,8 +100,7 @@ public class PasswordlessQueries {
             throws StorageQueryException, SQLException {
 
         String QUERY = "SELECT device_id_hash, email, phone_number, failed_attempts FROM "
-                + Config.getConfig(start).getPasswordlessDevicesTable()
-                + " WHERE device_id_hash = ? LOCK IN SHARE MODE";
+                + Config.getConfig(start).getPasswordlessDevicesTable() + " WHERE device_id_hash = ? FOR UPDATE";
         try (PreparedStatement pst = con.prepareStatement(QUERY)) {
             pst.setString(1, deviceIdHash);
 
@@ -174,13 +173,15 @@ public class PasswordlessQueries {
             Connection sqlCon = (Connection) con.getConnection();
 
             try {
-                if (PasswordlessQueries.getDevice_Transaction(start, sqlCon, code.deviceIdHash) == null) {
-                    throw new UnknownDeviceIdHash();
-                }
-
                 PasswordlessQueries.createCode_Transaction(start, sqlCon, code);
                 sqlCon.commit();
-            } catch (UnknownDeviceIdHash | SQLException e) {
+            } catch (SQLException e) {
+
+                String message = e.getMessage();
+                if (message.contains(
+                        "Cannot add or update a child row: a foreign key constraint fails (`supertokens`.`passwordless_codes`, CONSTRAINT `passwordless_codes_ibfk_1` FOREIGN KEY (`device_id_hash`) REFERENCES `passwordless_devices` (`device_id_hash`) ON DELETE CASCADE ON UPDATE CASCA)")) {
+                    throw new StorageTransactionLogicException(new UnknownDeviceIdHash());
+                }
                 throw new StorageTransactionLogicException(e);
             }
             return null;
