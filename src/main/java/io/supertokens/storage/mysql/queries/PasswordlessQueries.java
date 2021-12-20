@@ -100,7 +100,8 @@ public class PasswordlessQueries {
             throws StorageQueryException, SQLException {
 
         String QUERY = "SELECT device_id_hash, email, phone_number, failed_attempts FROM "
-                + Config.getConfig(start).getPasswordlessDevicesTable() + " WHERE device_id_hash = ?";
+                + Config.getConfig(start).getPasswordlessDevicesTable()
+                + " WHERE device_id_hash = ? LOCK IN SHARE MODE";
         try (PreparedStatement pst = con.prepareStatement(QUERY)) {
             pst.setString(1, deviceIdHash);
 
@@ -135,37 +136,24 @@ public class PasswordlessQueries {
     public static void deleteDevicesByPhoneNumber_Transaction(Start start, Connection con, @Nonnull String phoneNumber)
             throws SQLException {
 
-        String QUERY = "SELECT device_id_hash FROM " + Config.getConfig(start).getPasswordlessDevicesTable()
+        String QUERY = "DELETE FROM " + Config.getConfig(start).getPasswordlessDevicesTable()
                 + " WHERE phone_number = ?";
 
-        List<String> deviceIdHashes = new ArrayList<>();
         try (PreparedStatement pst = con.prepareStatement(QUERY)) {
             pst.setString(1, phoneNumber);
-            ResultSet result = pst.executeQuery();
-            while (result.next()) {
-                deviceIdHashes.add(result.getString("device_id_hash"));
-            }
+            pst.executeUpdate();
         }
-        deleteRowsByDeviceIdHashList_Transaction(con, Config.getConfig(start).getPasswordlessDevicesTable(),
-                deviceIdHashes);
     }
 
     public static void deleteDevicesByEmail_Transaction(Start start, Connection con, @Nonnull String email)
             throws SQLException, StorageQueryException {
 
-        String QUERY = "SELECT device_id_hash FROM " + Config.getConfig(start).getPasswordlessDevicesTable()
-                + " WHERE email = ?";
+        String QUERY = "DELETE FROM " + Config.getConfig(start).getPasswordlessDevicesTable() + " WHERE email = ?";
 
-        List<String> deviceIdHashes = new ArrayList<>();
         try (PreparedStatement pst = con.prepareStatement(QUERY)) {
             pst.setString(1, email);
-            ResultSet result = pst.executeQuery();
-            while (result.next()) {
-                deviceIdHashes.add(result.getString("device_id_hash"));
-            }
+            pst.executeUpdate();
         }
-        deleteRowsByDeviceIdHashList_Transaction(con, Config.getConfig(start).getPasswordlessDevicesTable(),
-                deviceIdHashes);
     }
 
     private static void createCode_Transaction(Start start, Connection con, PasswordlessCode code) throws SQLException {
@@ -491,30 +479,6 @@ public class PasswordlessQueries {
             }
         }
         return null;
-    }
-
-    private static void deleteRowsByDeviceIdHashList_Transaction(Connection con, String tableName,
-            List<String> deviceIdHashes) throws SQLException {
-        if (deviceIdHashes.size() > 0) {
-            StringBuilder QUERY = new StringBuilder("DELETE FROM " + tableName);
-            QUERY.append(" WHERE device_id_hash IN (");
-            for (int i = 0; i < deviceIdHashes.size(); i++) {
-                QUERY.append("?");
-                if (i != deviceIdHashes.size() - 1) {
-                    // not the last element
-                    QUERY.append(",");
-                }
-            }
-            QUERY.append(")");
-
-            try (PreparedStatement pst = con.prepareStatement(QUERY.toString())) {
-                for (int i = 0; i < deviceIdHashes.size(); i++) {
-                    // i+1 cause this starts with 1 and not 0
-                    pst.setString(i + 1, deviceIdHashes.get(i));
-                }
-                pst.executeUpdate();
-            }
-        }
     }
 
     private static class PasswordlessDeviceRowMapper implements RowMapper<PasswordlessDevice, ResultSet> {
