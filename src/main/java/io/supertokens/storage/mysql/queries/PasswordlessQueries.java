@@ -47,7 +47,8 @@ public class PasswordlessQueries {
     public static String getQueryToCreateDevicesTable(Start start) {
         return "CREATE TABLE IF NOT EXISTS " + Config.getConfig(start).getPasswordlessDevicesTable() + " ("
                 + "device_id_hash CHAR(44) NOT NULL," + "email VARCHAR(256)," + "phone_number VARCHAR(256),"
-                + "failed_attempts INT UNSIGNED NOT NULL," + "PRIMARY KEY (device_id_hash));";
+                + "link_code_salt CHAR(44) NOT NULL," + "failed_attempts INT UNSIGNED NOT NULL,"
+                + "PRIMARY KEY (device_id_hash));";
     }
 
     public static String getQueryToCreateCodesTable(Start start) {
@@ -73,17 +74,19 @@ public class PasswordlessQueries {
                 + Config.getConfig(start).getPasswordlessCodesTable() + "(created_at);";
     }
 
-    public static void createDeviceWithCode(Start start, String email, String phoneNumber, PasswordlessCode code)
-            throws StorageTransactionLogicException, StorageQueryException {
+    public static void createDeviceWithCode(Start start, String email, String phoneNumber, String linkCodeSalt,
+            PasswordlessCode code) throws StorageTransactionLogicException, StorageQueryException {
         start.startTransaction(con -> {
             Connection sqlCon = (Connection) con.getConnection();
             try {
                 String QUERY = "INSERT INTO " + Config.getConfig(start).getPasswordlessDevicesTable()
-                        + "(device_id_hash, email, phone_number, failed_attempts)" + " VALUES(?, ?, ?, 0)";
+                        + "(device_id_hash, email, phone_number, link_code_salt, failed_attempts)"
+                        + " VALUES(?, ?, ?, ?, 0)";
                 try (PreparedStatement pst = sqlCon.prepareStatement(QUERY)) {
                     pst.setString(1, code.deviceIdHash);
                     pst.setString(2, email);
                     pst.setString(3, phoneNumber);
+                    pst.setString(4, linkCodeSalt);
                     pst.executeUpdate();
                 }
 
@@ -99,7 +102,7 @@ public class PasswordlessQueries {
     public static PasswordlessDevice getDevice_Transaction(Start start, Connection con, String deviceIdHash)
             throws StorageQueryException, SQLException {
 
-        String QUERY = "SELECT device_id_hash, email, phone_number, failed_attempts FROM "
+        String QUERY = "SELECT device_id_hash, email, phone_number, link_code_salt, failed_attempts FROM "
                 + Config.getConfig(start).getPasswordlessDevicesTable() + " WHERE device_id_hash = ? FOR UPDATE";
         try (PreparedStatement pst = con.prepareStatement(QUERY)) {
             pst.setString(1, deviceIdHash);
@@ -300,7 +303,7 @@ public class PasswordlessQueries {
     public static PasswordlessDevice getDevice(Start start, String deviceIdHash)
             throws StorageQueryException, SQLException {
         try (Connection con = ConnectionPool.getConnection(start)) {
-            String QUERY = "SELECT device_id_hash, email, phone_number, failed_attempts FROM "
+            String QUERY = "SELECT device_id_hash, email, phone_number, link_code_salt, failed_attempts FROM "
                     + Config.getConfig(start).getPasswordlessDevicesTable() + " WHERE device_id_hash = ?";
             try (PreparedStatement pst = con.prepareStatement(QUERY)) {
                 pst.setString(1, deviceIdHash);
@@ -316,7 +319,7 @@ public class PasswordlessQueries {
 
     public static PasswordlessDevice[] getDevicesByEmail(Start start, @Nonnull String email)
             throws StorageQueryException, SQLException {
-        String QUERY = "SELECT device_id_hash, email, phone_number, failed_attempts FROM "
+        String QUERY = "SELECT device_id_hash, email, phone_number, link_code_salt, failed_attempts FROM "
                 + Config.getConfig(start).getPasswordlessDevicesTable() + " WHERE email = ?";
 
         try (Connection con = ConnectionPool.getConnection(start);
@@ -337,7 +340,7 @@ public class PasswordlessQueries {
 
     public static PasswordlessDevice[] getDevicesByPhoneNumber(Start start, @Nonnull String phoneNumber)
             throws StorageQueryException, SQLException {
-        String QUERY = "SELECT device_id_hash, email, phone_number, failed_attempts FROM "
+        String QUERY = "SELECT device_id_hash, email, phone_number, link_code_salt, failed_attempts FROM "
                 + Config.getConfig(start).getPasswordlessDevicesTable() + " WHERE phone_number = ?";
 
         try (Connection con = ConnectionPool.getConnection(start);
@@ -495,7 +498,8 @@ public class PasswordlessQueries {
         @Override
         public PasswordlessDevice map(ResultSet result) throws Exception {
             return new PasswordlessDevice(result.getString("device_id_hash"), result.getString("email"),
-                    result.getString("phone_number"), result.getInt("failed_attempts"));
+                    result.getString("phone_number"), result.getString("link_code_salt"),
+                    result.getInt("failed_attempts"));
         }
     }
 

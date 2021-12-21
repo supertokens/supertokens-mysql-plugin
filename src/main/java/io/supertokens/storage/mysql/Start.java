@@ -1001,14 +1001,14 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     }
 
     @Override
-    public void createDeviceWithCode(@Nullable String email, @Nullable String phoneNumber, PasswordlessCode code)
-            throws StorageQueryException, DuplicateDeviceIdHashException, DuplicateCodeIdException,
-            DuplicateLinkCodeHashException {
+    public void createDeviceWithCode(@Nullable String email, @Nullable String phoneNumber, @NotNull String linkCodeSalt,
+            PasswordlessCode code) throws StorageQueryException, DuplicateDeviceIdHashException,
+            DuplicateCodeIdException, DuplicateLinkCodeHashException {
         if (email == null && phoneNumber == null) {
             throw new IllegalArgumentException("Both email and phoneNumber can't be null");
         }
         try {
-            PasswordlessQueries.createDeviceWithCode(this, email, phoneNumber, code);
+            PasswordlessQueries.createDeviceWithCode(this, email, phoneNumber, linkCodeSalt, code);
         } catch (StorageTransactionLogicException e) {
             // TODO: review these error messages
             String message = e.actualException.getMessage();
