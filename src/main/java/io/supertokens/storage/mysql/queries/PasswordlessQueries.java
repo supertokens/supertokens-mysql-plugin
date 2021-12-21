@@ -181,8 +181,8 @@ public class PasswordlessQueries {
             } catch (SQLException e) {
 
                 String message = e.getMessage();
-                if (message.contains(
-                        "Cannot add or update a child row: a foreign key constraint fails (`supertokens`.`passwordless_codes`, CONSTRAINT `passwordless_codes_ibfk_1` FOREIGN KEY (`device_id_hash`) REFERENCES `passwordless_devices` (`device_id_hash`) ON DELETE CASCADE ON UPDATE CASCA)")) {
+                if (message.contains("foreign key constraint fails") && message.contains("passwordless_codes")
+                        && message.contains("device_id_hash")) {
                     throw new StorageTransactionLogicException(new UnknownDeviceIdHash());
                 }
                 throw new StorageTransactionLogicException(e);
@@ -272,31 +272,27 @@ public class PasswordlessQueries {
         });
     }
 
-    public static void updateUserEmail_Transaction(Start start, Connection con, String userId, String email)
-            throws SQLException, UnknownUserIdException {
+    public static int updateUserEmail_Transaction(Start start, Connection con, String userId, String email)
+            throws SQLException {
         String QUERY = "UPDATE " + Config.getConfig(start).getPasswordlessUsersTable()
                 + " SET email = ? WHERE user_id = ?";
 
         try (PreparedStatement pst = con.prepareStatement(QUERY)) {
             pst.setString(1, email);
             pst.setString(2, userId);
-            if (pst.executeUpdate() != 1) {
-                throw new UnknownUserIdException();
-            }
+            return pst.executeUpdate();
         }
     }
 
-    public static void updateUserPhoneNumber_Transaction(Start start, Connection con, String userId, String phoneNumber)
-            throws SQLException, UnknownUserIdException {
+    public static int updateUserPhoneNumber_Transaction(Start start, Connection con, String userId, String phoneNumber)
+            throws SQLException {
         String QUERY = "UPDATE " + Config.getConfig(start).getPasswordlessUsersTable()
                 + " SET phone_number = ? WHERE user_id = ?";
 
         try (PreparedStatement pst = con.prepareStatement(QUERY)) {
             pst.setString(1, phoneNumber);
             pst.setString(2, userId);
-            if (pst.executeUpdate() != 1) {
-                throw new UnknownUserIdException();
-            }
+            return pst.executeUpdate();
         }
     }
 

@@ -314,14 +314,14 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
         }
     }
 
-//    @Override
-//    public void deleteSessionsOfUser(String userId) throws StorageQueryException {
-//        try {
-//            SessionQueries.deleteSessionsOfUser(this, userId);
-//        } catch (SQLException e) {
-//            throw new StorageQueryException(e);
-//        }
-//    }
+    @Override
+    public void deleteSessionsOfUser(String userId) throws StorageQueryException {
+        try {
+            SessionQueries.deleteSessionsOfUser(this, userId);
+        } catch (SQLException e) {
+            throw new StorageQueryException(e);
+        }
+    }
 
     @Override
     public int getNumberOfSessions() throws StorageQueryException {
@@ -487,6 +487,15 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
                 throw new DuplicateUserIdException();
             }
             throw new StorageQueryException(e);
+        }
+    }
+
+    @Override
+    public void deleteEmailPasswordUser(String userId) throws StorageQueryException {
+        try {
+            EmailPasswordQueries.deleteUser(this, userId);
+        } catch (StorageTransactionLogicException e) {
+            throw new StorageQueryException(e.actualException);
         }
     }
 
@@ -719,6 +728,15 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     }
 
     @Override
+    public void deleteEmailVerificationUserInfo(String userId) throws StorageQueryException {
+        try {
+            EmailVerificationQueries.deleteUserInfo(this, userId);
+        } catch (StorageTransactionLogicException e) {
+            throw new StorageQueryException(e.actualException);
+        }
+    }
+
+    @Override
     public void revokeAllTokens(String userId, String email) throws StorageQueryException {
         try {
             EmailVerificationQueries.revokeAllTokens(this, userId, email);
@@ -797,6 +815,15 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
                 throw new io.supertokens.pluginInterface.thirdparty.exception.DuplicateUserIdException();
             }
             throw new StorageQueryException(e);
+        }
+    }
+
+    @Override
+    public void deleteThirdPartyUser(String userId) throws StorageQueryException {
+        try {
+            ThirdPartyQueries.deleteUser(this, userId);
+        } catch (StorageTransactionLogicException e) {
+            throw new StorageQueryException(e.actualException);
         }
     }
 
@@ -1019,7 +1046,6 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
         try {
             PasswordlessQueries.createDeviceWithCode(this, email, phoneNumber, linkCodeSalt, code);
         } catch (StorageTransactionLogicException e) {
-            // TODO: review these error messages
             String message = e.actualException.getMessage();
             if (message.contains("Duplicate entry")) {
                 if (message.endsWith(Config.getConfig(this).getPasswordlessDevicesTable() + ".PRIMARY'")) {
@@ -1112,14 +1138,9 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
         try {
             PasswordlessQueries.createCode(this, code);
         } catch (StorageTransactionLogicException e) {
-            // TODO: review these exceptions
             String message = e.actualException.getMessage();
 
             if (e.actualException instanceof UnknownDeviceIdHash) {
-                throw (UnknownDeviceIdHash) e.actualException;
-            }
-            if (message.contains(
-                    "Cannot add or update a child row: a foreign key constraint fails (`supertokens`.`passwordless_codes`, CONSTRAINT `passwordless_codes_ibfk_1` FOREIGN KEY (`device_id_hash`) REFERENCES `passwordless_devices` (`device_id_hash`) ON DELETE CASCADE ON UPDATE CASCA)")) {
                 throw (UnknownDeviceIdHash) e.actualException;
             }
             if (message.contains("Duplicate entry")) {
@@ -1164,7 +1185,6 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
         try {
             PasswordlessQueries.createUser(this, user);
         } catch (StorageTransactionLogicException e) {
-            // TODO: review these exceptions
             String message = e.actualException.getMessage();
             if (message.contains("Duplicate entry")) {
                 if (message.endsWith(Config.getConfig(this).getPasswordlessUsersTable() + ".PRIMARY'")
@@ -1192,16 +1212,23 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
             throws StorageQueryException, UnknownUserIdException, DuplicateEmailException {
         Connection sqlCon = (Connection) con.getConnection();
         try {
-            PasswordlessQueries.updateUserEmail_Transaction(this, sqlCon, userId, email);
-        } catch (SQLException e) {
-            // TODO: review these exceptions
+            int updated_rows = PasswordlessQueries.updateUserEmail_Transaction(this, sqlCon, userId, email);
+            if (updated_rows != 1) {
+                throw new UnknownUserIdException();
+            }
+        } catch (UnknownUserIdException | SQLException e) {
+
+            if (e instanceof UnknownUserIdException) {
+                throw new UnknownUserIdException();
+            }
+
             String message = e.getMessage();
             if (message.contains("Duplicate entry")
                     && (message.endsWith(Config.getConfig(this).getPasswordlessUsersTable() + ".email'"))) {
                 throw new DuplicateEmailException();
             }
-
             throw new StorageQueryException(e);
+
         }
     }
 
@@ -1210,9 +1237,18 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
             throws StorageQueryException, UnknownUserIdException, DuplicatePhoneNumberException {
         Connection sqlCon = (Connection) con.getConnection();
         try {
-            PasswordlessQueries.updateUserPhoneNumber_Transaction(this, sqlCon, userId, phoneNumber);
-        } catch (SQLException e) {
-            // TODO: review these exceptions
+            int updated_rows = PasswordlessQueries.updateUserPhoneNumber_Transaction(this, sqlCon, userId, phoneNumber);
+
+            if (updated_rows != 1) {
+                throw new UnknownUserIdException();
+            }
+
+        } catch (UnknownUserIdException | SQLException e) {
+
+            if (e instanceof UnknownUserIdException) {
+                throw new UnknownUserIdException();
+            }
+
             String message = e.getMessage();
             if (message.contains("Duplicate entry")
                     && (message.endsWith(Config.getConfig(this).getPasswordlessUsersTable() + ".phone_number'"))) {
