@@ -1216,11 +1216,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
             if (updated_rows != 1) {
                 throw new UnknownUserIdException();
             }
-        } catch (UnknownUserIdException | SQLException e) {
-
-            if (e instanceof UnknownUserIdException) {
-                throw new UnknownUserIdException();
-            }
+        } catch (SQLException e) {
 
             String message = e.getMessage();
             if (message.contains("Duplicate entry")
@@ -1243,11 +1239,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
                 throw new UnknownUserIdException();
             }
 
-        } catch (UnknownUserIdException | SQLException e) {
-
-            if (e instanceof UnknownUserIdException) {
-                throw new UnknownUserIdException();
-            }
+        } catch (SQLException e) {
 
             String message = e.getMessage();
             if (message.contains("Duplicate entry")
