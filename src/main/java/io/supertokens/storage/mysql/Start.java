@@ -1218,9 +1218,8 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
             }
         } catch (SQLException e) {
 
-            String message = e.getMessage();
-            if (message.contains("Duplicate entry")
-                    && (message.endsWith(Config.getConfig(this).getPasswordlessUsersTable() + ".email'"))) {
+            if (e.getMessage().contains("Duplicate entry")
+                    && (e.getMessage().endsWith(Config.getConfig(this).getPasswordlessUsersTable() + ".email'"))) {
                 throw new DuplicateEmailException();
             }
             throw new StorageQueryException(e);
@@ -1241,9 +1240,8 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
 
         } catch (SQLException e) {
 
-            String message = e.getMessage();
-            if (message.contains("Duplicate entry")
-                    && (message.endsWith(Config.getConfig(this).getPasswordlessUsersTable() + ".phone_number'"))) {
+            if (e.getMessage().contains("Duplicate entry") && (e.getMessage()
+                    .endsWith(Config.getConfig(this).getPasswordlessUsersTable() + ".phone_number'"))) {
                 throw new DuplicatePhoneNumberException();
             }
 

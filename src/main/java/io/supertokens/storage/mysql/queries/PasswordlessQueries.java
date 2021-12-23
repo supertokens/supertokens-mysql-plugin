@@ -180,10 +180,9 @@ public class PasswordlessQueries {
                 sqlCon.commit();
             } catch (SQLException e) {
 
-                String message = e.getMessage();
-                if (message.contains("foreign key constraint fails")
-                        && message.contains(Config.getConfig(start).getPasswordlessCodesTable())
-                        && message.contains("device_id_hash")) {
+                if (e.getMessage().contains("foreign key constraint fails")
+                        && e.getMessage().contains(Config.getConfig(start).getPasswordlessCodesTable())
+                        && e.getMessage().contains("device_id_hash")) {
                     throw new StorageTransactionLogicException(new UnknownDeviceIdHash());
                 }
                 throw new StorageTransactionLogicException(e);
