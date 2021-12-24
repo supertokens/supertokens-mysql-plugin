@@ -55,8 +55,9 @@ public class PasswordlessQueries {
         return "CREATE TABLE IF NOT EXISTS " + Config.getConfig(start).getPasswordlessCodesTable() + " ("
                 + "code_id CHAR(36) NOT NULL," + "device_id_hash CHAR(44) NOT NULL,"
                 + "link_code_hash CHAR(44) NOT NULL UNIQUE," + "created_at BIGINT UNSIGNED NOT NULL,"
-                + "PRIMARY KEY (code_id),"
-                + "FOREIGN KEY (device_id_hash) REFERENCES passwordless_devices(device_id_hash) ON DELETE CASCADE ON UPDATE CASCADE);";
+                + "PRIMARY KEY (code_id)," + "FOREIGN KEY (device_id_hash) REFERENCES "
+                + Config.getConfig(start).getPasswordlessDevicesTable()
+                + "(device_id_hash) ON DELETE CASCADE ON UPDATE CASCADE);";
     }
 
     public static String getQueryToCreateDeviceEmailIndex(Start start) {
@@ -179,12 +180,6 @@ public class PasswordlessQueries {
                 PasswordlessQueries.createCode_Transaction(start, sqlCon, code);
                 sqlCon.commit();
             } catch (SQLException e) {
-
-                if (e.getMessage().contains("foreign key constraint fails")
-                        && e.getMessage().contains(Config.getConfig(start).getPasswordlessCodesTable())
-                        && e.getMessage().contains("device_id_hash")) {
-                    throw new StorageTransactionLogicException(new UnknownDeviceIdHash());
-                }
                 throw new StorageTransactionLogicException(e);
             }
             return null;

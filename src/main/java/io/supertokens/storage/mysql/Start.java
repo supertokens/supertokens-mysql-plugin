@@ -1138,11 +1138,14 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
         try {
             PasswordlessQueries.createCode(this, code);
         } catch (StorageTransactionLogicException e) {
+
             String message = e.actualException.getMessage();
 
-            if (e.actualException instanceof UnknownDeviceIdHash) {
-                throw (UnknownDeviceIdHash) e.actualException;
+            if (message.contains("foreign key") && message.contains(Config.getConfig(this).getPasswordlessCodesTable())
+                    && message.contains("device_id_hash")) {
+                throw new UnknownDeviceIdHash();
             }
+
             if (message.contains("Duplicate entry")) {
 
                 if (message.endsWith(Config.getConfig(this).getPasswordlessCodesTable() + ".PRIMARY'")) {
