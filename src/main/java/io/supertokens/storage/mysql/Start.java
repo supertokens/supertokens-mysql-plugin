@@ -1204,8 +1204,16 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
                 if (message.endsWith(Config.getConfig(this).getPasswordlessUsersTable() + ".phone_number'")) {
                     throw new DuplicatePhoneNumberException();
                 }
-
             }
+            throw new StorageQueryException(e.actualException);
+        }
+    }
+
+    @Override
+    public void deletePasswordlessUser(String userId) throws StorageQueryException {
+        try {
+            PasswordlessQueries.deleteUser(this, userId);
+        } catch (StorageTransactionLogicException e) {
             throw new StorageQueryException(e.actualException);
         }
     }
