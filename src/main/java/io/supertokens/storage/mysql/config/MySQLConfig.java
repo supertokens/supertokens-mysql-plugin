@@ -250,6 +250,22 @@ public class MySQLConfig {
         return addPrefixToTableName(tableName);
     }
 
+    public String getPasswordlessUsersTable() {
+        String tableName = "passwordless_users";
+        return addPrefixToTableName(tableName);
+
+    }
+
+    public String getPasswordlessDevicesTable() {
+        String tableName = "passwordless_devices";
+        return addPrefixToTableName(tableName);
+    }
+
+    public String getPasswordlessCodesTable() {
+        String tableName = "passwordless_codes";
+        return addPrefixToTableName(tableName);
+    }
+
     public String getJWTSigningKeysTable() {
         return addPrefixToTableName("jwt_signing_keys");
     }
