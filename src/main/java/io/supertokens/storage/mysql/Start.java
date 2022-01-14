@@ -1048,16 +1048,19 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
         } catch (StorageTransactionLogicException e) {
             String message = e.actualException.getMessage();
             if (message.contains("Duplicate entry")) {
-                if (message.contains(code.deviceIdHash) && (message.endsWith("'" + Config.getConfig(this).getPasswordlessDevicesTable() + ".PRIMARY'")
-                        || message.endsWith("'PRIMARY'"))) {
+                if (message.contains(code.deviceIdHash)
+                        && (message.endsWith("'" + Config.getConfig(this).getPasswordlessDevicesTable() + ".PRIMARY'")
+                                || message.endsWith("'PRIMARY'"))) {
                     throw new DuplicateDeviceIdHashException();
                 }
-                if (message.contains(code.id) && (message.endsWith("'" + Config.getConfig(this).getPasswordlessCodesTable() + ".PRIMARY'")
-                        || message.endsWith("'PRIMARY'"))) {
+                if (message.contains(code.id)
+                        && (message.endsWith("'" + Config.getConfig(this).getPasswordlessCodesTable() + ".PRIMARY'")
+                                || message.endsWith("'PRIMARY'"))) {
                     throw new DuplicateCodeIdException();
                 }
 
-                if (message.contains(code.linkCodeHash) && (message.endsWith("'" + Config.getConfig(this).getPasswordlessCodesTable() + ".link_code_hash'")
+                if (message.contains(code.linkCodeHash) && (message
+                        .endsWith("'" + Config.getConfig(this).getPasswordlessCodesTable() + ".link_code_hash'")
                         || message.endsWith("'link_code_hash'"))) {
                     throw new DuplicateLinkCodeHashException();
                 }
