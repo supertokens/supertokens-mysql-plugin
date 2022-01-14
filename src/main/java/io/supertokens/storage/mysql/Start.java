@@ -1048,14 +1048,17 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
         } catch (StorageTransactionLogicException e) {
             String message = e.actualException.getMessage();
             if (message.contains("Duplicate entry")) {
-                if (message.endsWith(Config.getConfig(this).getPasswordlessDevicesTable() + ".PRIMARY'")) {
+                if (message.endsWith("'" + Config.getConfig(this).getPasswordlessDevicesTable() + ".PRIMARY'")
+                        || message.endsWith("'PRIMARY'")) {
                     throw new DuplicateDeviceIdHashException();
                 }
-                if (message.endsWith(Config.getConfig(this).getPasswordlessCodesTable() + ".PRIMARY'")) {
+                if (message.endsWith("'" + Config.getConfig(this).getPasswordlessCodesTable() + ".PRIMARY'")
+                        || message.endsWith("'PRIMARY'")) {
                     throw new DuplicateCodeIdException();
                 }
 
-                if (message.endsWith(Config.getConfig(this).getPasswordlessCodesTable() + ".link_code_hash'")) {
+                if (message.endsWith("'" + Config.getConfig(this).getPasswordlessCodesTable() + ".link_code_hash'")
+                        || message.endsWith("'link_code_hash'")) {
                     throw new DuplicateLinkCodeHashException();
                 }
             }
@@ -1148,11 +1151,13 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
 
             if (message.contains("Duplicate entry")) {
 
-                if (message.endsWith(Config.getConfig(this).getPasswordlessCodesTable() + ".PRIMARY'")) {
+                if (message.endsWith("'" + Config.getConfig(this).getPasswordlessCodesTable() + ".PRIMARY'")
+                        || message.endsWith("'PRIMARY'")) {
                     throw new DuplicateCodeIdException();
                 }
 
-                if (message.endsWith(Config.getConfig(this).getPasswordlessCodesTable() + ".link_code_hash'")) {
+                if (message.endsWith("'" + Config.getConfig(this).getPasswordlessCodesTable() + ".link_code_hash'")
+                        || message.endsWith("'link_code_hash'")) {
                     throw new DuplicateLinkCodeHashException();
                 }
 
@@ -1190,18 +1195,20 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
         } catch (StorageTransactionLogicException e) {
             String message = e.actualException.getMessage();
             if (message.contains("Duplicate entry")) {
-                if (message.endsWith(Config.getConfig(this).getPasswordlessUsersTable() + ".PRIMARY'")
-                        || message.endsWith(Config.getConfig(this).getUsersTable() + ".PRIMARY'")
-
-                ) {
+                if ((e.getMessage().endsWith("'" + Config.getConfig(this).getPasswordlessUsersTable() + ".user_id'")
+                        || e.getMessage().endsWith("'user_id'"))
+                        || (e.getMessage().endsWith("'" + Config.getConfig(this).getUsersTable() + ".PRIMARY'")
+                                || e.getMessage().endsWith("'PRIMARY'"))) {
                     throw new DuplicateUserIdException();
                 }
 
-                if (message.endsWith(Config.getConfig(this).getPasswordlessUsersTable() + ".email'")) {
+                if (message.endsWith("'" + Config.getConfig(this).getPasswordlessUsersTable() + ".email'")
+                        || e.getMessage().endsWith("'email'")) {
                     throw new DuplicateEmailException();
                 }
 
-                if (message.endsWith(Config.getConfig(this).getPasswordlessUsersTable() + ".phone_number'")) {
+                if (message.endsWith("'" + Config.getConfig(this).getPasswordlessUsersTable() + ".phone_number'")
+                        || e.getMessage().endsWith("'phone_number'")) {
                     throw new DuplicatePhoneNumberException();
                 }
             }
@@ -1230,7 +1237,8 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
         } catch (SQLException e) {
 
             if (e.getMessage().contains("Duplicate entry")
-                    && (e.getMessage().endsWith(Config.getConfig(this).getPasswordlessUsersTable() + ".email'"))) {
+                    && (e.getMessage().endsWith("'" + Config.getConfig(this).getPasswordlessUsersTable() + ".email'"))
+                    || e.getMessage().endsWith("'email'")) {
                 throw new DuplicateEmailException();
             }
             throw new StorageQueryException(e);
@@ -1251,8 +1259,10 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
 
         } catch (SQLException e) {
 
-            if (e.getMessage().contains("Duplicate entry") && (e.getMessage()
-                    .endsWith(Config.getConfig(this).getPasswordlessUsersTable() + ".phone_number'"))) {
+            if (e.getMessage().contains("Duplicate entry")
+                    && (e.getMessage()
+                            .endsWith("'" + Config.getConfig(this).getPasswordlessUsersTable() + ".phone_number'"))
+                    || e.getMessage().endsWith("'phone_number'")) {
                 throw new DuplicatePhoneNumberException();
             }
 
