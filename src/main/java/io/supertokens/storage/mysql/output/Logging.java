@@ -164,6 +164,9 @@ public class Logging extends ResourceDistributor.SingletonResource {
         logConsoleAppender.setEncoder(ple);
         logConsoleAppender.setContext(lc);
         logConsoleAppender.start();
+        if (name.startsWith("io.supertokens.storage.mysql.Error")) {
+            logConsoleAppender.setTarget("System.err");
+        }
 
         Logger logger = (Logger) LoggerFactory.getLogger(name);
         logger.addAppender(logConsoleAppender);

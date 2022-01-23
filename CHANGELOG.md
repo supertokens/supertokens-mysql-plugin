@@ -7,6 +7,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixes
+
+- Run as container, errors are merged into stdout (instead of going to stderr)
+
 ## [1.12.0] - 2022-01-14
 
 ### Added
