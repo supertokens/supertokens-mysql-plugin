@@ -129,7 +129,7 @@ public class HikariLoggingAppender implements Appender<ILoggingEvent> {
     @Override
     public void doAppend(ILoggingEvent event) throws LogbackException {
         if (event.getLevel() == Level.ERROR) {
-            Logging.error(start, event.getFormattedMessage(), false);
+            Logging.error(start, event.getFormattedMessage(), true);
         } else if (event.getLevel() == Level.WARN) {
             Logging.warn(start, event.getFormattedMessage());
         } else {
