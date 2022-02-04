@@ -147,9 +147,10 @@ public class ThirdPartyQueries {
                     // i+1 cause this starts with 1 and not 0
                     pst.setString(i + 1, ids.get(i));
                 }
-                ResultSet result = pst.executeQuery();
-                while (result.next()) {
-                    finalResult.add(UserInfoRowMapper.getInstance().mapOrThrow(result));
+                try (ResultSet result = pst.executeQuery()) {
+                    while (result.next()) {
+                        finalResult.add(UserInfoRowMapper.getInstance().mapOrThrow(result));
+                    }
                 }
             }
         }
@@ -166,9 +167,10 @@ public class ThirdPartyQueries {
                 PreparedStatement pst = con.prepareStatement(QUERY)) {
             pst.setString(1, thirdPartyId);
             pst.setString(2, thirdPartyUserId);
-            ResultSet result = pst.executeQuery();
-            if (result.next()) {
-                return UserInfoRowMapper.getInstance().mapOrThrow(result);
+            try (ResultSet result = pst.executeQuery()) {
+                if (result.next()) {
+                    return UserInfoRowMapper.getInstance().mapOrThrow(result);
+                }
             }
         }
         return null;
@@ -196,9 +198,10 @@ public class ThirdPartyQueries {
         try (PreparedStatement pst = con.prepareStatement(QUERY)) {
             pst.setString(1, thirdPartyId);
             pst.setString(2, thirdPartyUserId);
-            ResultSet result = pst.executeQuery();
-            if (result.next()) {
-                return UserInfoRowMapper.getInstance().mapOrThrow(result);
+            try (ResultSet result = pst.executeQuery()) {
+                if (result.next()) {
+                    return UserInfoRowMapper.getInstance().mapOrThrow(result);
+                }
             }
         }
         return null;
@@ -236,16 +239,17 @@ public class ThirdPartyQueries {
         try (Connection con = ConnectionPool.getConnection(start);
                 PreparedStatement pst = con.prepareStatement(QUERY)) {
             pst.setInt(1, limit);
-            ResultSet result = pst.executeQuery();
-            List<UserInfo> temp = new ArrayList<>();
-            while (result.next()) {
-                temp.add(UserInfoRowMapper.getInstance().mapOrThrow(result));
+            try (ResultSet result = pst.executeQuery()) {
+                List<UserInfo> temp = new ArrayList<>();
+                while (result.next()) {
+                    temp.add(UserInfoRowMapper.getInstance().mapOrThrow(result));
+                }
+                UserInfo[] finalResult = new UserInfo[temp.size()];
+                for (int i = 0; i < temp.size(); i++) {
+                    finalResult[i] = temp.get(i);
+                }
+                return finalResult;
             }
-            UserInfo[] finalResult = new UserInfo[temp.size()];
-            for (int i = 0; i < temp.size(); i++) {
-                finalResult[i] = temp.get(i);
-            }
-            return finalResult;
         }
     }
 
@@ -263,16 +267,17 @@ public class ThirdPartyQueries {
             pst.setLong(2, timeJoined);
             pst.setString(3, userId);
             pst.setInt(4, limit);
-            ResultSet result = pst.executeQuery();
-            List<UserInfo> temp = new ArrayList<>();
-            while (result.next()) {
-                temp.add(UserInfoRowMapper.getInstance().mapOrThrow(result));
+            try (ResultSet result = pst.executeQuery()) {
+                List<UserInfo> temp = new ArrayList<>();
+                while (result.next()) {
+                    temp.add(UserInfoRowMapper.getInstance().mapOrThrow(result));
+                }
+                UserInfo[] finalResult = new UserInfo[temp.size()];
+                for (int i = 0; i < temp.size(); i++) {
+                    finalResult[i] = temp.get(i);
+                }
+                return finalResult;
             }
-            UserInfo[] finalResult = new UserInfo[temp.size()];
-            for (int i = 0; i < temp.size(); i++) {
-                finalResult[i] = temp.get(i);
-            }
-            return finalResult;
         }
     }
 
@@ -281,11 +286,12 @@ public class ThirdPartyQueries {
         String QUERY = "SELECT COUNT(*) as total FROM " + Config.getConfig(start).getThirdPartyUsersTable();
         try (Connection con = ConnectionPool.getConnection(start);
                 PreparedStatement pst = con.prepareStatement(QUERY)) {
-            ResultSet result = pst.executeQuery();
-            if (result.next()) {
-                return result.getLong("total");
+            try (ResultSet result = pst.executeQuery()) {
+                if (result.next()) {
+                    return result.getLong("total");
+                }
+                return 0;
             }
-            return 0;
         }
     }
 
