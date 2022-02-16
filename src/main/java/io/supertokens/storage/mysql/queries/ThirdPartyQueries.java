@@ -16,7 +16,6 @@
 
 package io.supertokens.storage.mysql.queries;
 
-import io.supertokens.pluginInterface.RECIPE_ID;
 import io.supertokens.pluginInterface.RowMapper;
 import io.supertokens.pluginInterface.exceptions.StorageQueryException;
 import io.supertokens.pluginInterface.exceptions.StorageTransactionLogicException;
@@ -31,7 +30,13 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+
+import static io.supertokens.pluginInterface.RECIPE_ID.THIRD_PARTY;
+import static io.supertokens.storage.mysql.PreparedStatementValueSetter.NO_OP_SETTER;
+import static io.supertokens.storage.mysql.QueryExecutorTemplate.execute;
+import static io.supertokens.storage.mysql.QueryExecutorTemplate.update;
 
 public class ThirdPartyQueries {
 
@@ -50,26 +55,24 @@ public class ThirdPartyQueries {
                 {
                     String QUERY = "INSERT INTO " + Config.getConfig(start).getUsersTable()
                             + "(user_id, recipe_id, time_joined)" + " VALUES(?, ?, ?)";
-                    try (PreparedStatement pst = sqlCon.prepareStatement(QUERY)) {
+                    update(sqlCon, QUERY, pst -> {
                         pst.setString(1, userInfo.id);
-                        pst.setString(2, RECIPE_ID.THIRD_PARTY.toString());
+                        pst.setString(2, THIRD_PARTY.toString());
                         pst.setLong(3, userInfo.timeJoined);
-                        pst.executeUpdate();
-                    }
+                    });
                 }
 
                 {
                     String QUERY = "INSERT INTO " + Config.getConfig(start).getThirdPartyUsersTable()
                             + "(third_party_id, third_party_user_id, user_id, email, time_joined)"
                             + " VALUES(?, ?, ?, ?, ?)";
-                    try (PreparedStatement pst = sqlCon.prepareStatement(QUERY)) {
+                    update(sqlCon, QUERY, pst -> {
                         pst.setString(1, userInfo.thirdParty.id);
                         pst.setString(2, userInfo.thirdParty.userId);
                         pst.setString(3, userInfo.id);
                         pst.setString(4, userInfo.email);
                         pst.setLong(5, userInfo.timeJoined);
-                        pst.executeUpdate();
-                    }
+                    });
                 }
 
                 sqlCon.commit();
@@ -88,20 +91,18 @@ public class ThirdPartyQueries {
                 {
                     String QUERY = "DELETE FROM " + Config.getConfig(start).getUsersTable()
                             + " WHERE user_id = ? AND recipe_id = ?";
-                    try (PreparedStatement pst = sqlCon.prepareStatement(QUERY)) {
+                    update(sqlCon, QUERY, pst -> {
                         pst.setString(1, userId);
-                        pst.setString(2, RECIPE_ID.THIRD_PARTY.toString());
-                        pst.executeUpdate();
-                    }
+                        pst.setString(2, THIRD_PARTY.toString());
+                    });
                 }
 
                 {
                     String QUERY = "DELETE FROM " + Config.getConfig(start).getThirdPartyUsersTable()
                             + " WHERE user_id = ? ";
-                    try (PreparedStatement pst = sqlCon.prepareStatement(QUERY)) {
+                    update(sqlCon, QUERY, pst -> {
                         pst.setString(1, userId);
-                        pst.executeUpdate();
-                    }
+                    });
                 }
 
                 sqlCon.commit();
@@ -125,7 +126,7 @@ public class ThirdPartyQueries {
 
     public static List<UserInfo> getUsersInfoUsingIdList(Start start, List<String> ids)
             throws SQLException, StorageQueryException {
-        List<UserInfo> finalResult = new ArrayList<>();
+
         if (ids.size() > 0) {
             StringBuilder QUERY = new StringBuilder(
                     "SELECT user_id, third_party_id, third_party_user_id, email, time_joined FROM "
@@ -141,20 +142,20 @@ public class ThirdPartyQueries {
             }
             QUERY.append(")");
 
-            try (Connection con = ConnectionPool.getConnection(start);
-                    PreparedStatement pst = con.prepareStatement(QUERY.toString())) {
+            return execute(start, QUERY.toString(), pst -> {
                 for (int i = 0; i < ids.size(); i++) {
                     // i+1 cause this starts with 1 and not 0
                     pst.setString(i + 1, ids.get(i));
                 }
-                try (ResultSet result = pst.executeQuery()) {
-                    while (result.next()) {
-                        finalResult.add(UserInfoRowMapper.getInstance().mapOrThrow(result));
-                    }
+            }, result -> {
+                List<UserInfo> finalResult = new ArrayList<>();
+                while (result.next()) {
+                    finalResult.add(UserInfoRowMapper.getInstance().mapOrThrow(result));
                 }
-            }
+                return finalResult;
+            });
         }
-        return finalResult;
+        return Collections.emptyList();
     }
 
     public static UserInfo getThirdPartyUserInfoUsingId(Start start, String thirdPartyId, String thirdPartyUserId)
@@ -163,30 +164,27 @@ public class ThirdPartyQueries {
         String QUERY = "SELECT user_id, third_party_id, third_party_user_id, email, time_joined FROM "
                 + Config.getConfig(start).getThirdPartyUsersTable()
                 + " WHERE third_party_id = ? AND third_party_user_id = ?";
-        try (Connection con = ConnectionPool.getConnection(start);
-                PreparedStatement pst = con.prepareStatement(QUERY)) {
+        return execute(start, QUERY, pst -> {
             pst.setString(1, thirdPartyId);
             pst.setString(2, thirdPartyUserId);
-            try (ResultSet result = pst.executeQuery()) {
-                if (result.next()) {
-                    return UserInfoRowMapper.getInstance().mapOrThrow(result);
-                }
+        }, result -> {
+            if (result.next()) {
+                return UserInfoRowMapper.getInstance().mapOrThrow(result);
             }
-        }
-        return null;
+            return null;
+        });
     }
 
     public static void updateUserEmail_Transaction(Start start, Connection con, String thirdPartyId,
-            String thirdPartyUserId, String newEmail) throws SQLException {
+            String thirdPartyUserId, String newEmail) throws SQLException, StorageQueryException {
         String QUERY = "UPDATE " + Config.getConfig(start).getThirdPartyUsersTable()
                 + " SET email = ? WHERE third_party_id = ? AND third_party_user_id = ?";
 
-        try (PreparedStatement pst = con.prepareStatement(QUERY)) {
+        update(con, QUERY, pst -> {
             pst.setString(1, newEmail);
             pst.setString(2, thirdPartyId);
             pst.setString(3, thirdPartyUserId);
-            pst.executeUpdate();
-        }
+        });
     }
 
     public static UserInfo getUserInfoUsingId_Transaction(Start start, Connection con, String thirdPartyId,
@@ -195,16 +193,15 @@ public class ThirdPartyQueries {
         String QUERY = "SELECT user_id, third_party_id, third_party_user_id, email, time_joined FROM "
                 + Config.getConfig(start).getThirdPartyUsersTable()
                 + " WHERE third_party_id = ? AND third_party_user_id = ? FOR UPDATE";
-        try (PreparedStatement pst = con.prepareStatement(QUERY)) {
+        return execute(con, QUERY, pst -> {
             pst.setString(1, thirdPartyId);
             pst.setString(2, thirdPartyUserId);
-            try (ResultSet result = pst.executeQuery()) {
-                if (result.next()) {
-                    return UserInfoRowMapper.getInstance().mapOrThrow(result);
-                }
+        }, result -> {
+            if (result.next()) {
+                return UserInfoRowMapper.getInstance().mapOrThrow(result);
             }
-        }
-        return null;
+            return null;
+        });
     }
 
     public static UserInfo[] getThirdPartyUsersByEmail(Start start, @NotNull String email)
@@ -236,21 +233,16 @@ public class ThirdPartyQueries {
         String QUERY = "SELECT user_id, third_party_id, third_party_user_id, email, time_joined FROM "
                 + Config.getConfig(start).getThirdPartyUsersTable() + " ORDER BY time_joined " + timeJoinedOrder
                 + ", user_id DESC LIMIT ?";
-        try (Connection con = ConnectionPool.getConnection(start);
-                PreparedStatement pst = con.prepareStatement(QUERY)) {
-            pst.setInt(1, limit);
-            try (ResultSet result = pst.executeQuery()) {
-                List<UserInfo> temp = new ArrayList<>();
-                while (result.next()) {
-                    temp.add(UserInfoRowMapper.getInstance().mapOrThrow(result));
-                }
-                UserInfo[] finalResult = new UserInfo[temp.size()];
-                for (int i = 0; i < temp.size(); i++) {
-                    finalResult[i] = temp.get(i);
-                }
-                return finalResult;
+
+        return execute(start, QUERY, pst -> pst.setInt(1, limit), result -> {
+            List<UserInfo> users = new ArrayList<>();
+
+            while (result.next()) {
+                users.add(UserInfoRowMapper.getInstance().mapOrThrow(result));
             }
-        }
+
+            return users.toArray(UserInfo[]::new);
+        });
     }
 
     @Deprecated
@@ -261,38 +253,34 @@ public class ThirdPartyQueries {
                 + Config.getConfig(start).getThirdPartyUsersTable() + " WHERE time_joined " + timeJoinedOrderSymbol
                 + " ? OR (time_joined = ? AND user_id <= ?) ORDER BY time_joined " + timeJoinedOrder
                 + ", user_id DESC LIMIT ?";
-        try (Connection con = ConnectionPool.getConnection(start);
-                PreparedStatement pst = con.prepareStatement(QUERY)) {
+        return execute(start, QUERY, pst -> {
             pst.setLong(1, timeJoined);
             pst.setLong(2, timeJoined);
             pst.setString(3, userId);
             pst.setInt(4, limit);
-            try (ResultSet result = pst.executeQuery()) {
-                List<UserInfo> temp = new ArrayList<>();
-                while (result.next()) {
-                    temp.add(UserInfoRowMapper.getInstance().mapOrThrow(result));
-                }
-                UserInfo[] finalResult = new UserInfo[temp.size()];
-                for (int i = 0; i < temp.size(); i++) {
-                    finalResult[i] = temp.get(i);
-                }
-                return finalResult;
+        }, result -> {
+            List<UserInfo> temp = new ArrayList<>();
+            while (result.next()) {
+                temp.add(UserInfoRowMapper.getInstance().mapOrThrow(result));
             }
-        }
+            UserInfo[] finalResult = new UserInfo[temp.size()];
+            for (int i = 0; i < temp.size(); i++) {
+                finalResult[i] = temp.get(i);
+            }
+            return finalResult;
+        });
+
     }
 
     @Deprecated
-    public static long getUsersCount(Start start) throws SQLException {
+    public static long getUsersCount(Start start) throws SQLException, StorageQueryException {
         String QUERY = "SELECT COUNT(*) as total FROM " + Config.getConfig(start).getThirdPartyUsersTable();
-        try (Connection con = ConnectionPool.getConnection(start);
-                PreparedStatement pst = con.prepareStatement(QUERY)) {
-            try (ResultSet result = pst.executeQuery()) {
-                if (result.next()) {
-                    return result.getLong("total");
-                }
-                return 0;
+        return execute(start, QUERY, NO_OP_SETTER, result -> {
+            if (result.next()) {
+                return result.getLong("total");
             }
-        }
+            return 0L;
+        });
     }
 
     private static class UserInfoRowMapper implements RowMapper<UserInfo, ResultSet> {

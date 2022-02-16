@@ -25,11 +25,14 @@ import io.supertokens.storage.mysql.Start;
 import io.supertokens.storage.mysql.config.Config;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+
+import static io.supertokens.storage.mysql.PreparedStatementValueSetter.NO_OP_SETTER;
+import static io.supertokens.storage.mysql.QueryExecutorTemplate.execute;
+import static io.supertokens.storage.mysql.QueryExecutorTemplate.update;
 
 public class JWTSigningQueries {
     static String getQueryToCreateJWTSigningTable(Start start) {
@@ -50,17 +53,13 @@ public class JWTSigningQueries {
         String QUERY = "SELECT * FROM " + Config.getConfig(start).getJWTSigningKeysTable()
                 + " ORDER BY created_at DESC FOR UPDATE";
 
-        try (PreparedStatement pst = con.prepareStatement(QUERY)) {
-            try (ResultSet result = pst.executeQuery()) {
-                List<JWTSigningKeyInfo> keys = new ArrayList<>();
-
-                while (result.next()) {
-                    keys.add(JWTSigningKeyInfoRowMapper.getInstance().mapOrThrow(result));
-                }
-
-                return keys;
+        return execute(con, QUERY, NO_OP_SETTER, result -> {
+            List<JWTSigningKeyInfo> keys = new ArrayList<>();
+            while (result.next()) {
+                keys.add(JWTSigningKeyInfoRowMapper.getInstance().mapOrThrow(result));
             }
-        }
+            return keys;
+        });
     }
 
     private static class JWTSigningKeyInfoRowMapper implements RowMapper<JWTSigningKeyInfo, ResultSet> {
@@ -89,17 +88,16 @@ public class JWTSigningQueries {
     }
 
     public static void setJWTSigningKeyInfo_Transaction(Start start, Connection con, JWTSigningKeyInfo info)
-            throws SQLException {
+            throws SQLException, StorageQueryException {
 
         String QUERY = "INSERT INTO " + Config.getConfig(start).getJWTSigningKeysTable()
                 + "(key_id, key_string, created_at, algorithm) VALUES(?, ?, ?, ?)";
 
-        try (PreparedStatement pst = con.prepareStatement(QUERY)) {
+        update(con, QUERY, pst -> {
             pst.setString(1, info.keyId);
             pst.setString(2, info.keyString);
             pst.setLong(3, info.createdAtTime);
             pst.setString(4, info.algorithm);
-            pst.executeUpdate();
-        }
+        });
     }
 }
