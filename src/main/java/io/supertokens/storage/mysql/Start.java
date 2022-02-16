@@ -160,7 +160,8 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
                 return startTransactionHelper(logic);
             } catch (SQLException | StorageQueryException | StorageTransactionLogicException e) {
                 // check according to: https://github.com/supertokens/supertokens-mysql-plugin/pull/2
-                if ((e instanceof SQLTransactionRollbackException || e.getMessage().toLowerCase().contains("deadlock"))
+                if ((e instanceof SQLTransactionRollbackException
+                        || (e.getMessage() != null && e.getMessage().toLowerCase().contains("deadlock")))
                         && tries < 3) {
                     try {
                         Thread.sleep((long) (10 + (Math.random() * 20)));
