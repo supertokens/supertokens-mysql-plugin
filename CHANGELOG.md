@@ -7,6 +7,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.12.1] - 2022-02-16
+
+- Fixed https://github.com/supertokens/supertokens-core/issues/373: Catching `StorageTransactionLogicException` in
+  transaction helper function for retries
 - add workflow to verify if pr title follows conventional commits
 
 ## [1.12.0] - 2022-01-14
@@ -21,12 +25,12 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - Delete user functionality
 
-
 ## [1.10.0] - 2021-09-10
 
 ### Changed
 
-- Updated to match 2.9 plugin interface to support multiple access token signing keys: https://github.com/supertokens/supertokens-core/issues/305
+- Updated to match 2.9 plugin interface to support multiple access token signing
+  keys: https://github.com/supertokens/supertokens-core/issues/305
 - Added functions and other changes for the JWT recipe
 
 ## [1.9.0] - 2021-06-20
