@@ -16,159 +16,124 @@
 
 package io.supertokens.storage.mysql.queries;
 
-import io.supertokens.pluginInterface.RECIPE_ID;
 import io.supertokens.pluginInterface.RowMapper;
 import io.supertokens.pluginInterface.emailpassword.PasswordResetTokenInfo;
 import io.supertokens.pluginInterface.emailpassword.UserInfo;
 import io.supertokens.pluginInterface.exceptions.StorageQueryException;
 import io.supertokens.pluginInterface.exceptions.StorageTransactionLogicException;
-import io.supertokens.storage.mysql.ConnectionPool;
 import io.supertokens.storage.mysql.Start;
-import io.supertokens.storage.mysql.config.Config;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+
+import static io.supertokens.pluginInterface.RECIPE_ID.EMAIL_PASSWORD;
+import static io.supertokens.storage.mysql.PreparedStatementValueSetter.NO_OP_SETTER;
+import static io.supertokens.storage.mysql.QueryExecutorTemplate.execute;
+import static io.supertokens.storage.mysql.QueryExecutorTemplate.update;
+import static io.supertokens.storage.mysql.config.Config.getConfig;
+import static java.lang.System.currentTimeMillis;
 
 public class EmailPasswordQueries {
 
     static String getQueryToCreateUsersTable(Start start) {
-        return "CREATE TABLE IF NOT EXISTS " + Config.getConfig(start).getEmailPasswordUsersTable() + " ("
+        return "CREATE TABLE IF NOT EXISTS " + getConfig(start).getEmailPasswordUsersTable() + " ("
                 + "user_id CHAR(36) NOT NULL," + "email VARCHAR(256) NOT NULL UNIQUE,"
                 + "password_hash VARCHAR(128) NOT NULL," + "time_joined BIGINT UNSIGNED NOT NULL,"
                 + "PRIMARY KEY (user_id));";
     }
 
     static String getQueryToCreatePasswordResetTokensTable(Start start) {
-        return "CREATE TABLE IF NOT EXISTS " + Config.getConfig(start).getPasswordResetTokensTable() + " ("
+        return "CREATE TABLE IF NOT EXISTS " + getConfig(start).getPasswordResetTokensTable() + " ("
                 + "user_id CHAR(36) NOT NULL," + "token VARCHAR(128) NOT NULL UNIQUE,"
                 + "token_expiry BIGINT UNSIGNED NOT NULL," + "PRIMARY KEY (user_id, token),"
-                + "FOREIGN KEY (user_id) REFERENCES " + Config.getConfig(start).getEmailPasswordUsersTable()
+                + "FOREIGN KEY (user_id) REFERENCES " + getConfig(start).getEmailPasswordUsersTable()
                 + "(user_id) ON DELETE CASCADE ON UPDATE CASCADE);";
     }
 
     static String getQueryToCreatePasswordResetTokenExpiryIndex(Start start) {
         return "CREATE INDEX emailpassword_password_reset_token_expiry_index ON "
-                + Config.getConfig(start).getPasswordResetTokensTable() + "(token_expiry);";
+                + getConfig(start).getPasswordResetTokensTable() + "(token_expiry);";
     }
 
-    public static void deleteExpiredPasswordResetTokens(Start start) throws SQLException {
-        String QUERY = "DELETE FROM " + Config.getConfig(start).getPasswordResetTokensTable()
-                + " WHERE token_expiry < ?";
+    public static void deleteExpiredPasswordResetTokens(Start start) throws SQLException, StorageQueryException {
+        String QUERY = "DELETE FROM " + getConfig(start).getPasswordResetTokensTable() + " WHERE token_expiry < ?";
 
-        try (Connection con = ConnectionPool.getConnection(start);
-                PreparedStatement pst = con.prepareStatement(QUERY)) {
-            pst.setLong(1, System.currentTimeMillis());
-            pst.executeUpdate();
-        }
+        update(start, QUERY, pst -> pst.setLong(1, currentTimeMillis()));
     }
 
     public static void updateUsersPassword_Transaction(Start start, Connection con, String userId, String newPassword)
-            throws SQLException {
-        String QUERY = "UPDATE " + Config.getConfig(start).getEmailPasswordUsersTable()
+            throws SQLException, StorageQueryException {
+        String QUERY = "UPDATE " + getConfig(start).getEmailPasswordUsersTable()
                 + " SET password_hash = ? WHERE user_id = ?";
 
-        try (PreparedStatement pst = con.prepareStatement(QUERY)) {
+        update(con, QUERY, pst -> {
             pst.setString(1, newPassword);
             pst.setString(2, userId);
-            pst.executeUpdate();
-        }
-    }
-
-    public static void updateUsersEmail_Transaction(Start start, Connection con, String userId, String newEmail)
-            throws SQLException {
-        String QUERY = "UPDATE " + Config.getConfig(start).getEmailPasswordUsersTable()
-                + " SET email = ? WHERE user_id = ?";
-
-        try (PreparedStatement pst = con.prepareStatement(QUERY)) {
-            pst.setString(1, newEmail);
-            pst.setString(2, userId);
-            pst.executeUpdate();
-        }
+        });
     }
 
     public static void deleteAllPasswordResetTokensForUser_Transaction(Start start, Connection con, String userId)
-            throws SQLException {
-        String QUERY = "DELETE FROM " + Config.getConfig(start).getPasswordResetTokensTable() + " WHERE user_id = ?";
+            throws SQLException, StorageQueryException {
+        String QUERY = "DELETE FROM " + getConfig(start).getPasswordResetTokensTable() + " WHERE user_id = ?";
 
-        try (PreparedStatement pst = con.prepareStatement(QUERY)) {
-            pst.setString(1, userId);
-            pst.executeUpdate();
-        }
+        update(con, QUERY, pst -> pst.setString(1, userId));
     }
 
     public static PasswordResetTokenInfo[] getAllPasswordResetTokenInfoForUser(Start start, String userId)
             throws SQLException, StorageQueryException {
-        String QUERY = "SELECT user_id, token, token_expiry FROM "
-                + Config.getConfig(start).getPasswordResetTokensTable() + " WHERE user_id = ?";
+        String QUERY = "SELECT user_id, token, token_expiry FROM " + getConfig(start).getPasswordResetTokensTable()
+                + " WHERE user_id = ?";
 
-        try (Connection con = ConnectionPool.getConnection(start);
-                PreparedStatement pst = con.prepareStatement(QUERY)) {
-            pst.setString(1, userId);
-            ResultSet result = pst.executeQuery();
+        return execute(start, QUERY, pst -> pst.setString(1, userId), result -> {
             List<PasswordResetTokenInfo> temp = new ArrayList<>();
             while (result.next()) {
                 temp.add(PasswordResetTokenInfoRowMapper.getInstance().mapOrThrow(result));
             }
-            PasswordResetTokenInfo[] finalResult = new PasswordResetTokenInfo[temp.size()];
-            for (int i = 0; i < temp.size(); i++) {
-                finalResult[i] = temp.get(i);
-            }
-            return finalResult;
-        }
+            return temp.toArray(PasswordResetTokenInfo[]::new);
+        });
     }
 
     public static PasswordResetTokenInfo[] getAllPasswordResetTokenInfoForUser_Transaction(Start start, Connection con,
             String userId) throws SQLException, StorageQueryException {
 
-        String QUERY = "SELECT user_id, token, token_expiry FROM "
-                + Config.getConfig(start).getPasswordResetTokensTable() + " WHERE user_id = ? FOR UPDATE";
+        String QUERY = "SELECT user_id, token, token_expiry FROM " + getConfig(start).getPasswordResetTokensTable()
+                + " WHERE user_id = ? FOR UPDATE";
 
-        try (PreparedStatement pst = con.prepareStatement(QUERY)) {
-            pst.setString(1, userId);
-            ResultSet result = pst.executeQuery();
+        return execute(con, QUERY, pst -> pst.setString(1, userId), result -> {
             List<PasswordResetTokenInfo> temp = new ArrayList<>();
             while (result.next()) {
                 temp.add(PasswordResetTokenInfoRowMapper.getInstance().mapOrThrow(result));
             }
-            PasswordResetTokenInfo[] finalResult = new PasswordResetTokenInfo[temp.size()];
-            for (int i = 0; i < temp.size(); i++) {
-                finalResult[i] = temp.get(i);
-            }
-            return finalResult;
-        }
+            return temp.toArray(PasswordResetTokenInfo[]::new);
+        });
     }
 
     public static PasswordResetTokenInfo getPasswordResetTokenInfo(Start start, String token)
             throws SQLException, StorageQueryException {
-        String QUERY = "SELECT user_id, token, token_expiry FROM "
-                + Config.getConfig(start).getPasswordResetTokensTable() + " WHERE token = ?";
-        try (Connection con = ConnectionPool.getConnection(start);
-                PreparedStatement pst = con.prepareStatement(QUERY)) {
-            pst.setString(1, token);
-            ResultSet result = pst.executeQuery();
+        String QUERY = "SELECT user_id, token, token_expiry FROM " + getConfig(start).getPasswordResetTokensTable()
+                + " WHERE token = ?";
+        return execute(start, QUERY, pst -> pst.setString(1, token), result -> {
             if (result.next()) {
                 return PasswordResetTokenInfoRowMapper.getInstance().mapOrThrow(result);
             }
-        }
-        return null;
+            return null;
+        });
     }
 
     public static void addPasswordResetToken(Start start, String userId, String tokenHash, long expiry)
-            throws SQLException {
-        String QUERY = "INSERT INTO " + Config.getConfig(start).getPasswordResetTokensTable()
+            throws SQLException, StorageQueryException {
+        String QUERY = "INSERT INTO " + getConfig(start).getPasswordResetTokensTable()
                 + "(user_id, token, token_expiry)" + " VALUES(?, ?, ?)";
 
-        try (Connection con = ConnectionPool.getConnection(start);
-                PreparedStatement pst = con.prepareStatement(QUERY)) {
+        update(start, QUERY, pst -> {
             pst.setString(1, userId);
             pst.setString(2, tokenHash);
             pst.setLong(3, expiry);
-            pst.executeUpdate();
-        }
+        });
     }
 
     public static void signUp(Start start, String userId, String email, String passwordHash, long timeJoined)
@@ -177,27 +142,25 @@ public class EmailPasswordQueries {
             Connection sqlCon = (Connection) con.getConnection();
             try {
                 {
-                    String QUERY = "INSERT INTO " + Config.getConfig(start).getUsersTable()
+                    String QUERY = "INSERT INTO " + getConfig(start).getUsersTable()
                             + "(user_id, recipe_id, time_joined)" + " VALUES(?, ?, ?)";
-                    try (PreparedStatement pst = sqlCon.prepareStatement(QUERY)) {
+                    update(sqlCon, QUERY, pst -> {
                         pst.setString(1, userId);
-                        pst.setString(2, RECIPE_ID.EMAIL_PASSWORD.toString());
+                        pst.setString(2, EMAIL_PASSWORD.toString());
                         pst.setLong(3, timeJoined);
-                        pst.executeUpdate();
-                    }
+                    });
                 }
 
                 {
-                    String QUERY = "INSERT INTO " + Config.getConfig(start).getEmailPasswordUsersTable()
+                    String QUERY = "INSERT INTO " + getConfig(start).getEmailPasswordUsersTable()
                             + "(user_id, email, password_hash, time_joined)" + " VALUES(?, ?, ?, ?)";
 
-                    try (PreparedStatement pst = sqlCon.prepareStatement(QUERY)) {
+                    update(sqlCon, QUERY, pst -> {
                         pst.setString(1, userId);
                         pst.setString(2, email);
                         pst.setString(3, passwordHash);
                         pst.setLong(4, timeJoined);
-                        pst.executeUpdate();
-                    }
+                    });
                 }
 
                 sqlCon.commit();
@@ -214,24 +177,20 @@ public class EmailPasswordQueries {
             Connection sqlCon = (Connection) con.getConnection();
             try {
                 {
-                    String QUERY = "DELETE FROM " + Config.getConfig(start).getUsersTable()
+                    String QUERY = "DELETE FROM " + getConfig(start).getUsersTable()
                             + " WHERE user_id = ? AND recipe_id = ?";
 
-                    try (PreparedStatement pst = sqlCon.prepareStatement(QUERY)) {
+                    update(sqlCon, QUERY, pst -> {
                         pst.setString(1, userId);
-                        pst.setString(2, RECIPE_ID.EMAIL_PASSWORD.toString());
-                        pst.executeUpdate();
-                    }
+                        pst.setString(2, EMAIL_PASSWORD.toString());
+                    });
                 }
 
                 {
-                    String QUERY = "DELETE FROM " + Config.getConfig(start).getEmailPasswordUsersTable()
+                    String QUERY = "DELETE FROM " + getConfig(start).getEmailPasswordUsersTable()
                             + " WHERE user_id = ?";
 
-                    try (PreparedStatement pst = sqlCon.prepareStatement(QUERY)) {
-                        pst.setString(1, userId);
-                        pst.executeUpdate();
-                    }
+                    update(sqlCon, QUERY, pst -> pst.setString(1, userId));
                 }
                 sqlCon.commit();
             } catch (SQLException throwables) {
@@ -253,10 +212,10 @@ public class EmailPasswordQueries {
 
     public static List<UserInfo> getUsersInfoUsingIdList(Start start, List<String> ids)
             throws SQLException, StorageQueryException {
-        List<UserInfo> finalResult = new ArrayList<>();
+
         if (ids.size() > 0) {
             StringBuilder QUERY = new StringBuilder("SELECT user_id, email, password_hash, time_joined FROM "
-                    + Config.getConfig(start).getEmailPasswordUsersTable());
+                    + getConfig(start).getEmailPasswordUsersTable());
             QUERY.append(" WHERE user_id IN (");
             for (int i = 0; i < ids.size(); i++) {
 
@@ -268,69 +227,58 @@ public class EmailPasswordQueries {
             }
             QUERY.append(")");
 
-            try (Connection con = ConnectionPool.getConnection(start);
-                    PreparedStatement pst = con.prepareStatement(QUERY.toString())) {
+            return execute(start, QUERY.toString(), pst -> {
                 for (int i = 0; i < ids.size(); i++) {
                     // i+1 cause this starts with 1 and not 0
                     pst.setString(i + 1, ids.get(i));
                 }
-                ResultSet result = pst.executeQuery();
+            }, result -> {
+                List<UserInfo> finalResult = new ArrayList<>();
                 while (result.next()) {
                     finalResult.add(UserInfoRowMapper.getInstance().mapOrThrow(result));
                 }
-            }
+                return finalResult;
+            });
         }
-        return finalResult;
+        return Collections.emptyList();
     }
 
     public static UserInfo getUserInfoUsingId_Transaction(Start start, Connection con, String id)
             throws SQLException, StorageQueryException {
         String QUERY = "SELECT user_id, email, password_hash, time_joined FROM "
-                + Config.getConfig(start).getEmailPasswordUsersTable() + " WHERE user_id = ? FOR UPDATE";
-        try (PreparedStatement pst = con.prepareStatement(QUERY)) {
-            pst.setString(1, id);
-            ResultSet result = pst.executeQuery();
+                + getConfig(start).getEmailPasswordUsersTable() + " WHERE user_id = ? FOR UPDATE";
+        return execute(con, QUERY, pst -> pst.setString(1, id), result -> {
             if (result.next()) {
                 return UserInfoRowMapper.getInstance().mapOrThrow(result);
             }
-        }
-        return null;
+            return null;
+        });
     }
 
     public static UserInfo getUserInfoUsingEmail(Start start, String email) throws SQLException, StorageQueryException {
         String QUERY = "SELECT user_id, email, password_hash, time_joined FROM "
-                + Config.getConfig(start).getEmailPasswordUsersTable() + " WHERE email = ?";
-        try (Connection con = ConnectionPool.getConnection(start);
-                PreparedStatement pst = con.prepareStatement(QUERY)) {
-            pst.setString(1, email);
-            ResultSet result = pst.executeQuery();
+                + getConfig(start).getEmailPasswordUsersTable() + " WHERE email = ?";
+        return execute(start, QUERY, pst -> pst.setString(1, email), result -> {
             if (result.next()) {
                 return UserInfoRowMapper.getInstance().mapOrThrow(result);
             }
-        }
-        return null;
+            return null;
+        });
     }
 
     @Deprecated
     public static UserInfo[] getUsersInfo(Start start, Integer limit, String timeJoinedOrder)
             throws SQLException, StorageQueryException {
         String QUERY = "SELECT user_id, email, password_hash, time_joined FROM "
-                + Config.getConfig(start).getEmailPasswordUsersTable() + " ORDER BY time_joined " + timeJoinedOrder
+                + getConfig(start).getEmailPasswordUsersTable() + " ORDER BY time_joined " + timeJoinedOrder
                 + ", user_id DESC LIMIT ?";
-        try (Connection con = ConnectionPool.getConnection(start);
-                PreparedStatement pst = con.prepareStatement(QUERY)) {
-            pst.setInt(1, limit);
-            ResultSet result = pst.executeQuery();
+        return execute(start, QUERY, pst -> pst.setInt(1, limit), result -> {
             List<UserInfo> temp = new ArrayList<>();
             while (result.next()) {
                 temp.add(UserInfoRowMapper.getInstance().mapOrThrow(result));
             }
-            UserInfo[] finalResult = new UserInfo[temp.size()];
-            for (int i = 0; i < temp.size(); i++) {
-                finalResult[i] = temp.get(i);
-            }
-            return finalResult;
-        }
+            return temp.toArray(UserInfo[]::new);
+        });
     }
 
     @Deprecated
@@ -338,39 +286,42 @@ public class EmailPasswordQueries {
             String timeJoinedOrder) throws SQLException, StorageQueryException {
         String timeJoinedOrderSymbol = timeJoinedOrder.equals("ASC") ? ">" : "<";
         String QUERY = "SELECT user_id, email, password_hash, time_joined FROM "
-                + Config.getConfig(start).getEmailPasswordUsersTable() + " WHERE time_joined " + timeJoinedOrderSymbol
+                + getConfig(start).getEmailPasswordUsersTable() + " WHERE time_joined " + timeJoinedOrderSymbol
                 + " ? OR (time_joined = ? AND user_id <= ?) ORDER BY time_joined " + timeJoinedOrder
                 + ", user_id DESC LIMIT ?";
-        try (Connection con = ConnectionPool.getConnection(start);
-                PreparedStatement pst = con.prepareStatement(QUERY)) {
+        return execute(start, QUERY, pst -> {
             pst.setLong(1, timeJoined);
             pst.setLong(2, timeJoined);
             pst.setString(3, userId);
             pst.setInt(4, limit);
-            ResultSet result = pst.executeQuery();
+        }, result -> {
             List<UserInfo> temp = new ArrayList<>();
             while (result.next()) {
                 temp.add(UserInfoRowMapper.getInstance().mapOrThrow(result));
             }
-            UserInfo[] finalResult = new UserInfo[temp.size()];
-            for (int i = 0; i < temp.size(); i++) {
-                finalResult[i] = temp.get(i);
-            }
-            return finalResult;
-        }
+            return temp.toArray(UserInfo[]::new);
+        });
     }
 
     @Deprecated
-    public static long getUsersCount(Start start) throws SQLException {
-        String QUERY = "SELECT COUNT(*) as total FROM " + Config.getConfig(start).getEmailPasswordUsersTable();
-        try (Connection con = ConnectionPool.getConnection(start);
-                PreparedStatement pst = con.prepareStatement(QUERY)) {
-            ResultSet result = pst.executeQuery();
+    public static long getUsersCount(Start start) throws SQLException, StorageQueryException {
+        String QUERY = "SELECT COUNT(*) as total FROM " + getConfig(start).getEmailPasswordUsersTable();
+        return execute(start, QUERY, NO_OP_SETTER, result -> {
             if (result.next()) {
                 return result.getLong("total");
             }
-            return 0;
-        }
+            return 0L;
+        });
+    }
+
+    public static void updateUsersEmail_Transaction(Start start, Connection conn, String userId, String email)
+            throws SQLException, StorageQueryException {
+        String QUERY = "UPDATE " + getConfig(start).getEmailPasswordUsersTable() + " SET email = ? WHERE user_id = ?";
+
+        update(conn, QUERY, pst -> {
+            pst.setString(1, email);
+            pst.setString(2, userId);
+        });
     }
 
     private static class PasswordResetTokenInfoRowMapper implements RowMapper<PasswordResetTokenInfo, ResultSet> {
