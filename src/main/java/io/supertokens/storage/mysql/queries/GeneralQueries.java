@@ -29,7 +29,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -235,15 +234,12 @@ public class GeneralQueries {
     }
 
     @TestOnly
-    public static void deleteAllTables(Start start) throws SQLException {
+    public static void deleteAllTables(Start start) throws SQLException, StorageQueryException {
         String DROP_QUERY = "DROP DATABASE " + Config.getConfig(start).getDatabaseName();
         String CREATE_QUERY = "CREATE DATABASE " + Config.getConfig(start).getDatabaseName();
-        try (Connection con = ConnectionPool.getConnection(start);
-                PreparedStatement drop = con.prepareStatement(DROP_QUERY);
-                PreparedStatement create = con.prepareStatement(CREATE_QUERY)) {
-            drop.executeUpdate();
-            create.executeUpdate();
-        }
+        Connection con = ConnectionPool.getConnection(start);
+        update(con, DROP_QUERY, NO_OP_SETTER);
+        update(con, CREATE_QUERY, NO_OP_SETTER);
     }
 
     public static long getUsersCount(Start start, RECIPE_ID[] includeRecipeIds)

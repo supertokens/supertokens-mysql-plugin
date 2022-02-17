@@ -21,11 +21,9 @@ import io.supertokens.pluginInterface.emailpassword.PasswordResetTokenInfo;
 import io.supertokens.pluginInterface.emailpassword.UserInfo;
 import io.supertokens.pluginInterface.exceptions.StorageQueryException;
 import io.supertokens.pluginInterface.exceptions.StorageTransactionLogicException;
-import io.supertokens.storage.mysql.ConnectionPool;
 import io.supertokens.storage.mysql.Start;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -90,21 +88,13 @@ public class EmailPasswordQueries {
         String QUERY = "SELECT user_id, token, token_expiry FROM " + getConfig(start).getPasswordResetTokensTable()
                 + " WHERE user_id = ?";
 
-        try (Connection con = ConnectionPool.getConnection(start);
-                PreparedStatement pst = con.prepareStatement(QUERY)) {
-            pst.setString(1, userId);
-            try (ResultSet result = pst.executeQuery()) {
-                List<PasswordResetTokenInfo> temp = new ArrayList<>();
-                while (result.next()) {
-                    temp.add(PasswordResetTokenInfoRowMapper.getInstance().mapOrThrow(result));
-                }
-                PasswordResetTokenInfo[] finalResult = new PasswordResetTokenInfo[temp.size()];
-                for (int i = 0; i < temp.size(); i++) {
-                    finalResult[i] = temp.get(i);
-                }
-                return finalResult;
+        return execute(start, QUERY, pst -> pst.setString(1, userId), result -> {
+            List<PasswordResetTokenInfo> temp = new ArrayList<>();
+            while (result.next()) {
+                temp.add(PasswordResetTokenInfoRowMapper.getInstance().mapOrThrow(result));
             }
-        }
+            return temp.toArray(PasswordResetTokenInfo[]::new);
+        });
     }
 
     public static PasswordResetTokenInfo[] getAllPasswordResetTokenInfoForUser_Transaction(Start start, Connection con,
@@ -113,16 +103,13 @@ public class EmailPasswordQueries {
         String QUERY = "SELECT user_id, token, token_expiry FROM " + getConfig(start).getPasswordResetTokensTable()
                 + " WHERE user_id = ? FOR UPDATE";
 
-        try (PreparedStatement pst = con.prepareStatement(QUERY)) {
-            pst.setString(1, userId);
-            try (ResultSet result = pst.executeQuery()) {
-                List<PasswordResetTokenInfo> temp = new ArrayList<>();
-                while (result.next()) {
-                    temp.add(PasswordResetTokenInfoRowMapper.getInstance().mapOrThrow(result));
-                }
-                return temp.toArray(PasswordResetTokenInfo[]::new);
+        return execute(con, QUERY, pst -> pst.setString(1, userId), result -> {
+            List<PasswordResetTokenInfo> temp = new ArrayList<>();
+            while (result.next()) {
+                temp.add(PasswordResetTokenInfoRowMapper.getInstance().mapOrThrow(result));
             }
-        }
+            return temp.toArray(PasswordResetTokenInfo[]::new);
+        });
     }
 
     public static PasswordResetTokenInfo getPasswordResetTokenInfo(Start start, String token)
@@ -285,17 +272,13 @@ public class EmailPasswordQueries {
         String QUERY = "SELECT user_id, email, password_hash, time_joined FROM "
                 + getConfig(start).getEmailPasswordUsersTable() + " ORDER BY time_joined " + timeJoinedOrder
                 + ", user_id DESC LIMIT ?";
-        try (Connection con = ConnectionPool.getConnection(start);
-                PreparedStatement pst = con.prepareStatement(QUERY)) {
-            pst.setInt(1, limit);
-            try (ResultSet result = pst.executeQuery()) {
-                List<UserInfo> temp = new ArrayList<>();
-                while (result.next()) {
-                    temp.add(UserInfoRowMapper.getInstance().mapOrThrow(result));
-                }
-                return temp.toArray(UserInfo[]::new);
+        return execute(start, QUERY, pst -> pst.setInt(1, limit), result -> {
+            List<UserInfo> temp = new ArrayList<>();
+            while (result.next()) {
+                temp.add(UserInfoRowMapper.getInstance().mapOrThrow(result));
             }
-        }
+            return temp.toArray(UserInfo[]::new);
+        });
     }
 
     @Deprecated
@@ -306,20 +289,18 @@ public class EmailPasswordQueries {
                 + getConfig(start).getEmailPasswordUsersTable() + " WHERE time_joined " + timeJoinedOrderSymbol
                 + " ? OR (time_joined = ? AND user_id <= ?) ORDER BY time_joined " + timeJoinedOrder
                 + ", user_id DESC LIMIT ?";
-        try (Connection con = ConnectionPool.getConnection(start);
-                PreparedStatement pst = con.prepareStatement(QUERY)) {
+        return execute(start, QUERY, pst -> {
             pst.setLong(1, timeJoined);
             pst.setLong(2, timeJoined);
             pst.setString(3, userId);
             pst.setInt(4, limit);
-            try (ResultSet result = pst.executeQuery()) {
-                List<UserInfo> temp = new ArrayList<>();
-                while (result.next()) {
-                    temp.add(UserInfoRowMapper.getInstance().mapOrThrow(result));
-                }
-                return temp.toArray(UserInfo[]::new);
+        }, result -> {
+            List<UserInfo> temp = new ArrayList<>();
+            while (result.next()) {
+                temp.add(UserInfoRowMapper.getInstance().mapOrThrow(result));
             }
-        }
+            return temp.toArray(UserInfo[]::new);
+        });
     }
 
     @Deprecated

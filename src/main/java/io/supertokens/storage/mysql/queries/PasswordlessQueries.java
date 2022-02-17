@@ -153,7 +153,6 @@ public class PasswordlessQueries {
             pst.setString(2, code.deviceIdHash);
             pst.setString(3, code.linkCodeHash);
             pst.setLong(4, code.createdAt);
-            pst.executeUpdate();
         });
     }
 

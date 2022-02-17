@@ -20,13 +20,11 @@ import io.supertokens.pluginInterface.RowMapper;
 import io.supertokens.pluginInterface.exceptions.StorageQueryException;
 import io.supertokens.pluginInterface.exceptions.StorageTransactionLogicException;
 import io.supertokens.pluginInterface.thirdparty.UserInfo;
-import io.supertokens.storage.mysql.ConnectionPool;
 import io.supertokens.storage.mysql.Start;
 import io.supertokens.storage.mysql.config.Config;
 import org.jetbrains.annotations.NotNull;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -209,22 +207,16 @@ public class ThirdPartyQueries {
         String sqlQuery = "SELECT user_id, third_party_id, third_party_user_id, email, time_joined FROM "
                 + Config.getConfig(start).getThirdPartyUsersTable() + " WHERE email = ?";
 
-        try (Connection conn = ConnectionPool.getConnection(start);
-                PreparedStatement statement = conn.prepareStatement(sqlQuery)) {
-            statement.setString(1, email);
+        return execute(start, sqlQuery, pst -> pst.setString(1, email), result -> {
+            List<UserInfo> users = new ArrayList<>();
 
-            return getUsersFromResult(statement.executeQuery());
-        }
-    }
+            while (result.next()) {
+                users.add(UserInfoRowMapper.getInstance().mapOrThrow(result));
+            }
 
-    private static UserInfo[] getUsersFromResult(ResultSet resultSet) throws SQLException, StorageQueryException {
-        List<UserInfo> users = new ArrayList<>();
+            return users.toArray(UserInfo[]::new);
 
-        while (resultSet.next()) {
-            users.add(UserInfoRowMapper.getInstance().mapOrThrow(resultSet));
-        }
-
-        return users.toArray(UserInfo[]::new);
+        });
     }
 
     @Deprecated
