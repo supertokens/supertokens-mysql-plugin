@@ -12,13 +12,13 @@ import java.sql.PreparedStatement;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
 @RunWith(ArchUnitRunner.class) // Remove this line for JUnit 5!!
-@AnalyzeClasses(packages = "io.supertokens.inmemorydb.queries")
+@AnalyzeClasses(packages = "io.supertokens.storage.mysql.queries")
 public class QueryTemplateUsageTest {
 
     // @formatter:off
     @ArchTest
     public static final ArchRule discourage_use_of_unsafe_methods_rule = noClasses()
-            .that().resideInAnyPackage("io.supertokens.inmemorydb.queries")
+            .that().resideInAnyPackage("io.supertokens.storage.mysql.queries")
             .should().callMethod(Connection.class, "prepareStatement", String.class)
             .orShould().callMethod(PreparedStatement.class, "executeQuery")
             .orShould().callMethod(PreparedStatement.class, "executeUpdate")
