@@ -153,17 +153,17 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     @Override
     public <T> T startTransaction(TransactionLogic<T> logic)
             throws StorageTransactionLogicException, StorageQueryException {
-        return startTransaction(logic, true);
+        return startTransaction(logic, TransactionIsolationLevel.SERIALIZABLE);
     }
 
     @Override
-    public <T> T startTransaction(TransactionLogic<T> logic, boolean serializableIsolation)
+    public <T> T startTransaction(TransactionLogic<T> logic, TransactionIsolationLevel isolationLevel)
             throws StorageTransactionLogicException, StorageQueryException {
         int tries = 0;
         while (true) {
             tries++;
             try {
-                return startTransactionHelper(logic, serializableIsolation);
+                return startTransactionHelper(logic, isolationLevel);
             } catch (SQLException | StorageQueryException | StorageTransactionLogicException e) {
                 // check according to: https://github.com/supertokens/supertokens-mysql-plugin/pull/2
                 if ((e instanceof SQLTransactionRollbackException
@@ -186,15 +186,16 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
         }
     }
 
-    private <T> T startTransactionHelper(TransactionLogic<T> logic, boolean serializableIsolation)
+    private <T> T startTransactionHelper(TransactionLogic<T> logic, TransactionIsolationLevel isolationLevel)
             throws StorageQueryException, StorageTransactionLogicException, SQLException {
         Connection con = null;
         Integer defaultTransactionIsolation = null;
         try {
             con = ConnectionPool.getConnection(this);
             defaultTransactionIsolation = con.getTransactionIsolation();
-            con.setTransactionIsolation(serializableIsolation ? Connection.TRANSACTION_SERIALIZABLE
-                    : Connection.TRANSACTION_REPEATABLE_READ);
+            con.setTransactionIsolation(
+                    isolationLevel == TransactionIsolationLevel.SERIALIZABLE ? Connection.TRANSACTION_SERIALIZABLE
+                            : Connection.TRANSACTION_REPEATABLE_READ);
             con.setAutoCommit(false);
             return logic.mainLogicAndCommit(new TransactionConnection(con));
         } catch (Exception e) {
