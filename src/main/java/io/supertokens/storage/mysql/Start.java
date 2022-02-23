@@ -153,11 +153,17 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     @Override
     public <T> T startTransaction(TransactionLogic<T> logic)
             throws StorageTransactionLogicException, StorageQueryException {
+        return startTransaction(logic, true);
+    }
+
+    @Override
+    public <T> T startTransaction(TransactionLogic<T> logic, boolean serializableIsolation)
+            throws StorageTransactionLogicException, StorageQueryException {
         int tries = 0;
         while (true) {
             tries++;
             try {
-                return startTransactionHelper(logic);
+                return startTransactionHelper(logic, serializableIsolation);
             } catch (SQLException | StorageQueryException | StorageTransactionLogicException e) {
                 // check according to: https://github.com/supertokens/supertokens-mysql-plugin/pull/2
                 if ((e instanceof SQLTransactionRollbackException
@@ -180,14 +186,15 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
         }
     }
 
-    private <T> T startTransactionHelper(TransactionLogic<T> logic)
+    private <T> T startTransactionHelper(TransactionLogic<T> logic, boolean serializableIsolation)
             throws StorageQueryException, StorageTransactionLogicException, SQLException {
         Connection con = null;
         Integer defaultTransactionIsolation = null;
         try {
             con = ConnectionPool.getConnection(this);
             defaultTransactionIsolation = con.getTransactionIsolation();
-            con.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
+            con.setTransactionIsolation(serializableIsolation ? Connection.TRANSACTION_SERIALIZABLE
+                    : Connection.TRANSACTION_REPEATABLE_READ);
             con.setAutoCommit(false);
             return logic.mainLogicAndCommit(new TransactionConnection(con));
         } catch (Exception e) {

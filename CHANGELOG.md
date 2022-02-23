@@ -7,6 +7,12 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.13.0] - 2022-02-23
+
+### Changed
+
+- Using lower transaction isolation level while creating passwordless device with code
+
 ## [1.12.1] - 2022-02-16
 
 - Fixed https://github.com/supertokens/supertokens-core/issues/373: Catching `StorageTransactionLogicException` in

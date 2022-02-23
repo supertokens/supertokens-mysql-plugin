@@ -38,6 +38,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public class DeadlockTest {
@@ -181,6 +182,46 @@ public class DeadlockTest {
         es.shutdown();
         es.awaitTermination(2, TimeUnit.MINUTES);
 
+        assert (pass.get());
+
+        process.kill();
+        assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
+    }
+
+    @Test
+    public void testCodeCreationRapidlyWithDifferentEmails() throws Exception {
+        String[] args = { "../" };
+
+        TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
+        assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
+
+        ExecutorService es = Executors.newCachedThreadPool();
+
+        AtomicBoolean pass = new AtomicBoolean(true);
+
+        for (int i = 0; i < 3000; i++) {
+            final int ind = i;
+            es.execute(() -> {
+                try {
+                    Passwordless.CreateCodeResponse resp = Passwordless.createCode(process.getProcess(),
+                            "test" + ind + "@example.com", null, null, null);
+                    Passwordless.ConsumeCodeResponse resp2 = Passwordless.consumeCode(process.getProcess(),
+                            resp.deviceId, resp.deviceIdHash, resp.userInputCode, resp.linkCode);
+
+                } catch (Exception e) {
+                    if (e.getMessage() != null
+                            && e.getMessage().toLowerCase().contains("the transaction might succeed if retried")) {
+                        pass.set(false);
+                    }
+                }
+            });
+        }
+
+        es.shutdown();
+        es.awaitTermination(2, TimeUnit.MINUTES);
+
+        assertNull(process
+                .checkOrWaitForEventInPlugin(io.supertokens.storage.mysql.ProcessState.PROCESS_STATE.DEADLOCK_FOUND));
         assert (pass.get());
 
         process.kill();
