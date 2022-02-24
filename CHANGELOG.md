@@ -6,15 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-### Changes
-
-- Fixed ResultSet instances to avoid Memory Leaks
 
 ## [1.13.0] - 2022-02-23
 
 ### Changed
 
 - Using lower transaction isolation level while creating passwordless device with code
+- Fixed ResultSet instances to avoid Memory Leaks
 
 ## [1.12.1] - 2022-02-16
 
