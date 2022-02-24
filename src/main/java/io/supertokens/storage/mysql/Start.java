@@ -41,7 +41,11 @@ import io.supertokens.pluginInterface.jwt.exceptions.DuplicateKeyIdException;
 import io.supertokens.pluginInterface.jwt.sqlstorage.JWTRecipeSQLStorage;
 import io.supertokens.pluginInterface.passwordless.PasswordlessCode;
 import io.supertokens.pluginInterface.passwordless.PasswordlessDevice;
-import io.supertokens.pluginInterface.passwordless.exception.*;
+import io.supertokens.pluginInterface.passwordless.exception.DuplicateCodeIdException;
+import io.supertokens.pluginInterface.passwordless.exception.DuplicateDeviceIdHashException;
+import io.supertokens.pluginInterface.passwordless.exception.DuplicateLinkCodeHashException;
+import io.supertokens.pluginInterface.passwordless.exception.DuplicatePhoneNumberException;
+import io.supertokens.pluginInterface.passwordless.exception.UnknownDeviceIdHash;
 import io.supertokens.pluginInterface.passwordless.sqlStorage.PasswordlessSQLStorage;
 import io.supertokens.pluginInterface.session.SessionInfo;
 import io.supertokens.pluginInterface.session.sqlStorage.SessionSQLStorage;
@@ -50,7 +54,13 @@ import io.supertokens.pluginInterface.thirdparty.exception.DuplicateThirdPartyUs
 import io.supertokens.pluginInterface.thirdparty.sqlStorage.ThirdPartySQLStorage;
 import io.supertokens.storage.mysql.config.Config;
 import io.supertokens.storage.mysql.output.Logging;
-import io.supertokens.storage.mysql.queries.*;
+import io.supertokens.storage.mysql.queries.EmailPasswordQueries;
+import io.supertokens.storage.mysql.queries.EmailVerificationQueries;
+import io.supertokens.storage.mysql.queries.GeneralQueries;
+import io.supertokens.storage.mysql.queries.JWTSigningQueries;
+import io.supertokens.storage.mysql.queries.PasswordlessQueries;
+import io.supertokens.storage.mysql.queries.SessionQueries;
+import io.supertokens.storage.mysql.queries.ThirdPartyQueries;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.slf4j.LoggerFactory;
@@ -145,7 +155,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
         ConnectionPool.initPool(this);
         try {
             GeneralQueries.createTablesIfNotExists(this);
-        } catch (SQLException e) {
+        } catch (SQLException | StorageQueryException e) {
             throw new QuitProgramFromPluginException(e);
         }
     }
