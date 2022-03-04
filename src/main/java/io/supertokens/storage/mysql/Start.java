@@ -52,6 +52,8 @@ import io.supertokens.pluginInterface.session.sqlStorage.SessionSQLStorage;
 import io.supertokens.pluginInterface.sqlStorage.TransactionConnection;
 import io.supertokens.pluginInterface.thirdparty.exception.DuplicateThirdPartyUserException;
 import io.supertokens.pluginInterface.thirdparty.sqlStorage.ThirdPartySQLStorage;
+import io.supertokens.pluginInterface.usermetadata.UserMetadataStorage;
+import io.supertokens.pluginInterface.usermetadata.sqlStorage.UserMetadataSQLStorage;
 import io.supertokens.storage.mysql.config.Config;
 import io.supertokens.storage.mysql.output.Logging;
 import io.supertokens.storage.mysql.queries.EmailPasswordQueries;
@@ -61,6 +63,8 @@ import io.supertokens.storage.mysql.queries.JWTSigningQueries;
 import io.supertokens.storage.mysql.queries.PasswordlessQueries;
 import io.supertokens.storage.mysql.queries.SessionQueries;
 import io.supertokens.storage.mysql.queries.ThirdPartyQueries;
+import io.supertokens.storage.mysql.queries.UserMetadataQueries;
+
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.slf4j.LoggerFactory;
@@ -73,7 +77,7 @@ import java.sql.SQLTransactionRollbackException;
 import java.util.List;
 
 public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailVerificationSQLStorage,
-        ThirdPartySQLStorage, JWTRecipeSQLStorage, PasswordlessSQLStorage {
+        ThirdPartySQLStorage, JWTRecipeSQLStorage, PasswordlessSQLStorage, UserMetadataSQLStorage {
 
     private static final Object appenderLock = new Object();
     public static boolean silent = false;
@@ -1306,6 +1310,46 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
                 throw new DuplicatePhoneNumberException();
             }
 
+            throw new StorageQueryException(e);
+        }
+    }
+
+    @Override
+    public JsonObject getUserMetadata(String userId) throws StorageQueryException {
+        try {
+            return UserMetadataQueries.getUserMetadata(this, userId);
+        } catch (SQLException e) {
+            throw new StorageQueryException(e);
+        }
+    }
+
+    @Override
+    public JsonObject getUserMetadata_Transaction(TransactionConnection con, String userId)
+            throws StorageQueryException {
+        Connection sqlCon = (Connection) con.getConnection();
+        try {
+            return UserMetadataQueries.getUserMetadata_Transaction(this, sqlCon, userId);
+        } catch (SQLException e) {
+            throw new StorageQueryException(e);
+        }
+    }
+
+    @Override
+    public int setUserMetadata_Transaction(TransactionConnection con, String userId, JsonObject metadata)
+            throws StorageQueryException {
+        Connection sqlCon = (Connection) con.getConnection();
+        try {
+            return UserMetadataQueries.setUserMetadata_Transaction(this, sqlCon, userId, metadata);
+        } catch (SQLException e) {
+            throw new StorageQueryException(e);
+        }
+    }
+
+    @Override
+    public int deleteUserMetadata(String userId) throws StorageQueryException {
+        try {
+            return UserMetadataQueries.deleteUserMetadata(this, userId);
+        } catch (SQLException e) {
             throw new StorageQueryException(e);
         }
     }

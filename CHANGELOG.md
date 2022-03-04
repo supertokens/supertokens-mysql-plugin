@@ -7,6 +7,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- Support for usermetadata
+
 ## [1.13.0] - 2022-02-23
 
 ### Changed

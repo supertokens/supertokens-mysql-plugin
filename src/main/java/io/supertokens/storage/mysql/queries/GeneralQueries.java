@@ -55,6 +55,7 @@ import static io.supertokens.storage.mysql.queries.PasswordlessQueries.getQueryT
 import static io.supertokens.storage.mysql.queries.PasswordlessQueries.getQueryToCreateDevicesTable;
 import static io.supertokens.storage.mysql.queries.SessionQueries.getQueryToCreateAccessTokenSigningKeysTable;
 import static io.supertokens.storage.mysql.queries.SessionQueries.getQueryToCreateSessionInfoTable;
+import static io.supertokens.storage.mysql.queries.UserMetadataQueries.getQueryToCreateUserMetadataTable;
 
 public class GeneralQueries {
 
@@ -161,6 +162,11 @@ public class GeneralQueries {
             update(start, getQueryToCreateCodesTable(start), NO_OP_SETTER);
             // index
             update(start, getQueryToCreateCodeCreatedAtIndex(start), NO_OP_SETTER);
+        }
+
+        if (!doesTableExists(start, Config.getConfig(start).getUserMetadataTable())) {
+            getInstance(start).addState(CREATING_NEW_TABLE, null);
+            update(start, getQueryToCreateUserMetadataTable(start), NO_OP_SETTER);
         }
     }
 
