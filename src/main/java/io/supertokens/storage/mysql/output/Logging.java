@@ -35,12 +35,11 @@ public class Logging extends ResourceDistributor.SingletonResource {
 
     private Logging(Start start, String infoLogPath, String errorLogPath) {
         this.infoLogger = infoLogPath.equals("null")
-                ? createLoggerForConsole(start, "io.supertokens.storage.mysql.Info." + start.getProcessId())
-                : createLoggerForFile(start, infoLogPath, "io.supertokens.storage.mysql.Info." + start.getProcessId());
+                ? createLoggerForConsole(start, "io.supertokens.storage.mysql.Info")
+                : createLoggerForFile(start, infoLogPath, "io.supertokens.storage.mysql.Info");
         this.errorLogger = errorLogPath.equals("null")
-                ? createLoggerForConsole(start, "io.supertokens.storage.mysql.Error." + start.getProcessId())
-                : createLoggerForFile(start, errorLogPath,
-                        "io.supertokens.storage.mysql.Error." + start.getProcessId());
+                ? createLoggerForConsole(start, "io.supertokens.storage.mysql.Error")
+                : createLoggerForFile(start, errorLogPath, "io.supertokens.storage.mysql.Error");
     }
 
     private static Logging getInstance(Start start) {
@@ -139,7 +138,7 @@ public class Logging extends ResourceDistributor.SingletonResource {
 
     private Logger createLoggerForFile(Start start, String file, String name) {
         LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
-        LayoutWrappingEncoder ple = new LayoutWrappingEncoder(start);
+        LayoutWrappingEncoder ple = new LayoutWrappingEncoder(start.getProcessId());
         ple.setContext(lc);
         ple.start();
         FileAppender<ILoggingEvent> fileAppender = new FileAppender<>();
@@ -157,7 +156,7 @@ public class Logging extends ResourceDistributor.SingletonResource {
 
     private Logger createLoggerForConsole(Start start, String name) {
         LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
-        LayoutWrappingEncoder ple = new LayoutWrappingEncoder(start);
+        LayoutWrappingEncoder ple = new LayoutWrappingEncoder(start.getProcessId());
         ple.setContext(lc);
         ple.start();
         ConsoleAppender<ILoggingEvent> logConsoleAppender = new ConsoleAppender<>();

@@ -54,6 +54,7 @@ public class LoggingTest {
 
     @Test
     public void defaultLogging() throws Exception {
+        StorageLayer.close();
         String[] args = { "../" };
         TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
 
@@ -148,15 +149,16 @@ public class LoggingTest {
 
     @Test
     public void confirmLoggerClosed() throws Exception {
+        StorageLayer.close();
         String[] args = { "../" };
         TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
 
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
 
         ch.qos.logback.classic.Logger mysqlInfo = (ch.qos.logback.classic.Logger) LoggerFactory
-                .getLogger("io.supertokens.storage.mysql.Info." + process.getProcess().getProcessId());
+                .getLogger("io.supertokens.storage.mysql.Info");
         ch.qos.logback.classic.Logger mysqlError = (ch.qos.logback.classic.Logger) LoggerFactory
-                .getLogger("io.supertokens.storage.mysql.Error." + process.getProcess().getProcessId());
+                .getLogger("io.supertokens.storage.mysql.Error");
 
         ch.qos.logback.classic.Logger hikariLogger = (Logger) LoggerFactory.getLogger("com.zaxxer.hikari");
 

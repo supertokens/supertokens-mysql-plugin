@@ -33,7 +33,7 @@ import java.util.Objects;
 public class ConnectionPool extends ResourceDistributor.SingletonResource {
 
     private static final String RESOURCE_KEY = "io.supertokens.storage.mysql.ConnectionPool";
-    private final HikariDataSource ds;
+    private static HikariDataSource hikariDataSource = null;
 
     private ConnectionPool(Start start) {
         if (!start.enabled) {
@@ -79,7 +79,7 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
         // - Failed to validate connection org.mariadb.jdbc.MariaDbConnection@79af83ae (Connection.setNetworkTimeout
         // cannot be called on a closed connection). Possibly consider using a shorter maxLifetime value.
         config.setPoolName("SuperTokens");
-        ds = new HikariDataSource(config);
+        hikariDataSource = new HikariDataSource(config);
     }
 
     private static int getTimeToWaitToInit(Start start) {
@@ -163,13 +163,14 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
         if (!start.enabled) {
             throw new SQLException("Storage layer disabled");
         }
-        return getInstance(start).ds.getConnection();
+        return ConnectionPool.hikariDataSource.getConnection();
     }
 
     public static void close(Start start) {
         if (getInstance(start) == null) {
             return;
         }
-        getInstance(start).ds.close();
+        ConnectionPool.hikariDataSource.close();
+        ConnectionPool.hikariDataSource = null;
     }
 }
