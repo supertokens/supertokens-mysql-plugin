@@ -6,11 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-- Fixes issue https://github.com/supertokens/supertokens-mysql-plugin/issues/31
 
 ### Added
 
 - Support for usermetadata
+- Fixes issue https://github.com/supertokens/supertokens-mysql-plugin/issues/31
 
 ## [1.13.0] - 2022-02-23
 
