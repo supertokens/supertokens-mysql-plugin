@@ -17,6 +17,8 @@
 
 package io.supertokens.storage.mysql.test;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.supertokens.ProcessState;
 import io.supertokens.storage.mysql.ConnectionPoolTestContent;
 import io.supertokens.storage.mysql.Start;
@@ -31,6 +33,7 @@ import org.junit.Test;
 import org.junit.rules.TestRule;
 
 import java.io.File;
+import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -266,10 +269,13 @@ public class ConfigTest {
 
     @Test
     public void testValidConnectionURI() throws Exception {
+        final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+        MySQLConfig userConfig = mapper.readValue(new File("../config.yaml"), MySQLConfig.class);
+        String hostname = userConfig.getHostName();
         {
             String[] args = { "../" };
 
-            Utils.setValueInConfig("mysql_connection_uri", "mysql://root:root@localhost:3306/supertokens");
+            Utils.setValueInConfig("mysql_connection_uri", "mysql://root:root@" + hostname + ":3306/supertokens");
             Utils.commentConfigValue("mysql_password");
             Utils.commentConfigValue("mysql_user");
             Utils.commentConfigValue("mysql_port");
@@ -289,7 +295,7 @@ public class ConfigTest {
             Utils.reset();
             String[] args = { "../" };
 
-            Utils.setValueInConfig("mysql_connection_uri", "mysql://root:root@localhost/supertokens");
+            Utils.setValueInConfig("mysql_connection_uri", "mysql://root:root@" + hostname + "/supertokens");
             Utils.commentConfigValue("mysql_password");
             Utils.commentConfigValue("mysql_user");
             Utils.commentConfigValue("mysql_port");
@@ -309,7 +315,7 @@ public class ConfigTest {
             Utils.reset();
             String[] args = { "../" };
 
-            Utils.setValueInConfig("mysql_connection_uri", "mysql://localhost:3306/supertokens");
+            Utils.setValueInConfig("mysql_connection_uri", "mysql://" + hostname + ":3306/supertokens");
             Utils.commentConfigValue("mysql_port");
             Utils.commentConfigValue("mysql_host");
             Utils.commentConfigValue("mysql_database_name");
@@ -327,7 +333,7 @@ public class ConfigTest {
             Utils.reset();
             String[] args = { "../" };
 
-            Utils.setValueInConfig("mysql_connection_uri", "mysql://root@localhost:3306/supertokens");
+            Utils.setValueInConfig("mysql_connection_uri", "mysql://root@" + hostname + ":3306/supertokens");
             Utils.commentConfigValue("mysql_user");
             Utils.commentConfigValue("mysql_port");
             Utils.commentConfigValue("mysql_host");
@@ -346,7 +352,7 @@ public class ConfigTest {
             Utils.reset();
             String[] args = { "../" };
 
-            Utils.setValueInConfig("mysql_connection_uri", "mysql://root:root@localhost:3306");
+            Utils.setValueInConfig("mysql_connection_uri", "mysql://root:root@" + hostname + ":3306");
             Utils.commentConfigValue("mysql_password");
             Utils.commentConfigValue("mysql_user");
             Utils.commentConfigValue("mysql_port");
@@ -365,10 +371,13 @@ public class ConfigTest {
 
     @Test
     public void testInvalidConnectionURI() throws Exception {
+        final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+        MySQLConfig userConfig = mapper.readValue(new File("../config.yaml"), MySQLConfig.class);
+        String hostname = userConfig.getHostName();
         {
             String[] args = { "../" };
 
-            Utils.setValueInConfig("mysql_connection_uri", ":/localhost:3306/supertokens");
+            Utils.setValueInConfig("mysql_connection_uri", ":/" + hostname + ":3306/supertokens");
 
             TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
             ProcessState.EventAndException e = process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.INIT_FAILURE);
@@ -386,7 +395,8 @@ public class ConfigTest {
             Utils.reset();
             String[] args = { "../" };
 
-            Utils.setValueInConfig("mysql_connection_uri", "mysql://root:wrongPassword@localhost:3306/supertokens");
+            Utils.setValueInConfig("mysql_connection_uri",
+                    "mysql://root:wrongPassword@" + hostname + ":3306/supertokens");
             Utils.commentConfigValue("mysql_password");
             Utils.commentConfigValue("mysql_user");
             Utils.commentConfigValue("mysql_port");
@@ -406,10 +416,14 @@ public class ConfigTest {
 
     @Test
     public void testValidConnectionURIAttributes() throws Exception {
+        final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+        MySQLConfig userConfig = mapper.readValue(new File("../config.yaml"), MySQLConfig.class);
+        String hostname = userConfig.getHostName();
         {
             String[] args = { "../" };
 
-            Utils.setValueInConfig("mysql_connection_uri", "mysql://root:root@localhost:3306/supertokens?key1=value1");
+            Utils.setValueInConfig("mysql_connection_uri",
+                    "mysql://root:root@" + hostname + ":3306/supertokens?key1=value1");
 
             TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
             assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
@@ -424,9 +438,8 @@ public class ConfigTest {
             Utils.reset();
             String[] args = { "../" };
 
-            Utils.setValueInConfig("mysql_connection_uri",
-                    "mysql://root:root@localhost:3306/supertokens?key1=value1&allowPublicKeyRetrieval=false&key2"
-                            + "=value2");
+            Utils.setValueInConfig("mysql_connection_uri", "mysql://root:root@" + hostname
+                    + ":3306/supertokens?key1=value1&allowPublicKeyRetrieval=false&key2" + "=value2");
 
             TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
             assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
@@ -438,15 +451,17 @@ public class ConfigTest {
         }
     }
 
-    public static void checkConfig(MySQLConfig config) {
-
+    public static void checkConfig(MySQLConfig config) throws IOException {
+        final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+        MySQLConfig userConfig = mapper.readValue(new File("../config.yaml"), MySQLConfig.class);
+        String hostname = userConfig.getHostName();
         assertEquals("Config getAttributes did not match default", config.getConnectionAttributes(),
                 "allowPublicKeyRetrieval=true");
         assertEquals("Config getSchema did not match default", config.getConnectionScheme(), "mysql");
         assertEquals("Config connectionPoolSize did not match default", config.getConnectionPoolSize(), 10);
         assertEquals("Config databaseName does not match default", config.getDatabaseName(), "supertokens");
         assertEquals("Config keyValue table does not match default", config.getKeyValueTable(), "key_value");
-        assertEquals("Config hostName does not match default ", config.getHostName(), "localhost");
+        assertEquals("Config hostName does not match default ", config.getHostName(), hostname);
         assertEquals("Config port does not match default", config.getPort(), 3306);
         assertEquals("Config sessionInfoTable does not match default", config.getSessionInfoTable(), "session_info");
         assertEquals("Config user does not match default", config.getUser(), "root");
