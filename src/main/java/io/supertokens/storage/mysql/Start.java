@@ -54,6 +54,9 @@ import io.supertokens.pluginInterface.thirdparty.exception.DuplicateThirdPartyUs
 import io.supertokens.pluginInterface.thirdparty.sqlStorage.ThirdPartySQLStorage;
 import io.supertokens.pluginInterface.usermetadata.UserMetadataStorage;
 import io.supertokens.pluginInterface.usermetadata.sqlStorage.UserMetadataSQLStorage;
+import io.supertokens.pluginInterface.userroles.exception.DuplicateUserRoleMappingException;
+import io.supertokens.pluginInterface.userroles.exception.UnknownRoleException;
+import io.supertokens.pluginInterface.userroles.sqlStorage.UserRolesSQLStorage;
 import io.supertokens.storage.mysql.config.Config;
 import io.supertokens.storage.mysql.output.Logging;
 import io.supertokens.storage.mysql.queries.EmailPasswordQueries;
@@ -77,7 +80,7 @@ import java.sql.SQLTransactionRollbackException;
 import java.util.List;
 
 public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailVerificationSQLStorage,
-        ThirdPartySQLStorage, JWTRecipeSQLStorage, PasswordlessSQLStorage, UserMetadataSQLStorage {
+        ThirdPartySQLStorage, JWTRecipeSQLStorage, PasswordlessSQLStorage, UserMetadataSQLStorage, UserRolesSQLStorage {
 
     private static final Object appenderLock = new Object();
     public static boolean silent = false;
@@ -1352,5 +1355,99 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
         } catch (SQLException e) {
             throw new StorageQueryException(e);
         }
+    }
+
+    @Override
+    public void addRoleToUser(String userId, String role)
+            throws StorageQueryException, UnknownRoleException, DuplicateUserRoleMappingException {
+        // TODO:
+    }
+
+    @Override
+    public String[] getRolesForUser(String userId) throws StorageQueryException {
+        // TODO:
+        return new String[0];
+    }
+
+    @Override
+    public String[] getUsersForRole(String role) throws StorageQueryException {
+        // TODO:
+        return new String[0];
+    }
+
+    @Override
+    public String[] getPermissionsForRole(String role) throws StorageQueryException {
+        // TODO:
+        return new String[0];
+    }
+
+    @Override
+    public String[] getRolesThatHavePermission(String permission) throws StorageQueryException {
+        // TODO:
+        return new String[0];
+    }
+
+    @Override
+    public boolean deleteRole(String role) throws StorageQueryException {
+        // TODO:
+        return false;
+    }
+
+    @Override
+    public String[] getRoles() throws StorageQueryException {
+        // TODO:
+        return new String[0];
+    }
+
+    @Override
+    public boolean doesRoleExist(String role) throws StorageQueryException {
+        // TODO:
+        return false;
+    }
+
+    @Override
+    public int deleteAllRolesForUser(String userId) throws StorageQueryException {
+        // TODO:
+        return 0;
+    }
+
+    @Override
+    public boolean deleteRoleForUser_Transaction(TransactionConnection con, String userId, String role)
+            throws StorageQueryException {
+        // TODO:
+        return false;
+    }
+
+    @Override
+    public boolean createNewRoleOrDoNothingIfExists_Transaction(TransactionConnection con, String role)
+            throws StorageQueryException {
+        // TODO:
+        return false;
+    }
+
+    @Override
+    public void addPermissionToRoleOrDoNothingIfExists_Transaction(TransactionConnection con, String role,
+            String permission) throws StorageQueryException, UnknownRoleException {
+        // TODO:
+    }
+
+    @Override
+    public boolean deletePermissionForRole_Transaction(TransactionConnection con, String role, String permission)
+            throws StorageQueryException {
+        // TODO:
+        return false;
+    }
+
+    @Override
+    public int deleteAllPermissionsForRole_Transaction(TransactionConnection con, String role)
+            throws StorageQueryException {
+        // TODO:
+        return 0;
+    }
+
+    @Override
+    public boolean doesRoleExist_Transaction(TransactionConnection con, String role) throws StorageQueryException {
+        // TODO:
+        return false;
     }
 }

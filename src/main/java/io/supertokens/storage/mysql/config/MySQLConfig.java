@@ -274,6 +274,18 @@ public class MySQLConfig {
         return addPrefixToTableName("user_metadata");
     }
 
+    public String getRolesTable() {
+        return addPrefixToTableName("roles");
+    }
+
+    public String getUserRolesPermissionTable() {
+        return addPrefixToTableName("role_permissions");
+    }
+
+    public String getUserRolesTable() {
+        return addPrefixToTableName("user_roles");
+    }
+
     private String addPrefixToTableName(String tableName) {
         if (!mysql_table_names_prefix.trim().equals("")) {
             return mysql_table_names_prefix.trim() + "_" + tableName;
