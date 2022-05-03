@@ -17,6 +17,7 @@
 package io.supertokens.storage.mysql.queries;
 
 import io.supertokens.pluginInterface.exceptions.StorageQueryException;
+import io.supertokens.storage.mysql.PreparedStatementValueSetter;
 import io.supertokens.storage.mysql.Start;
 import io.supertokens.storage.mysql.config.Config;
 
@@ -105,6 +106,30 @@ public class UserRoleQueries {
         update(con, QUERY, pst -> {
             pst.setString(1, role);
             pst.setString(2, permission);
+        });
+    }
+
+    public static String[] getPermissionsForRole(Start start, String role) throws SQLException, StorageQueryException {
+        String QUERY = "SELECT permission FROM " + Config.getConfig(start).getUserRolesPermissionTable()
+                + " WHERE role = ?";
+        return execute(start, QUERY, pst -> pst.setString(1, role), result -> {
+            ArrayList<String> permissions = new ArrayList<>();
+            while (result.next()) {
+                permissions.add(result.getString("permission"));
+            }
+            return permissions.toArray(String[]::new);
+        });
+    }
+
+    public static String[] getRoles(Start start) throws SQLException, StorageQueryException {
+        String QUERY = "SELECT role FROM " + Config.getConfig(start).getRolesTable();
+        return execute(start, QUERY, PreparedStatementValueSetter.NO_OP_SETTER, result -> {
+            ArrayList<String> roles = new ArrayList<>();
+            while (result.next()) {
+                roles.add(result.getString("role"));
+            }
+            return roles.toArray(String[]::new);
+
         });
     }
 }

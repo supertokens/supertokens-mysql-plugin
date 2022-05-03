@@ -1389,8 +1389,11 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
 
     @Override
     public String[] getPermissionsForRole(String role) throws StorageQueryException {
-        // TODO:
-        return new String[0];
+        try {
+            return UserRoleQueries.getPermissionsForRole(this, role);
+        } catch (SQLException e) {
+            throw new StorageQueryException(e);
+        }
     }
 
     @Override
@@ -1407,8 +1410,11 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
 
     @Override
     public String[] getRoles() throws StorageQueryException {
-        // TODO:
-        return new String[0];
+        try {
+            return UserRoleQueries.getRoles(this);
+        } catch (SQLException e) {
+            throw new StorageQueryException(e);
+        }
     }
 
     @Override
