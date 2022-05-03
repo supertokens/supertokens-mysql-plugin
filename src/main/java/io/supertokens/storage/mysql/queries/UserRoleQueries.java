@@ -132,4 +132,17 @@ public class UserRoleQueries {
 
         });
     }
+
+    public static boolean deleteRoleForUser_Transaction(Start start, Connection con, String userId, String role)
+            throws SQLException, StorageQueryException {
+        String QUERY = "DELETE FROM " + Config.getConfig(start).getUserRolesTable() + " WHERE user_id = ? AND role = ?";
+
+        // store the number of rows updated
+        int rowUpdatedCount = update(con, QUERY, pst -> {
+            pst.setString(1, userId);
+            pst.setString(2, role);
+        });
+        return rowUpdatedCount > 0;
+    }
+
 }
