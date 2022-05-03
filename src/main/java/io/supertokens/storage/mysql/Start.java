@@ -1447,7 +1447,16 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     @Override
     public void addPermissionToRoleOrDoNothingIfExists_Transaction(TransactionConnection con, String role,
             String permission) throws StorageQueryException, UnknownRoleException {
-        // TODO:
+        Connection sqlCon = (Connection) con.getConnection();
+        try {
+            UserRoleQueries.addPermissionToRoleOrDoNothingIfExists_Transaction(this, sqlCon, role, permission);
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+            if (e.getMessage().contains("foreign key") && e.getMessage().contains("role")) {
+                throw new UnknownRoleException();
+            }
+            throw new StorageQueryException(e);
+        }
     }
 
     @Override

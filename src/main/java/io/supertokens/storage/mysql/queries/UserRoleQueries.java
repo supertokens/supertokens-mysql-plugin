@@ -98,4 +98,13 @@ public class UserRoleQueries {
         return execute(start, QUERY, pst -> pst.setString(1, role), ResultSet::next);
     }
 
+    public static void addPermissionToRoleOrDoNothingIfExists_Transaction(Start start, Connection con, String role,
+            String permission) throws SQLException, StorageQueryException {
+        String QUERY = "INSERT INTO " + Config.getConfig(start).getUserRolesPermissionTable()
+                + " (role, permission) VALUES(?, ?) ON DUPLICATE KEY UPDATE permission=permission";
+        update(con, QUERY, pst -> {
+            pst.setString(1, role);
+            pst.setString(2, permission);
+        });
+    }
 }
