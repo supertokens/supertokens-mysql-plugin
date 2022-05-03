@@ -16,8 +16,17 @@
 
 package io.supertokens.storage.mysql.queries;
 
+import io.supertokens.pluginInterface.exceptions.StorageQueryException;
 import io.supertokens.storage.mysql.Start;
 import io.supertokens.storage.mysql.config.Config;
+
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+
+import static io.supertokens.storage.mysql.QueryExecutorTemplate.execute;
+import static io.supertokens.storage.mysql.QueryExecutorTemplate.update;
 
 public class UserRoleQueries {
 
@@ -55,6 +64,38 @@ public class UserRoleQueries {
 
     public static String getQueryToCreateUserRolesRoleIndex(Start start) {
         return "CREATE INDEX user_roles_role_index ON " + Config.getConfig(start).getUserRolesTable() + "(role)";
+    }
+
+    public static int addRoleToUser(Start start, String userId, String role)
+            throws SQLException, StorageQueryException {
+        String QUERY = "INSERT INTO " + Config.getConfig(start).getUserRolesTable() + "(user_id, role) VALUES(?, ?)";
+        return update(start, QUERY, pst -> {
+            pst.setString(1, userId);
+            pst.setString(2, role);
+        });
+    }
+
+    public static boolean createNewRoleOrDoNothingIfExists_Transaction(Start start, Connection con, String role)
+            throws SQLException, StorageQueryException {
+        String QUERY = "INSERT IGNORE INTO " + Config.getConfig(start).getRolesTable() + " VALUES(?)";
+        int rowsUpdated = update(con, QUERY, pst -> pst.setString(1, role));
+        return rowsUpdated > 0;
+    }
+
+    public static String[] getRolesForUser(Start start, String userId) throws SQLException, StorageQueryException {
+        String QUERY = "SELECT role FROM " + Config.getConfig(start).getUserRolesTable() + " WHERE user_id = ?";
+        return execute(start, QUERY, pst -> pst.setString(1, userId), result -> {
+            ArrayList<String> roles = new ArrayList<>();
+            while (result.next()) {
+                roles.add(result.getString("role"));
+            }
+            return roles.toArray(String[]::new);
+        });
+    }
+
+    public static boolean doesRoleExist(Start start, String role) throws SQLException, StorageQueryException {
+        String QUERY = "SELECT 1 FROM " + Config.getConfig(start).getRolesTable() + " WHERE role = ?";
+        return execute(start, QUERY, pst -> pst.setString(1, role), ResultSet::next);
     }
 
 }

@@ -59,14 +59,7 @@ import io.supertokens.pluginInterface.userroles.exception.UnknownRoleException;
 import io.supertokens.pluginInterface.userroles.sqlStorage.UserRolesSQLStorage;
 import io.supertokens.storage.mysql.config.Config;
 import io.supertokens.storage.mysql.output.Logging;
-import io.supertokens.storage.mysql.queries.EmailPasswordQueries;
-import io.supertokens.storage.mysql.queries.EmailVerificationQueries;
-import io.supertokens.storage.mysql.queries.GeneralQueries;
-import io.supertokens.storage.mysql.queries.JWTSigningQueries;
-import io.supertokens.storage.mysql.queries.PasswordlessQueries;
-import io.supertokens.storage.mysql.queries.SessionQueries;
-import io.supertokens.storage.mysql.queries.ThirdPartyQueries;
-import io.supertokens.storage.mysql.queries.UserMetadataQueries;
+import io.supertokens.storage.mysql.queries.*;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -1360,13 +1353,32 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     @Override
     public void addRoleToUser(String userId, String role)
             throws StorageQueryException, UnknownRoleException, DuplicateUserRoleMappingException {
-        // TODO:
+        try {
+            UserRoleQueries.addRoleToUser(this, userId, role);
+        } catch (SQLException e) {
+            String message = e.getMessage();
+
+            if (message.contains("foreign key") && message.contains(Config.getConfig(this).getRolesTable())
+                    && message.contains("role")) {
+                throw new UnknownRoleException();
+            }
+            if (message.contains("Duplicate entry")
+                    && (message.endsWith("'" + Config.getConfig(this).getUserRolesTable() + ".PRIMARY'"))
+                    || message.endsWith("'PRIMARY'")) {
+                throw new DuplicateUserRoleMappingException();
+            }
+
+            throw new StorageQueryException(e);
+        }
     }
 
     @Override
     public String[] getRolesForUser(String userId) throws StorageQueryException {
-        // TODO:
-        return new String[0];
+        try {
+            return UserRoleQueries.getRolesForUser(this, userId);
+        } catch (SQLException e) {
+            throw new StorageQueryException(e);
+        }
     }
 
     @Override
@@ -1401,8 +1413,11 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
 
     @Override
     public boolean doesRoleExist(String role) throws StorageQueryException {
-        // TODO:
-        return false;
+        try {
+            return UserRoleQueries.doesRoleExist(this, role);
+        } catch (SQLException e) {
+            throw new StorageQueryException(e);
+        }
     }
 
     @Override
@@ -1421,8 +1436,12 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     @Override
     public boolean createNewRoleOrDoNothingIfExists_Transaction(TransactionConnection con, String role)
             throws StorageQueryException {
-        // TODO:
-        return false;
+        Connection sqlCon = (Connection) con.getConnection();
+        try {
+            return UserRoleQueries.createNewRoleOrDoNothingIfExists_Transaction(this, sqlCon, role);
+        } catch (SQLException e) {
+            throw new StorageQueryException(e);
+        }
     }
 
     @Override
