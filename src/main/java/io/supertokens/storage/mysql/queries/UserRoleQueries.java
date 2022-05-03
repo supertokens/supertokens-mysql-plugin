@@ -16,6 +16,57 @@
 
 package io.supertokens.storage.mysql.queries;
 
+import io.supertokens.storage.mysql.Start;
+import io.supertokens.storage.mysql.config.Config;
+
 public class UserRoleQueries {
 
+    public static String getQueryToCreateRolesTable(Start start) {
+        String tableName = Config.getConfig(start).getRolesTable();
+        // @formatter:off
+            return "CREATE TABLE IF NOT EXISTS " + tableName + " ( role VARCHAR(255) NOT NULL, " +
+                    "PRIMARY KEY(role))";
+        // @formatter:on
+    }
+
+    public static String getQueryToCreateRolePermissionsTable(Start start) {
+        String tableName = Config.getConfig(start).getUserRolesPermissionTable();
+        // @formatter:off
+        return "CREATE TABLE IF NOT EXISTS " + tableName + " ( " +
+                "role VARCHAR(255) NOT NULL, " +
+                "permission VARCHAR(255) NOT NULL, " +
+                "PRIMARY KEY (role, permission), " +
+                "FOREIGN KEY (role) REFERENCES " +
+                Config.getConfig(start).getRolesTable()+ "(role) ON DELETE CASCADE )";
+        // @formatter:on
+    }
+
+    public static String getQueryToCreateRolePermissionsPermissionIndex(Start start) {
+        return "CREATE INDEX role_permissions_permission_index ON "
+                + Config.getConfig(start).getUserRolesPermissionTable() + "(permission);";
+    }
+//    static String getQueryToCreateRolePermissionsPermissionIndex(Start start) {
+//        return "CREATE INDEX role_permissions_permission_index ON " + getConfig(start).getUserRolesPermissionsTable()
+//                + "(permission);";
+//    }
+//
+//    public static String getQueryToCreateUserRolesTable(Start start) {
+//        String schema = Config.getConfig(start).getTableSchema();
+//        String tableName = getConfig(start).getUserRolesTable();
+//        // @formatter:off
+//        return "CREATE TABLE IF NOT EXISTS " + tableName + " ("
+//                + "user_id VARCHAR(128) NOT NULL,"
+//                + "role VARCHAR(255) NOT NULL,"
+//                + "CONSTRAINT " + Utils.getConstraintName(schema, tableName, null, "pkey") + " PRIMARY KEY(user_id,
+//                role),"
+//                + "CONSTRAINT " + Utils.getConstraintName(schema, tableName, "role", "fkey") + " FOREIGN KEY(role)"
+//                + " REFERENCES " + getConfig(start).getRolesTable()
+//                +"(role) ON DELETE CASCADE );";
+//
+//        // @formatter:on
+//    }
+//
+//    public static String getQueryToCreateUserRolesRoleIndex(Start start) {
+//        return "CREATE INDEX user_roles_role_index ON " + getConfig(start).getUserRolesTable() + "(role);";
+//    }
 }
