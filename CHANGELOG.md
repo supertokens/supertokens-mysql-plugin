@@ -11,6 +11,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - Support for usermetadata
 - Fixes issue https://github.com/supertokens/supertokens-mysql-plugin/issues/31
+- Support for User Roles
 
 ## [1.13.0] - 2022-02-23
 
