@@ -67,10 +67,10 @@ public class UserRoleQueries {
         return "CREATE INDEX user_roles_role_index ON " + Config.getConfig(start).getUserRolesTable() + "(role)";
     }
 
-    public static int addRoleToUser(Start start, String userId, String role)
+    public static void addRoleToUser(Start start, String userId, String role)
             throws SQLException, StorageQueryException {
         String QUERY = "INSERT INTO " + Config.getConfig(start).getUserRolesTable() + "(user_id, role) VALUES(?, ?)";
-        return update(start, QUERY, pst -> {
+        update(start, QUERY, pst -> {
             pst.setString(1, userId);
             pst.setString(2, role);
         });
@@ -78,6 +78,8 @@ public class UserRoleQueries {
 
     public static boolean createNewRoleOrDoNothingIfExists_Transaction(Start start, Connection con, String role)
             throws SQLException, StorageQueryException {
+        // We use IGNORE here since we want to ignore any conflict(duplicate key exception) that might be thrown.
+        // We do not use ON DUPLICATE UPDATE since it will return false positives when a role already exists
         String QUERY = "INSERT IGNORE INTO " + Config.getConfig(start).getRolesTable() + " VALUES(?)";
         int rowsUpdated = update(con, QUERY, pst -> pst.setString(1, role));
         return rowsUpdated > 0;
@@ -101,6 +103,11 @@ public class UserRoleQueries {
 
     public static void addPermissionToRoleOrDoNothingIfExists_Transaction(Start start, Connection con, String role,
             String permission) throws SQLException, StorageQueryException {
+
+        // we dont use IGNORE here, since it would ignore both duplicate key and foreign key exceptions. So
+        // we use ON DUPLICATE KEY UPDATE and set the value in the row as itself(there is no change to the row).
+        // This results in the duplicate key exception being handled while the foreign key exception can still be thrown
+
         String QUERY = "INSERT INTO " + Config.getConfig(start).getUserRolesPermissionTable()
                 + " (role, permission) VALUES(?, ?) ON DUPLICATE KEY UPDATE permission=permission";
         update(con, QUERY, pst -> {
