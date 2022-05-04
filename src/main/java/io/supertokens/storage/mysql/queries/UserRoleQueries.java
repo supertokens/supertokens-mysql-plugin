@@ -152,4 +152,36 @@ public class UserRoleQueries {
         return rowUpdatedCount > 0;
     }
 
+    public static String[] getUsersForRole(Start start, String role) throws SQLException, StorageQueryException {
+        String QUERY = "SELECT user_id FROM " + Config.getConfig(start).getUserRolesTable() + " WHERE role = ? ";
+        return execute(start, QUERY, pst -> pst.setString(1, role), result -> {
+            ArrayList<String> userIds = new ArrayList<>();
+            while (result.next()) {
+                userIds.add(result.getString("user_id"));
+            }
+            return userIds.toArray(String[]::new);
+        });
+    }
+
+    public static boolean deletePermissionForRole_Transaction(Start start, Connection con, String role,
+            String permission) throws SQLException, StorageQueryException {
+        String QUERY = "DELETE FROM " + Config.getConfig(start).getUserRolesPermissionTable()
+                + " WHERE role = ? AND permission = ? ";
+        // store the number of rows updated
+        int rowUpdatedCount = update(con, QUERY, pst -> {
+            pst.setString(1, role);
+            pst.setString(2, permission);
+        });
+
+        return rowUpdatedCount > 0;
+    }
+
+    public static int deleteAllPermissionsForRole_Transaction(Start start, Connection con, String role)
+            throws SQLException, StorageQueryException {
+        String QUERY = "DELETE FROM " + Config.getConfig(start).getUserRolesPermissionTable() + " WHERE role = ? ";
+        // return the number of rows updated
+        return update(con, QUERY, pst -> {
+            pst.setString(1, role);
+        });
+    }
 }
