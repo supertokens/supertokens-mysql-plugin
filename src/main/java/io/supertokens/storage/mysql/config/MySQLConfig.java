@@ -278,7 +278,7 @@ public class MySQLConfig {
         return addPrefixToTableName("roles");
     }
 
-    public String getUserRolesPermissionTable() {
+    public String getUserRolesPermissionsTable() {
         return addPrefixToTableName("role_permissions");
     }
 

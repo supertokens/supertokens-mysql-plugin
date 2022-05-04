@@ -174,7 +174,7 @@ public class GeneralQueries {
             update(start, UserRoleQueries.getQueryToCreateRolesTable(start), NO_OP_SETTER);
         }
 
-        if (!doesTableExists(start, Config.getConfig(start).getUserRolesPermissionTable())) {
+        if (!doesTableExists(start, Config.getConfig(start).getUserRolesPermissionsTable())) {
             getInstance(start).addState(CREATING_NEW_TABLE, null);
             update(start, UserRoleQueries.getQueryToCreateRolePermissionsTable(start), NO_OP_SETTER);
             // index

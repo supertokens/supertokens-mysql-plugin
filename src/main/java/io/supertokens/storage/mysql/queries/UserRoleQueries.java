@@ -40,7 +40,7 @@ public class UserRoleQueries {
     }
 
     public static String getQueryToCreateRolePermissionsTable(Start start) {
-        String tableName = Config.getConfig(start).getUserRolesPermissionTable();
+        String tableName = Config.getConfig(start).getUserRolesPermissionsTable();
         // @formatter:off
         return "CREATE TABLE IF NOT EXISTS " + tableName + " ( " +
                 "role VARCHAR(255) NOT NULL, " +
@@ -53,7 +53,7 @@ public class UserRoleQueries {
 
     public static String getQueryToCreateRolePermissionsPermissionIndex(Start start) {
         return "CREATE INDEX role_permissions_permission_index ON "
-                + Config.getConfig(start).getUserRolesPermissionTable() + "(permission);";
+                + Config.getConfig(start).getUserRolesPermissionsTable() + "(permission);";
     }
 
     public static String getQueryToCreateUserRolesTable(Start start) {
@@ -108,7 +108,7 @@ public class UserRoleQueries {
         // we use ON DUPLICATE KEY UPDATE and set the value in the row as itself(there is no change to the row).
         // This results in the duplicate key exception being handled while the foreign key exception can still be thrown
 
-        String QUERY = "INSERT INTO " + Config.getConfig(start).getUserRolesPermissionTable()
+        String QUERY = "INSERT INTO " + Config.getConfig(start).getUserRolesPermissionsTable()
                 + " (role, permission) VALUES(?, ?) ON DUPLICATE KEY UPDATE permission=permission";
         update(con, QUERY, pst -> {
             pst.setString(1, role);
@@ -117,7 +117,7 @@ public class UserRoleQueries {
     }
 
     public static String[] getPermissionsForRole(Start start, String role) throws SQLException, StorageQueryException {
-        String QUERY = "SELECT permission FROM " + Config.getConfig(start).getUserRolesPermissionTable()
+        String QUERY = "SELECT permission FROM " + Config.getConfig(start).getUserRolesPermissionsTable()
                 + " WHERE role = ?";
         return execute(start, QUERY, pst -> pst.setString(1, role), result -> {
             ArrayList<String> permissions = new ArrayList<>();
@@ -165,7 +165,7 @@ public class UserRoleQueries {
 
     public static boolean deletePermissionForRole_Transaction(Start start, Connection con, String role,
             String permission) throws SQLException, StorageQueryException {
-        String QUERY = "DELETE FROM " + Config.getConfig(start).getUserRolesPermissionTable()
+        String QUERY = "DELETE FROM " + Config.getConfig(start).getUserRolesPermissionsTable()
                 + " WHERE role = ? AND permission = ? ";
         // store the number of rows updated
         int rowUpdatedCount = update(con, QUERY, pst -> {
@@ -178,10 +178,45 @@ public class UserRoleQueries {
 
     public static int deleteAllPermissionsForRole_Transaction(Start start, Connection con, String role)
             throws SQLException, StorageQueryException {
-        String QUERY = "DELETE FROM " + Config.getConfig(start).getUserRolesPermissionTable() + " WHERE role = ? ";
+        String QUERY = "DELETE FROM " + Config.getConfig(start).getUserRolesPermissionsTable() + " WHERE role = ? ";
         // return the number of rows updated
         return update(con, QUERY, pst -> {
             pst.setString(1, role);
         });
+    }
+
+    public static String[] getRolesThatHavePermission(Start start, String permission)
+            throws SQLException, StorageQueryException {
+
+        String QUERY = "SELECT role FROM " + Config.getConfig(start).getUserRolesPermissionsTable()
+                + " WHERE permission = ? ";
+
+        return execute(start, QUERY, pst -> pst.setString(1, permission), result -> {
+            ArrayList<String> roles = new ArrayList<>();
+
+            while (result.next()) {
+                roles.add(result.getString("role"));
+            }
+
+            return roles.toArray(String[]::new);
+        });
+    }
+
+    public static boolean deleteRole(Start start, String role) throws SQLException, StorageQueryException {
+        String QUERY = "DELETE FROM " + Config.getConfig(start).getRolesTable() + " WHERE role = ? ;";
+        return update(start, QUERY, pst -> {
+            pst.setString(1, role);
+        }) == 1;
+    }
+
+    public static boolean doesRoleExist_transaction(Start start, Connection con, String role)
+            throws SQLException, StorageQueryException {
+        String QUERY = "SELECT 1 FROM " + Config.getConfig(start).getRolesTable() + " WHERE role = ? FOR UPDATE";
+        return execute(con, QUERY, pst -> pst.setString(1, role), ResultSet::next);
+    }
+
+    public static int deleteAllRolesForUser(Start start, String userId) throws SQLException, StorageQueryException {
+        String QUERY = "DELETE FROM " + Config.getConfig(start).getUserRolesTable() + " WHERE user_id = ?";
+        return update(start, QUERY, pst -> pst.setString(1, userId));
     }
 }

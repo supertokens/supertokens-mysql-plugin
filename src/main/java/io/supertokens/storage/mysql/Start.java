@@ -1401,14 +1401,20 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
 
     @Override
     public String[] getRolesThatHavePermission(String permission) throws StorageQueryException {
-        // TODO:
-        return new String[0];
+        try {
+            return UserRoleQueries.getRolesThatHavePermission(this, permission);
+        } catch (SQLException e) {
+            throw new StorageQueryException(e);
+        }
     }
 
     @Override
     public boolean deleteRole(String role) throws StorageQueryException {
-        // TODO:
-        return false;
+        try {
+            return UserRoleQueries.deleteRole(this, role);
+        } catch (SQLException e) {
+            throw new StorageQueryException(e);
+        }
     }
 
     @Override
@@ -1431,8 +1437,11 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
 
     @Override
     public int deleteAllRolesForUser(String userId) throws StorageQueryException {
-        // TODO:
-        return 0;
+        try {
+            return UserRoleQueries.deleteAllRolesForUser(this, userId);
+        } catch (SQLException e) {
+            throw new StorageQueryException(e);
+        }
     }
 
     @Override
@@ -1496,7 +1505,11 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
 
     @Override
     public boolean doesRoleExist_Transaction(TransactionConnection con, String role) throws StorageQueryException {
-        // TODO:
-        return false;
+        Connection sqlCon = (Connection) con.getConnection();
+        try {
+            return UserRoleQueries.doesRoleExist_transaction(this, sqlCon, role);
+        } catch (SQLException e) {
+            throw new StorageQueryException(e);
+        }
     }
 }
