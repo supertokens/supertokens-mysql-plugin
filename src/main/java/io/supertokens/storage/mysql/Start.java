@@ -1473,7 +1473,6 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
         try {
             UserRoleQueries.addPermissionToRoleOrDoNothingIfExists_Transaction(this, sqlCon, role, permission);
         } catch (SQLException e) {
-            System.out.println(e.getMessage());
             if (e.getMessage().contains("foreign key") && e.getMessage().contains("role")) {
                 throw new UnknownRoleException();
             }
