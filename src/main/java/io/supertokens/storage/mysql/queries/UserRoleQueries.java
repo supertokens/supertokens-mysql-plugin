@@ -26,8 +26,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
-import static io.supertokens.storage.mysql.QueryExecutorTemplate.execute;
-import static io.supertokens.storage.mysql.QueryExecutorTemplate.update;
+import static io.supertokens.storage.mysql.QueryExecutorTemplate.*;
 
 public class UserRoleQueries {
 
@@ -78,10 +77,17 @@ public class UserRoleQueries {
 
     public static boolean createNewRoleOrDoNothingIfExists_Transaction(Start start, Connection con, String role)
             throws SQLException, StorageQueryException {
-        // We use IGNORE here since we want to ignore any conflict(duplicate key exception) that might be thrown.
-        // We do not use ON DUPLICATE UPDATE since it will return false positives when a role already exists
-        String QUERY = "INSERT IGNORE INTO " + Config.getConfig(start).getRolesTable() + " VALUES(?)";
-        int rowsUpdated = update(con, QUERY, pst -> pst.setString(1, role));
+        // We want to insert a role which does not exist into the roles table, Since INSERT queries do not support WHERE
+        // condition clause, we use a SELECT query with the input role and a WHERE NOT EXISTS clause to check that the
+        // input
+        // role does not exist in the table
+        String QUERY = "INSERT INTO " + Config.getConfig(start).getRolesTable() + "(role) "
+                + "SELECT ? AS role WHERE NOT EXISTS (" + " SELECT role FROM " + Config.getConfig(start).getRolesTable()
+                + " WHERE role = ? )";
+        int rowsUpdated = update(con, QUERY, pst -> {
+            pst.setString(1, role);
+            pst.setString(2, role);
+        });
         return rowsUpdated > 0;
     }
 
@@ -209,7 +215,7 @@ public class UserRoleQueries {
         }) == 1;
     }
 
-    public static boolean doesRoleExist_transaction(Start start, Connection con, String role)
+    public static boolean doesRoleExist_Transaction(Start start, Connection con, String role)
             throws SQLException, StorageQueryException {
         String QUERY = "SELECT 1 FROM " + Config.getConfig(start).getRolesTable() + " WHERE role = ? FOR UPDATE";
         return execute(con, QUERY, pst -> pst.setString(1, role), ResultSet::next);

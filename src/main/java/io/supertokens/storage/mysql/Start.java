@@ -1506,7 +1506,7 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     public boolean doesRoleExist_Transaction(TransactionConnection con, String role) throws StorageQueryException {
         Connection sqlCon = (Connection) con.getConnection();
         try {
-            return UserRoleQueries.doesRoleExist_transaction(this, sqlCon, role);
+            return UserRoleQueries.doesRoleExist_Transaction(this, sqlCon, role);
         } catch (SQLException e) {
             throw new StorageQueryException(e);
         }
