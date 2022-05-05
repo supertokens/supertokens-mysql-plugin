@@ -79,8 +79,8 @@ public class UserRoleQueries {
             throws SQLException, StorageQueryException {
         // We want to insert a role which does not exist into the roles table, Since INSERT queries do not support WHERE
         // condition clause, we use a SELECT query with the input role and a WHERE NOT EXISTS clause to check that the
-        // input
-        // role does not exist in the table
+        // input role does not exist in the table
+
         String QUERY = "INSERT INTO " + Config.getConfig(start).getRolesTable() + "(role) "
                 + "SELECT ? AS role WHERE NOT EXISTS (" + " SELECT role FROM " + Config.getConfig(start).getRolesTable()
                 + " WHERE role = ? )";
