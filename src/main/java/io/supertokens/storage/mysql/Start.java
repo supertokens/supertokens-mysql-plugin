@@ -41,18 +41,13 @@ import io.supertokens.pluginInterface.jwt.exceptions.DuplicateKeyIdException;
 import io.supertokens.pluginInterface.jwt.sqlstorage.JWTRecipeSQLStorage;
 import io.supertokens.pluginInterface.passwordless.PasswordlessCode;
 import io.supertokens.pluginInterface.passwordless.PasswordlessDevice;
-import io.supertokens.pluginInterface.passwordless.exception.DuplicateCodeIdException;
-import io.supertokens.pluginInterface.passwordless.exception.DuplicateDeviceIdHashException;
-import io.supertokens.pluginInterface.passwordless.exception.DuplicateLinkCodeHashException;
-import io.supertokens.pluginInterface.passwordless.exception.DuplicatePhoneNumberException;
-import io.supertokens.pluginInterface.passwordless.exception.UnknownDeviceIdHash;
+import io.supertokens.pluginInterface.passwordless.exception.*;
 import io.supertokens.pluginInterface.passwordless.sqlStorage.PasswordlessSQLStorage;
 import io.supertokens.pluginInterface.session.SessionInfo;
 import io.supertokens.pluginInterface.session.sqlStorage.SessionSQLStorage;
 import io.supertokens.pluginInterface.sqlStorage.TransactionConnection;
 import io.supertokens.pluginInterface.thirdparty.exception.DuplicateThirdPartyUserException;
 import io.supertokens.pluginInterface.thirdparty.sqlStorage.ThirdPartySQLStorage;
-import io.supertokens.pluginInterface.usermetadata.UserMetadataStorage;
 import io.supertokens.pluginInterface.usermetadata.sqlStorage.UserMetadataSQLStorage;
 import io.supertokens.pluginInterface.userroles.exception.DuplicateUserRoleMappingException;
 import io.supertokens.pluginInterface.userroles.exception.UnknownRoleException;
@@ -60,7 +55,6 @@ import io.supertokens.pluginInterface.userroles.sqlStorage.UserRolesSQLStorage;
 import io.supertokens.storage.mysql.config.Config;
 import io.supertokens.storage.mysql.output.Logging;
 import io.supertokens.storage.mysql.queries.*;
-
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.slf4j.LoggerFactory;
@@ -379,9 +373,9 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     }
 
     @Override
-    public String[] getAllSessionHandlesForUser(String userId) throws StorageQueryException {
+    public String[] getAllNonExpiredSessionHandlesForUser(String userId) throws StorageQueryException {
         try {
-            return SessionQueries.getAllSessionHandlesForUser(this, userId);
+            return SessionQueries.getAllNonExpiredSessionHandlesForUser(this, userId);
         } catch (SQLException e) {
             throw new StorageQueryException(e);
         }
