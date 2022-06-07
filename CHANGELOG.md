@@ -7,15 +7,20 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.16.0] - 2022-06-07
+
+- Compatibility with plugin interface 2.15 - returns only non expired session handles for a user
+
 ## [1.15.0] - 2022-05-05
+
 - Support for User Roles
 
 ## [1.14.0]
+
 ### Added
 
 - Support for usermetadata
 - Fixes issue https://github.com/supertokens/supertokens-mysql-plugin/issues/31
-
 
 ## [1.13.0] - 2022-02-23
 
