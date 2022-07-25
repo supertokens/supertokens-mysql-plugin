@@ -48,6 +48,10 @@ import io.supertokens.pluginInterface.session.sqlStorage.SessionSQLStorage;
 import io.supertokens.pluginInterface.sqlStorage.TransactionConnection;
 import io.supertokens.pluginInterface.thirdparty.exception.DuplicateThirdPartyUserException;
 import io.supertokens.pluginInterface.thirdparty.sqlStorage.ThirdPartySQLStorage;
+import io.supertokens.pluginInterface.useridmapping.UserIdMapping;
+import io.supertokens.pluginInterface.useridmapping.UserIdMappingStorage;
+import io.supertokens.pluginInterface.useridmapping.exception.UnknownSuperTokensUserIdException;
+import io.supertokens.pluginInterface.useridmapping.exception.UserIdMappingAlreadyExistsException;
 import io.supertokens.pluginInterface.usermetadata.sqlStorage.UserMetadataSQLStorage;
 import io.supertokens.pluginInterface.userroles.exception.DuplicateUserRoleMappingException;
 import io.supertokens.pluginInterface.userroles.exception.UnknownRoleException;
@@ -66,8 +70,9 @@ import java.sql.SQLException;
 import java.sql.SQLTransactionRollbackException;
 import java.util.List;
 
-public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailVerificationSQLStorage,
-        ThirdPartySQLStorage, JWTRecipeSQLStorage, PasswordlessSQLStorage, UserMetadataSQLStorage, UserRolesSQLStorage {
+public class Start
+        implements SessionSQLStorage, EmailPasswordSQLStorage, EmailVerificationSQLStorage, ThirdPartySQLStorage,
+        JWTRecipeSQLStorage, PasswordlessSQLStorage, UserMetadataSQLStorage, UserRolesSQLStorage, UserIdMappingStorage {
 
     private static final Object appenderLock = new Object();
     public static boolean silent = false;
@@ -942,6 +947,15 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
     }
 
     @Override
+    public boolean doesUserIdExist(String userId) throws StorageQueryException {
+        try {
+            return GeneralQueries.doesUserIdExist(this, userId);
+        } catch (SQLException e) {
+            throw new StorageQueryException(e);
+        }
+    }
+
+    @Override
     public List<JWTSigningKeyInfo> getJWTSigningKeys_Transaction(TransactionConnection con)
             throws StorageQueryException {
         Connection sqlCon = (Connection) con.getConnection();
@@ -1501,6 +1515,90 @@ public class Start implements SessionSQLStorage, EmailPasswordSQLStorage, EmailV
         Connection sqlCon = (Connection) con.getConnection();
         try {
             return UserRoleQueries.doesRoleExist_Transaction(this, sqlCon, role);
+        } catch (SQLException e) {
+            throw new StorageQueryException(e);
+        }
+    }
+
+    @Override
+    public void createUserIdMapping(String superTokensUserId, String externalUserId,
+            @org.jetbrains.annotations.Nullable String externalUserIdInfo)
+            throws StorageQueryException, UnknownSuperTokensUserIdException, UserIdMappingAlreadyExistsException {
+
+        try {
+            UserIdMappingQueries.createUserIdMapping(this, superTokensUserId, externalUserId, externalUserIdInfo);
+        } catch (SQLException e) {
+            String message = e.getMessage();
+            if (message.contains("foreign key") && message.contains(Config.getConfig(this).getUserIdMappingTable())
+                    && message.contains("supertokens_user_id")) {
+                throw new UnknownSuperTokensUserIdException();
+            }
+
+            if (message.contains("Duplicate entry")
+                    && (message.endsWith("'" + Config.getConfig(this).getUserIdMappingTable() + ".PRIMARY'"))
+                    || message.endsWith("'PRIMARY'")) {
+                throw new UserIdMappingAlreadyExistsException(true, true);
+            }
+
+            if (e.getMessage().contains("Duplicate entry") && (e.getMessage()
+                    .endsWith("'" + Config.getConfig(this).getUserIdMappingTable() + ".supertokens_user_id'")
+                    || e.getMessage().endsWith("'supertokens_user_id'"))) {
+                throw new UserIdMappingAlreadyExistsException(true, false);
+            }
+
+            if (e.getMessage().contains("Duplicate entry") && (e.getMessage()
+                    .endsWith("'" + Config.getConfig(this).getUserIdMappingTable() + ".external_user_id'")
+                    || e.getMessage().endsWith("'external_user_id'"))) {
+                throw new UserIdMappingAlreadyExistsException(false, true);
+            }
+            throw new StorageQueryException(e);
+        }
+
+    }
+
+    @Override
+    public boolean deleteUserIdMapping(String userId, boolean isSuperTokensUserId) throws StorageQueryException {
+        try {
+            if (isSuperTokensUserId) {
+                return UserIdMappingQueries.deleteUserIdMappingWithSuperTokensUserId(this, userId);
+            }
+            return UserIdMappingQueries.deleteUserIdMappingWithExternalUserId(this, userId);
+        } catch (SQLException e) {
+            throw new StorageQueryException(e);
+        }
+    }
+
+    @Override
+    public UserIdMapping getUserIdMapping(String userId, boolean isSuperTokensUserId) throws StorageQueryException {
+        try {
+            if (isSuperTokensUserId) {
+                return UserIdMappingQueries.getUserIdMappingWithSuperTokensUserId(this, userId);
+            }
+            return UserIdMappingQueries.getUserIdMappingWithExternalUserId(this, userId);
+        } catch (SQLException e) {
+            throw new StorageQueryException(e);
+        }
+    }
+
+    @Override
+    public UserIdMapping[] getUserIdMapping(String userId) throws StorageQueryException {
+        try {
+            return UserIdMappingQueries.getUserIdMappingWithEitherSuperTokensUserIdOrExternalUserId(this, userId);
+        } catch (SQLException e) {
+            throw new StorageQueryException(e);
+        }
+    }
+
+    @Override
+    public boolean updateOrDeleteExternalUserIdInfo(String userId, boolean isSuperTokensUserId,
+            @org.jetbrains.annotations.Nullable String externalUserIdInfo) throws StorageQueryException {
+        try {
+            if (isSuperTokensUserId) {
+                return UserIdMappingQueries.updateOrDeleteExternalUserIdInfoWithSuperTokensUserId(this, userId,
+                        externalUserIdInfo);
+            }
+            return UserIdMappingQueries.updateOrDeleteExternalUserIdInfoWithExternalUserId(this, userId,
+                    externalUserIdInfo);
         } catch (SQLException e) {
             throw new StorageQueryException(e);
         }
