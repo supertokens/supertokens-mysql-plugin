@@ -1599,7 +1599,7 @@ public class Start
             }
             return UserIdMappingQueries.updateOrDeleteExternalUserIdInfoWithExternalUserId(this, userId,
                     externalUserIdInfo);
-        } catch (SQLException | StorageTransactionLogicException e) {
+        } catch (SQLException e) {
             throw new StorageQueryException(e);
         }
     }

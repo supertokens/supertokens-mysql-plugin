@@ -123,8 +123,7 @@ public class UserIdMappingQueries {
     }
 
     public static boolean updateOrDeleteExternalUserIdInfoWithSuperTokensUserId(Start start, String userId,
-            @Nullable String externalUserIdInfo)
-            throws SQLException, StorageQueryException, StorageTransactionLogicException {
+            @Nullable String externalUserIdInfo) throws SQLException, StorageQueryException {
         String QUERY = "UPDATE " + getConfig(start).getUserIdMappingTable()
                 + " SET external_user_id_info = ? WHERE supertokens_user_id = ?";
 
@@ -137,8 +136,7 @@ public class UserIdMappingQueries {
     }
 
     public static boolean updateOrDeleteExternalUserIdInfoWithExternalUserId(Start start, String userId,
-            @Nullable String externalUserIdInfo)
-            throws SQLException, StorageQueryException, StorageTransactionLogicException {
+            @Nullable String externalUserIdInfo) throws SQLException, StorageQueryException {
         String QUERY = "UPDATE " + getConfig(start).getUserIdMappingTable()
                 + " SET external_user_id_info = ? WHERE external_user_id = ?";
 
