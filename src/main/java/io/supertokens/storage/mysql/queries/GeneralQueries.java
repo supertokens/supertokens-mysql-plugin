@@ -188,6 +188,11 @@ public class GeneralQueries {
             update(start, UserRoleQueries.getQueryToCreateUserRolesRoleIndex(start), NO_OP_SETTER);
         }
 
+        if (!doesTableExists(start, Config.getConfig(start).getUserIdMappingTable())) {
+            getInstance(start).addState(CREATING_NEW_TABLE, null);
+            update(start, UserIdMappingQueries.getQueryToCreateUserIdMappingTable(start), NO_OP_SETTER);
+        }
+
     }
 
     public static void setKeyValue_Transaction(Start start, Connection con, String key, KeyValueInfo info)
@@ -203,6 +208,13 @@ public class GeneralQueries {
             pst.setString(4, info.value);
             pst.setLong(5, info.createdAtTime);
         });
+    }
+
+    public static boolean doesUserIdExist(Start start, String userId) throws SQLException, StorageQueryException {
+
+        String QUERY = "SELECT 1 FROM " + Config.getConfig(start).getUsersTable() + " WHERE user_id = ?";
+        return execute(start, QUERY, pst -> pst.setString(1, userId), ResultSet::next);
+
     }
 
     public static void setKeyValue(Start start, String key, KeyValueInfo info)

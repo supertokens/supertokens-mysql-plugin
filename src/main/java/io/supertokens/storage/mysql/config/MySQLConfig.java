@@ -286,6 +286,10 @@ public class MySQLConfig {
         return addPrefixToTableName("user_roles");
     }
 
+    public String getUserIdMappingTable() {
+        return addPrefixToTableName("userid_mapping");
+    }
+
     private String addPrefixToTableName(String tableName) {
         if (!mysql_table_names_prefix.trim().equals("")) {
             return mysql_table_names_prefix.trim() + "_" + tableName;
