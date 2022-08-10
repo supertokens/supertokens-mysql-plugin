@@ -7,6 +7,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.18.0] - 2022-08-10
+
+- Adds compatibility with plugin interface 2.16
+
 ## [1.17.0] - 2022-07-07
 
 - Support for UserIdMapping
