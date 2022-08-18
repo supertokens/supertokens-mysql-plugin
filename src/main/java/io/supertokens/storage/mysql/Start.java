@@ -20,6 +20,7 @@ package io.supertokens.storage.mysql;
 import ch.qos.logback.classic.Logger;
 import com.google.gson.JsonObject;
 import io.supertokens.pluginInterface.KeyValueInfo;
+import io.supertokens.pluginInterface.LOG_LEVEL;
 import io.supertokens.pluginInterface.RECIPE_ID;
 import io.supertokens.pluginInterface.STORAGE_TYPE;
 import io.supertokens.pluginInterface.authRecipe.AuthRecipeUserInfo;
@@ -55,10 +56,6 @@ import io.supertokens.pluginInterface.useridmapping.UserIdMapping;
 import io.supertokens.pluginInterface.useridmapping.UserIdMappingStorage;
 import io.supertokens.pluginInterface.useridmapping.exception.UnknownSuperTokensUserIdException;
 import io.supertokens.pluginInterface.useridmapping.exception.UserIdMappingAlreadyExistsException;
-import io.supertokens.pluginInterface.useridmapping.UserIdMapping;
-import io.supertokens.pluginInterface.useridmapping.UserIdMappingStorage;
-import io.supertokens.pluginInterface.useridmapping.exception.UnknownSuperTokensUserIdException;
-import io.supertokens.pluginInterface.useridmapping.exception.UserIdMappingAlreadyExistsException;
 import io.supertokens.pluginInterface.usermetadata.UserMetadataStorage;
 import io.supertokens.pluginInterface.usermetadata.sqlStorage.UserMetadataSQLStorage;
 import io.supertokens.pluginInterface.userroles.UserRolesStorage;
@@ -80,6 +77,7 @@ import java.sql.SQLTransactionRollbackException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 
 public class Start
         implements SessionSQLStorage, EmailPasswordSQLStorage, EmailVerificationSQLStorage, ThirdPartySQLStorage,
@@ -118,8 +116,8 @@ public class Start
     }
 
     @Override
-    public void loadConfig(String configFilePath) {
-        Config.loadConfig(this, configFilePath);
+    public void loadConfig(String configFilePath, Set<LOG_LEVEL> logLevels) {
+        Config.loadConfig(this, configFilePath, logLevels);
     }
 
     @Override
