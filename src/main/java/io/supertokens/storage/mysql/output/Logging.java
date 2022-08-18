@@ -74,7 +74,6 @@ public class Logging extends ResourceDistributor.SingletonResource {
         }
         try {
             msg = msg.trim();
-            systemOut(msg);
             if (getInstance(start) != null) {
                 getInstance(start).infoLogger.info(msg);
             }
