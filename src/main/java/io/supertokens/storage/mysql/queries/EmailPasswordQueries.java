@@ -42,7 +42,7 @@ public class EmailPasswordQueries {
     static String getQueryToCreateUsersTable(Start start) {
         return "CREATE TABLE IF NOT EXISTS " + getConfig(start).getEmailPasswordUsersTable() + " ("
                 + "user_id CHAR(36) NOT NULL," + "email VARCHAR(256) NOT NULL UNIQUE,"
-                + "password_hash VARCHAR(128) NOT NULL," + "time_joined BIGINT UNSIGNED NOT NULL,"
+                + "password_hash VARCHAR(256) NOT NULL," + "time_joined BIGINT UNSIGNED NOT NULL,"
                 + "PRIMARY KEY (user_id));";
     }
 
