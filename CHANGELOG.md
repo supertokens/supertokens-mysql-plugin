@@ -7,15 +7,22 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [2.1.0] - 2022-11-07
+
+- Updates dependencies as per: https://github.com/supertokens/supertokens-core/issues/525
+
 ## [2.0.0] - 2022-09-19
 
-- Updates the `third_party_user_id` column in the `thirdparty_users` table from `VARCHAR(128)` to `VARCHAR(256)` to resolve https://github.com/supertokens/supertokens-core/issues/306
+- Updates the `third_party_user_id` column in the `thirdparty_users` table from `VARCHAR(128)` to `VARCHAR(256)` to
+  resolve https://github.com/supertokens/supertokens-core/issues/306
 
 - Adds support for user migration
-  - Updates the `password_hash` column in the `emailpassword_users` table from `VARCHAR(128)` to `VARCHAR(256)` to support more types of password hashes.
+    - Updates the `password_hash` column in the `emailpassword_users` table from `VARCHAR(128)` to `VARCHAR(256)` to
+      support more types of password hashes.
 
-- For legacy users who are self hosting the SuperTokens core run the following command to update your database with the changes:
-`ALTER TABLE thirdparty_users MODIFY third_party_user_id VARCHAR(256); ALTER TABLE emailpassword_users MODIFY password_hash VARCHAR(256);` 
+- For legacy users who are self hosting the SuperTokens core run the following command to update your database with the
+  changes:
+  `ALTER TABLE thirdparty_users MODIFY third_party_user_id VARCHAR(256); ALTER TABLE emailpassword_users MODIFY password_hash VARCHAR(256);`
 
 ## [1.19.0] - 2022-08-18
 
