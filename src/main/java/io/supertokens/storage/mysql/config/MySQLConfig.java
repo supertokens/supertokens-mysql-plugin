@@ -289,6 +289,14 @@ public class MySQLConfig {
     public String getUserIdMappingTable() {
         return addPrefixToTableName("userid_mapping");
     }
+    
+    public String getDashboardUsersTable(){
+        return "dashboard_users";
+    }
+
+    public String getDashboardSessionsTable(){
+        return "dashboard_user_sessions";
+    }
 
     private String addPrefixToTableName(String tableName) {
         if (!mysql_table_names_prefix.trim().equals("")) {
