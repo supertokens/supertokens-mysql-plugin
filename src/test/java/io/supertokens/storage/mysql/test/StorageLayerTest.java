@@ -80,7 +80,7 @@ public class StorageLayerTest {
             insertUsedCodeUtil(storage, code);
             assert (false);
         } catch (StorageQueryException e) {
-            assert e.getMessage().endsWith("ERROR: value too long for type character varying(8)");
+            assert e.getMessage().endsWith("Data too long for column 'code' at row 1");
         }
 
         // Try code with length < 8
