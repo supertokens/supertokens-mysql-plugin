@@ -8,6 +8,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 - Support for TOTP recipe
+- Support for active users
 
 ### Database changes
 
@@ -15,6 +16,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - `totp_users` that stores the users that have enabled TOTP
   - `totp_user_devices` that stores devices (each device has its own secret) for each user
   - `totp_used_codes` that stores used codes for each user. This is to implement rate limiting and prevent replay attacks.
+- Add `user_last_active` table to store the last active time of a user.
 
 ## [2.2.0] - 2023-02-21
 
