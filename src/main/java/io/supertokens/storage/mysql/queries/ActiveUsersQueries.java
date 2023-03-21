@@ -30,7 +30,7 @@ public class ActiveUsersQueries {
 
     public static int updateUserLastActive(Start start, String userId) throws SQLException, StorageQueryException {
         String QUERY = "INSERT INTO " + Config.getConfig(start).getUserLastActiveTable()
-                + "(user_id, last_active_time) VALUES(?, ?) ON CONFLICT(user_id) DO UPDATE SET last_active_time = ?";
+                + "(user_id, last_active_time) VALUES(?, ?) ON DUPLICATE KEY UPDATE last_active_time = ?";
 
         long now = System.currentTimeMillis();
         return update(start, QUERY, pst -> {
