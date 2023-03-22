@@ -199,6 +199,10 @@ public class MySQLConfig {
         return addPrefixToTableName(tableName);
     }
 
+    public String getUserLastActiveTable() {
+        return addPrefixToTableName("user_last_active");
+    }
+
     public String getAccessTokenSigningKeysTable() {
         return addPrefixToTableName("session_access_token_signing_keys");
     }
