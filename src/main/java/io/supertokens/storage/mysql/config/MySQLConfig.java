@@ -82,7 +82,8 @@ public class MySQLConfig {
         if (mysql_connection_uri != null) {
             URI uri = URI.create(mysql_connection_uri);
 
-            // sometimes if the scheme is missing, the host is returned as the scheme. To prevent that,
+            // sometimes if the scheme is missing, the host is returned as the scheme. To
+            // prevent that,
             // we have a check
             String host = this.getHostName();
             if (uri.getScheme() != null && !uri.getScheme().equals(host)) {
@@ -198,6 +199,10 @@ public class MySQLConfig {
         return addPrefixToTableName(tableName);
     }
 
+    public String getUserLastActiveTable() {
+        return addPrefixToTableName("user_last_active");
+    }
+
     public String getAccessTokenSigningKeysTable() {
         return addPrefixToTableName("session_access_token_signing_keys");
     }
@@ -289,13 +294,25 @@ public class MySQLConfig {
     public String getUserIdMappingTable() {
         return addPrefixToTableName("userid_mapping");
     }
-    
-    public String getDashboardUsersTable(){
+
+    public String getDashboardUsersTable() {
         return "dashboard_users";
     }
 
-    public String getDashboardSessionsTable(){
+    public String getDashboardSessionsTable() {
         return "dashboard_user_sessions";
+    }
+
+    public String getTotpUsersTable() {
+        return addPrefixToTableName("totp_users");
+    }
+
+    public String getTotpUserDevicesTable() {
+        return addPrefixToTableName("totp_user_devices");
+    }
+
+    public String getTotpUsedCodesTable() {
+        return addPrefixToTableName("totp_used_codes");
     }
 
     private String addPrefixToTableName(String tableName) {

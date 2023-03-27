@@ -99,6 +99,11 @@ public class GeneralQueries {
             update(start, getQueryToCreateUserPaginationIndex(start), NO_OP_SETTER);
         }
 
+        if (!doesTableExists(start, Config.getConfig(start).getUserLastActiveTable())) {
+            getInstance(start).addState(CREATING_NEW_TABLE, null);
+            update(start, ActiveUsersQueries.getQueryToCreateUserLastActiveTable(start), NO_OP_SETTER);
+        }
+
         if (!doesTableExists(start, Config.getConfig(start).getAccessTokenSigningKeysTable())) {
             getInstance(start).addState(CREATING_NEW_TABLE, null);
             update(start, getQueryToCreateAccessTokenSigningKeysTable(start), NO_OP_SETTER);
@@ -205,6 +210,22 @@ public class GeneralQueries {
             update(start, DashboardQueries.getQueryToCreateDashboardUserSessionsExpiryIndex(start), NO_OP_SETTER);
         }
 
+        if (!doesTableExists(start, Config.getConfig(start).getTotpUsersTable())) {
+            getInstance(start).addState(CREATING_NEW_TABLE, null);
+            update(start, TOTPQueries.getQueryToCreateUsersTable(start), NO_OP_SETTER);
+        }
+
+        if (!doesTableExists(start, Config.getConfig(start).getTotpUserDevicesTable())) {
+            getInstance(start).addState(CREATING_NEW_TABLE, null);
+            update(start, TOTPQueries.getQueryToCreateUserDevicesTable(start), NO_OP_SETTER);
+        }
+
+        if (!doesTableExists(start, Config.getConfig(start).getTotpUsedCodesTable())) {
+            getInstance(start).addState(CREATING_NEW_TABLE, null);
+            update(start, TOTPQueries.getQueryToCreateUsedCodesTable(start), NO_OP_SETTER);
+            // index:
+            update(start, TOTPQueries.getQueryToCreateUsedCodesExpiryTimeIndex(start), NO_OP_SETTER);
+        }
     }
 
     public static void setKeyValue_Transaction(Start start, Connection con, String key, KeyValueInfo info)
@@ -403,7 +424,8 @@ public class GeneralQueries {
             List<? extends AuthRecipeUserInfo> users = getUserInfoForRecipeIdFromUserIds(start, recipeId,
                     recipeIdToUserIdListMap.get(recipeId));
 
-            // we fill in all the slots in finalResult based on their position in usersFromQuery
+            // we fill in all the slots in finalResult based on their position in
+            // usersFromQuery
             Map<String, AuthRecipeUserInfo> userIdToInfoMap = new HashMap<>();
             for (AuthRecipeUserInfo user : users) {
                 userIdToInfoMap.put(user.id, user);
