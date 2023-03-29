@@ -19,12 +19,7 @@ package io.supertokens.storage.mysql;
 
 import ch.qos.logback.classic.Logger;
 import com.google.gson.JsonObject;
-
-import io.supertokens.pluginInterface.ActiveUsersStorage;
-import io.supertokens.pluginInterface.KeyValueInfo;
-import io.supertokens.pluginInterface.LOG_LEVEL;
-import io.supertokens.pluginInterface.RECIPE_ID;
-import io.supertokens.pluginInterface.STORAGE_TYPE;
+import io.supertokens.pluginInterface.*;
 import io.supertokens.pluginInterface.authRecipe.AuthRecipeUserInfo;
 import io.supertokens.pluginInterface.dashboard.DashboardSessionInfo;
 import io.supertokens.pluginInterface.dashboard.DashboardUser;
@@ -209,7 +204,7 @@ public class Start
                     }
                     ProcessState.getInstance(this).addState(ProcessState.PROCESS_STATE.DEADLOCK_FOUND, e);
                     continue; // this because deadlocks are not necessarily a result of faulty logic. They can
-                              // happen
+                    // happen
                 }
                 if (e instanceof StorageQueryException) {
                     throw (StorageQueryException) e;
@@ -352,6 +347,7 @@ public class Start
     @Override
     @TestOnly
     public void deleteAllInformation() throws StorageQueryException {
+        ProcessState.getInstance(this).clear();
         try {
             GeneralQueries.deleteAllTables(this);
         } catch (SQLException e) {
@@ -366,7 +362,8 @@ public class Start
 
     @Override
     public void createNewSession(String sessionHandle, String userId, String refreshTokenHash2,
-            JsonObject userDataInDatabase, long expiry, JsonObject userDataInJWT, long createdAtTime)
+                                 JsonObject userDataInDatabase, long expiry, JsonObject userDataInJWT,
+                                 long createdAtTime)
             throws StorageQueryException {
         try {
             SessionQueries.createNewSession(this, sessionHandle, userId, refreshTokenHash2, userDataInDatabase, expiry,
@@ -476,7 +473,7 @@ public class Start
 
     @Override
     public void updateSessionInfo_Transaction(TransactionConnection con, String sessionHandle, String refreshTokenHash2,
-            long expiry) throws StorageQueryException {
+                                              long expiry) throws StorageQueryException {
         Connection sqlCon = (Connection) con.getConnection();
         try {
             SessionQueries.updateSessionInfo_Transaction(this, sqlCon, sessionHandle, refreshTokenHash2, expiry);
@@ -550,11 +547,10 @@ public class Start
                 throw new StorageQueryException(e);
             }
         } else if (className.equals(TOTPStorage.class.getName())) {
-            try{
+            try {
                 TOTPDevice[] devices = TOTPQueries.getDevices(this, userId);
                 return devices.length > 0;
-            }
-            catch (SQLException e){
+            } catch (SQLException e) {
                 throw new StorageQueryException(e);
             }
         } else if (className.equals(JWTRecipeStorage.class.getName())) {
@@ -614,8 +610,7 @@ public class Start
             try {
                 TOTPDevice device = new TOTPDevice(userId, "testDevice", "secret", 0, 30, false);
                 TOTPQueries.createDevice(this, device);
-            }
-            catch (StorageTransactionLogicException e) {
+            } catch (StorageTransactionLogicException e) {
                 throw new StorageQueryException(e.actualException);
             }
         } else if (className.equals(JWTRecipeStorage.class.getName())) {
@@ -634,12 +629,12 @@ public class Start
             Exception e = eTemp.actualException;
             if (e.getMessage().contains("Duplicate entry")
                     && (e.getMessage().endsWith("'" + Config.getConfig(this).getEmailPasswordUsersTable() + ".email'")
-                            || e.getMessage().endsWith("'email'"))) {
+                    || e.getMessage().endsWith("'email'"))) {
                 throw new DuplicateEmailException();
             } else if (e.getMessage().contains("Duplicate entry")
                     && (e.getMessage().endsWith("'" + Config.getConfig(this).getEmailPasswordUsersTable() + ".PRIMARY'")
-                            || e.getMessage().endsWith("'" + Config.getConfig(this).getUsersTable() + ".PRIMARY'")
-                            || e.getMessage().endsWith("'PRIMARY'"))) {
+                    || e.getMessage().endsWith("'" + Config.getConfig(this).getUsersTable() + ".PRIMARY'")
+                    || e.getMessage().endsWith("'PRIMARY'"))) {
                 throw new DuplicateUserIdException();
             }
             throw new StorageQueryException(e);
@@ -711,7 +706,8 @@ public class Start
 
     @Override
     public PasswordResetTokenInfo[] getAllPasswordResetTokenInfoForUser_Transaction(TransactionConnection con,
-            String userId) throws StorageQueryException {
+                                                                                    String userId)
+            throws StorageQueryException {
         Connection sqlCon = (Connection) con.getConnection();
         try {
             return EmailPasswordQueries.getAllPasswordResetTokenInfoForUser_Transaction(this, sqlCon, userId);
@@ -751,7 +747,7 @@ public class Start
         } catch (SQLException e) {
             if (e.getMessage().contains("Duplicate entry")
                     && (e.getMessage().endsWith("'" + Config.getConfig(this).getEmailPasswordUsersTable() + ".email'")
-                            || e.getMessage().endsWith("'email'"))) {
+                    || e.getMessage().endsWith("'email'"))) {
                 throw new DuplicateEmailException();
             }
             throw new StorageQueryException(e);
@@ -772,7 +768,7 @@ public class Start
     @Override
     @Deprecated
     public UserInfo[] getUsers(@Nonnull String userId, @Nonnull Long timeJoined, @Nonnull Integer limit,
-            @Nonnull String timeJoinedOrder) throws StorageQueryException {
+                               @Nonnull String timeJoinedOrder) throws StorageQueryException {
         try {
             return EmailPasswordQueries.getUsersInfo(this, userId, timeJoined, limit, timeJoinedOrder);
         } catch (SQLException e) {
@@ -820,7 +816,8 @@ public class Start
 
     @Override
     public EmailVerificationTokenInfo[] getAllEmailVerificationTokenInfoForUser_Transaction(TransactionConnection con,
-            String userId, String email) throws StorageQueryException {
+                                                                                            String userId, String email)
+            throws StorageQueryException {
         Connection sqlCon = (Connection) con.getConnection();
         try {
             return EmailVerificationQueries.getAllEmailVerificationTokenInfoForUser_Transaction(this, sqlCon, userId,
@@ -832,7 +829,7 @@ public class Start
 
     @Override
     public void deleteAllEmailVerificationTokensForUser_Transaction(TransactionConnection con, String userId,
-            String email) throws StorageQueryException {
+                                                                    String email) throws StorageQueryException {
         Connection sqlCon = (Connection) con.getConnection();
         try {
             EmailVerificationQueries.deleteAllEmailVerificationTokensForUser_Transaction(this, sqlCon, userId, email);
@@ -843,7 +840,7 @@ public class Start
 
     @Override
     public void updateIsEmailVerified_Transaction(TransactionConnection con, String userId, String email,
-            boolean isEmailVerified) throws StorageQueryException {
+                                                  boolean isEmailVerified) throws StorageQueryException {
         Connection sqlCon = (Connection) con.getConnection();
         try {
             EmailVerificationQueries.updateUsersIsEmailVerified_Transaction(this, sqlCon, userId, email,
@@ -851,7 +848,7 @@ public class Start
         } catch (SQLException e) {
             if (!isEmailVerified || !(e.getMessage().contains("Duplicate entry")
                     && (e.getMessage().endsWith("'" + Config.getConfig(this).getEmailVerificationTable() + ".PRIMARY'")
-                            || e.getMessage().endsWith("'PRIMARY'")))) {
+                    || e.getMessage().endsWith("'PRIMARY'")))) {
                 throw new StorageQueryException(e);
             }
             // we do not throw an error since the email is already verified
@@ -931,7 +928,9 @@ public class Start
 
     @Override
     public io.supertokens.pluginInterface.thirdparty.UserInfo getUserInfoUsingId_Transaction(TransactionConnection con,
-            String thirdPartyId, String thirdPartyUserId) throws StorageQueryException {
+                                                                                             String thirdPartyId,
+                                                                                             String thirdPartyUserId)
+            throws StorageQueryException {
         Connection sqlCon = (Connection) con.getConnection();
         try {
             return ThirdPartyQueries.getUserInfoUsingId_Transaction(this, sqlCon, thirdPartyId, thirdPartyUserId);
@@ -942,7 +941,7 @@ public class Start
 
     @Override
     public void updateUserEmail_Transaction(TransactionConnection con, String thirdPartyId, String thirdPartyUserId,
-            String newEmail) throws StorageQueryException {
+                                            String newEmail) throws StorageQueryException {
         Connection sqlCon = (Connection) con.getConnection();
         try {
             ThirdPartyQueries.updateUserEmail_Transaction(this, sqlCon, thirdPartyId, thirdPartyUserId, newEmail);
@@ -961,13 +960,13 @@ public class Start
             Exception e = eTemp.actualException;
             if (e.getMessage().contains("Duplicate entry") && e.getMessage().contains(userInfo.thirdParty.userId)
                     && (e.getMessage().endsWith("'" + Config.getConfig(this).getThirdPartyUsersTable() + ".PRIMARY'")
-                            || e.getMessage().endsWith("'PRIMARY'"))) {
+                    || e.getMessage().endsWith("'PRIMARY'"))) {
                 throw new DuplicateThirdPartyUserException();
             } else if (e.getMessage().contains("Duplicate entry")
                     && ((e.getMessage().endsWith("'" + Config.getConfig(this).getThirdPartyUsersTable() + ".user_id'")
-                            || e.getMessage().endsWith("'user_id'"))
-                            || (e.getMessage().endsWith("'" + Config.getConfig(this).getUsersTable() + ".PRIMARY'")
-                                    || e.getMessage().endsWith("'PRIMARY'")))) {
+                    || e.getMessage().endsWith("'user_id'"))
+                    || (e.getMessage().endsWith("'" + Config.getConfig(this).getUsersTable() + ".PRIMARY'")
+                    || e.getMessage().endsWith("'PRIMARY'")))) {
                 throw new io.supertokens.pluginInterface.thirdparty.exception.DuplicateUserIdException();
             }
             throw new StorageQueryException(e);
@@ -985,7 +984,8 @@ public class Start
 
     @Override
     public io.supertokens.pluginInterface.thirdparty.UserInfo getThirdPartyUserInfoUsingId(String thirdPartyId,
-            String thirdPartyUserId) throws StorageQueryException {
+                                                                                           String thirdPartyUserId)
+            throws StorageQueryException {
         try {
             return ThirdPartyQueries.getThirdPartyUserInfoUsingId(this, thirdPartyId, thirdPartyUserId);
         } catch (SQLException e) {
@@ -1006,7 +1006,9 @@ public class Start
     @Override
     @Deprecated
     public io.supertokens.pluginInterface.thirdparty.UserInfo[] getThirdPartyUsers(@NotNull String userId,
-            @NotNull Long timeJoined, @NotNull Integer limit, @NotNull String timeJoinedOrder)
+                                                                                   @NotNull Long timeJoined,
+                                                                                   @NotNull Integer limit,
+                                                                                   @NotNull String timeJoinedOrder)
             throws StorageQueryException {
         try {
             return ThirdPartyQueries.getThirdPartyUsers(this, userId, timeJoined, limit, timeJoinedOrder);
@@ -1018,7 +1020,8 @@ public class Start
     @Override
     @Deprecated
     public io.supertokens.pluginInterface.thirdparty.UserInfo[] getThirdPartyUsers(@NotNull Integer limit,
-            @NotNull String timeJoinedOrder) throws StorageQueryException {
+                                                                                   @NotNull String timeJoinedOrder)
+            throws StorageQueryException {
         try {
             return ThirdPartyQueries.getThirdPartyUsers(this, limit, timeJoinedOrder);
         } catch (SQLException e) {
@@ -1057,7 +1060,8 @@ public class Start
 
     @Override
     public AuthRecipeUserInfo[] getUsers(@NotNull Integer limit, @NotNull String timeJoinedOrder,
-            @Nullable RECIPE_ID[] includeRecipeIds, @Nullable String userId, @Nullable Long timeJoined)
+                                         @Nullable RECIPE_ID[] includeRecipeIds, @Nullable String userId,
+                                         @Nullable Long timeJoined)
             throws StorageQueryException {
         try {
             return GeneralQueries.getUsers(this, limit, timeJoinedOrder, includeRecipeIds, userId, timeJoined);
@@ -1132,7 +1136,7 @@ public class Start
 
             if (e.getMessage().contains("Duplicate entry") && e.getMessage().contains(info.keyId)
                     && (e.getMessage().endsWith("'" + Config.getConfig(this).getJWTSigningKeysTable() + ".PRIMARY'")
-                            || e.getMessage().endsWith("'PRIMARY'"))) {
+                    || e.getMessage().endsWith("'PRIMARY'"))) {
                 throw new DuplicateKeyIdException();
             }
 
@@ -1239,7 +1243,8 @@ public class Start
 
     @Override
     public void createDeviceWithCode(@Nullable String email, @Nullable String phoneNumber, @NotNull String linkCodeSalt,
-            PasswordlessCode code) throws StorageQueryException, DuplicateDeviceIdHashException,
+                                     PasswordlessCode code)
+            throws StorageQueryException, DuplicateDeviceIdHashException,
             DuplicateCodeIdException, DuplicateLinkCodeHashException {
         if (email == null && phoneNumber == null) {
             throw new IllegalArgumentException("Both email and phoneNumber can't be null");
@@ -1251,12 +1256,12 @@ public class Start
             if (message.contains("Duplicate entry")) {
                 if (message.contains(code.deviceIdHash)
                         && (message.endsWith("'" + Config.getConfig(this).getPasswordlessDevicesTable() + ".PRIMARY'")
-                                || message.endsWith("'PRIMARY'"))) {
+                        || message.endsWith("'PRIMARY'"))) {
                     throw new DuplicateDeviceIdHashException();
                 }
                 if (message.contains(code.id)
                         && (message.endsWith("'" + Config.getConfig(this).getPasswordlessCodesTable() + ".PRIMARY'")
-                                || message.endsWith("'PRIMARY'"))) {
+                        || message.endsWith("'PRIMARY'"))) {
                     throw new DuplicateCodeIdException();
                 }
 
@@ -1402,7 +1407,7 @@ public class Start
                 if ((e.getMessage().endsWith("'" + Config.getConfig(this).getPasswordlessUsersTable() + ".user_id'")
                         || e.getMessage().endsWith("'user_id'"))
                         || (e.getMessage().endsWith("'" + Config.getConfig(this).getUsersTable() + ".PRIMARY'")
-                                || e.getMessage().endsWith("'PRIMARY'"))) {
+                        || e.getMessage().endsWith("'PRIMARY'"))) {
                     throw new DuplicateUserIdException();
                 }
 
@@ -1465,7 +1470,7 @@ public class Start
 
             if (e.getMessage().contains("Duplicate entry")
                     && (e.getMessage()
-                            .endsWith("'" + Config.getConfig(this).getPasswordlessUsersTable() + ".phone_number'"))
+                    .endsWith("'" + Config.getConfig(this).getPasswordlessUsersTable() + ".phone_number'"))
                     || e.getMessage().endsWith("'phone_number'")) {
                 throw new DuplicatePhoneNumberException();
             }
@@ -1632,7 +1637,8 @@ public class Start
 
     @Override
     public void addPermissionToRoleOrDoNothingIfExists_Transaction(TransactionConnection con, String role,
-            String permission) throws StorageQueryException, UnknownRoleException {
+                                                                   String permission)
+            throws StorageQueryException, UnknownRoleException {
         Connection sqlCon = (Connection) con.getConnection();
         try {
             UserRoleQueries.addPermissionToRoleOrDoNothingIfExists_Transaction(this, sqlCon, role, permission);
@@ -1678,7 +1684,7 @@ public class Start
 
     @Override
     public void createUserIdMapping(String superTokensUserId, String externalUserId,
-            @org.jetbrains.annotations.Nullable String externalUserIdInfo)
+                                    @org.jetbrains.annotations.Nullable String externalUserIdInfo)
             throws StorageQueryException, UnknownSuperTokensUserIdException, UserIdMappingAlreadyExistsException {
 
         try {
@@ -1747,7 +1753,8 @@ public class Start
 
     @Override
     public boolean updateOrDeleteExternalUserIdInfo(String userId, boolean isSuperTokensUserId,
-            @org.jetbrains.annotations.Nullable String externalUserIdInfo) throws StorageQueryException {
+                                                    @org.jetbrains.annotations.Nullable String externalUserIdInfo)
+            throws StorageQueryException {
         try {
             if (isSuperTokensUserId) {
                 return UserIdMappingQueries.updateOrDeleteExternalUserIdInfoWithSuperTokensUserId(this, userId,
@@ -1886,7 +1893,7 @@ public class Start
 
     @Override
     public void updateDashboardUsersEmailWithUserId_Transaction(TransactionConnection con, String userId,
-            String newEmail) throws StorageQueryException,
+                                                                String newEmail) throws StorageQueryException,
             io.supertokens.pluginInterface.dashboard.exceptions.DuplicateEmailException, UserIdNotFoundException {
         Connection sqlCon = (Connection) con.getConnection();
         try {
@@ -1906,7 +1913,8 @@ public class Start
 
     @Override
     public void updateDashboardUsersPasswordWithUserId_Transaction(TransactionConnection con, String userId,
-            String newPassword) throws StorageQueryException, UserIdNotFoundException {
+                                                                   String newPassword)
+            throws StorageQueryException, UserIdNotFoundException {
         Connection sqlCon = (Connection) con.getConnection();
         try {
             if (!DashboardQueries.updateDashboardUsersPasswordWithUserId_Transaction(this, sqlCon, userId,
@@ -2026,7 +2034,7 @@ public class Start
             String message = e.getMessage();
             if (message.contains("Duplicate entry")
                     && (message.endsWith("'" + Config.getConfig(this).getTotpUsedCodesTable() +
-                            ".PRIMARY'"))
+                    ".PRIMARY'"))
                     || message.endsWith("'PRIMARY'")) {
                 throw new UsedCodeAlreadyExistsException();
             }
