@@ -370,7 +370,7 @@ public class GeneralQueries {
                             queryList.add("%@" + dashboardSearchTags.emails.get(i) + "%");
                         }
 
-                        USER_SEARCH_TAG_CONDITION.append("SELECT * FROM ( ").append(QUERY).append(" LIMIT 1000)");
+                        USER_SEARCH_TAG_CONDITION.append("SELECT * FROM ( ").append(QUERY).append(" LIMIT 1000) AS emailpasswordResultTable");
                     }
                 }
 
@@ -416,10 +416,10 @@ public class GeneralQueries {
                         // check if we need to append this to an existing search query
                         if (USER_SEARCH_TAG_CONDITION.length() != 0) {
                             USER_SEARCH_TAG_CONDITION.append(" UNION ").append("SELECT * FROM ( ").append(QUERY)
-                                    .append(" LIMIT 1000)");
+                                    .append(" LIMIT 1000) AS thirdPartyResultTable");
 
                         } else {
-                            USER_SEARCH_TAG_CONDITION.append("SELECT * FROM ( ").append(QUERY).append(" LIMIT 1000)");
+                            USER_SEARCH_TAG_CONDITION.append("SELECT * FROM ( ").append(QUERY).append(" LIMIT 1000) AS thirdPartyResultTable");
 
                         }
                     }
@@ -474,10 +474,10 @@ public class GeneralQueries {
                         // check if we need to append this to an existing search query
                         if (USER_SEARCH_TAG_CONDITION.length() != 0) {
                             USER_SEARCH_TAG_CONDITION.append(" UNION ").append("SELECT * FROM ( ").append(QUERY)
-                                    .append(" LIMIT 1000)");
+                                    .append(" LIMIT 1000) AS passwordlessResultTable");
 
                         } else {
-                            USER_SEARCH_TAG_CONDITION.append("SELECT * FROM ( ").append(QUERY).append(" LIMIT 1000)");
+                            USER_SEARCH_TAG_CONDITION.append("SELECT * FROM ( ").append(QUERY).append(" LIMIT 1000) AS passwordlessResultTable");
 
                         }
                     }
@@ -487,7 +487,7 @@ public class GeneralQueries {
                     usersFromQuery = new ArrayList<>();
                 } else {
 
-                    String finalQuery = "SELECT * FROM ( " + USER_SEARCH_TAG_CONDITION.toString() + " )"
+                    String finalQuery = "SELECT * FROM ( " + USER_SEARCH_TAG_CONDITION.toString() + " ) AS finalResultTable"
                             + " ORDER BY time_joined " + timeJoinedOrder + ", user_id DESC ";
                     usersFromQuery = execute(start, finalQuery, pst -> {
                         for (int i = 1; i <= queryList.size(); i++) {
