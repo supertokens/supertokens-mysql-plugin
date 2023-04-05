@@ -52,11 +52,11 @@ public class SessionQueries {
     }
 
     public static void createNewSession(Start start, String sessionHandle, String userId, String refreshTokenHash2,
-            JsonObject userDataInDatabase, long expiry, JsonObject userDataInJWT, long createdAtTime)
+            JsonObject userDataInDatabase, long expiry, JsonObject userDataInJWT, long createdAtTime, boolean useStaticKey)
             throws SQLException, StorageQueryException {
         String QUERY = "INSERT INTO " + Config.getConfig(start).getSessionInfoTable()
                 + "(session_handle, user_id, refresh_token_hash_2, session_data, expires_at, jwt_user_payload, "
-                + "created_at_time)" + " VALUES(?, ?, ?, ?, ?, ?, ?)";
+                + "created_at_time, use_static_key)" + " VALUES(?, ?, ?, ?, ?, ?, ?, ?)";
 
         update(start, QUERY, pst -> {
             pst.setString(1, sessionHandle);
@@ -66,13 +66,14 @@ public class SessionQueries {
             pst.setLong(5, expiry);
             pst.setString(6, userDataInJWT.toString());
             pst.setLong(7, createdAtTime);
+            pst.setBoolean(8, useStaticKey);
         });
     }
 
     public static SessionInfo getSessionInfo_Transaction(Start start, Connection con, String sessionHandle)
             throws SQLException, StorageQueryException {
         String QUERY = "SELECT session_handle, user_id, refresh_token_hash_2, session_data, expires_at, "
-                + "created_at_time, jwt_user_payload FROM " + Config.getConfig(start).getSessionInfoTable()
+                + "created_at_time, jwt_user_payload, use_static_key FROM " + Config.getConfig(start).getSessionInfoTable()
                 + " WHERE session_handle = ? FOR UPDATE";
         return execute(con, QUERY, pst -> {
             pst.setString(1, sessionHandle);
@@ -159,7 +160,7 @@ public class SessionQueries {
 
     public static SessionInfo getSession(Start start, String sessionHandle) throws SQLException, StorageQueryException {
         String QUERY = "SELECT session_handle, user_id, refresh_token_hash_2, session_data, expires_at, "
-                + "created_at_time, jwt_user_payload FROM " + Config.getConfig(start).getSessionInfoTable()
+                + "created_at_time, jwt_user_payload, use_static_key FROM " + Config.getConfig(start).getSessionInfoTable()
                 + " WHERE session_handle = ?";
         return execute(start, QUERY, pst -> pst.setString(1, sessionHandle), result -> {
             if (result.next()) {
@@ -251,7 +252,8 @@ public class SessionQueries {
                     result.getString("refresh_token_hash_2"),
                     jp.parse(result.getString("session_data")).getAsJsonObject(), result.getLong("expires_at"),
                     jp.parse(result.getString("jwt_user_payload")).getAsJsonObject(),
-                    result.getLong("created_at_time"));
+                    result.getLong("created_at_time"),
+                    result.getBoolean("use_static_key"));
         }
     }
 
