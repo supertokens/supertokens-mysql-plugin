@@ -6,10 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-## [3.0.0] - XXX
+
+## [3.0.0] - 2023-04-05
 
 - Adds `use_static_key` `BOOLEAN` column into `session_info`
-- Adds support for plugin inteface version 2.21
+- Adds support for plugin inteface version 2.23
 
 ### Migration
 
