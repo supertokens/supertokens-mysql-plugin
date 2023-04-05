@@ -40,10 +40,15 @@ import static java.lang.System.currentTimeMillis;
 public class SessionQueries {
     static String getQueryToCreateSessionInfoTable(Start start) {
         return "CREATE TABLE IF NOT EXISTS " + Config.getConfig(start).getSessionInfoTable() + " ("
-                + "session_handle VARCHAR(255) NOT NULL," + "user_id VARCHAR(128) NOT NULL,"
-                + "refresh_token_hash_2 VARCHAR(128) NOT NULL," + "session_data TEXT,"
-                + "expires_at BIGINT UNSIGNED NOT NULL," + "created_at_time BIGINT UNSIGNED NOT NULL,"
-                + "jwt_user_payload TEXT," + "PRIMARY KEY(session_handle)" + " );";
+                + "session_handle VARCHAR(255) NOT NULL,"
+                + "user_id VARCHAR(128) NOT NULL,"
+                + "refresh_token_hash_2 VARCHAR(128) NOT NULL,"
+                + "session_data TEXT,"
+                + "expires_at BIGINT UNSIGNED NOT NULL,"
+                + "created_at_time BIGINT UNSIGNED NOT NULL,"
+                + "jwt_user_payload TEXT,"
+                + "use_static_key BOOLEAN NOT NULL,"
+                + "PRIMARY KEY(session_handle)" + " );";
     }
 
     static String getQueryToCreateAccessTokenSigningKeysTable(Start start) {
