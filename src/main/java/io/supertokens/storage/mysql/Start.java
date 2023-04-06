@@ -198,9 +198,9 @@ public class Start
                 // https://github.com/supertokens/supertokens-mysql-plugin/pull/2
                 if ((e instanceof SQLTransactionRollbackException
                         || (e.getMessage() != null && e.getMessage().toLowerCase().contains("deadlock")))
-                        && tries < 3) {
+                        && tries < 20) {
                     try {
-                        Thread.sleep((long) (10 + (Math.random() * 20)));
+                        Thread.sleep((long) (10 + Math.min(tries, 10) * (Math.random() * 20)));
                     } catch (InterruptedException ignored) {
                     }
                     ProcessState.getInstance(this).addState(ProcessState.PROCESS_STATE.DEADLOCK_FOUND, e);
