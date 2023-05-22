@@ -208,18 +208,19 @@ public class PasswordlessQueries {
         update(con, QUERY, pst -> pst.setString(1, codeId));
     }
 
-    public static void createUser(Start start, UserInfo user)
+    public static UserInfo createUser(Start start, String id, @javax.annotation.Nullable String email,
+                                  @javax.annotation.Nullable String phoneNumber, long timeJoined)
             throws StorageTransactionLogicException, StorageQueryException {
-        start.startTransaction(con -> {
+        return start.startTransaction(con -> {
             Connection sqlCon = (Connection) con.getConnection();
             try {
                 {
                     String QUERY = "INSERT INTO " + getConfig(start).getUsersTable()
                             + "(user_id, recipe_id, time_joined)" + " VALUES(?, ?, ?)";
                     update(sqlCon, QUERY, pst -> {
-                        pst.setString(1, user.id);
+                        pst.setString(1, id);
                         pst.setString(2, PASSWORDLESS.toString());
-                        pst.setLong(3, user.timeJoined);
+                        pst.setLong(3, timeJoined);
                     });
                 }
 
@@ -227,17 +228,17 @@ public class PasswordlessQueries {
                     String QUERY = "INSERT INTO " + getConfig(start).getPasswordlessUsersTable()
                             + "(user_id, email, phone_number, time_joined)" + " VALUES(?, ?, ?, ?)";
                     update(sqlCon, QUERY, pst -> {
-                        pst.setString(1, user.id);
-                        pst.setString(2, user.email);
-                        pst.setString(3, user.phoneNumber);
-                        pst.setLong(4, user.timeJoined);
+                        pst.setString(1, id);
+                        pst.setString(2, email);
+                        pst.setString(3, phoneNumber);
+                        pst.setLong(4, timeJoined);
                     });
                 }
                 sqlCon.commit();
+                return new UserInfo(id, email, phoneNumber, timeJoined, new String[0]);
             } catch (SQLException throwables) {
                 throw new StorageTransactionLogicException(throwables);
             }
-            return null;
         });
     }
 
@@ -504,7 +505,7 @@ public class PasswordlessQueries {
         @Override
         public UserInfo map(ResultSet result) throws Exception {
             return new UserInfo(result.getString("user_id"), result.getString("email"),
-                    result.getString("phone_number"), result.getLong("time_joined"));
+                    result.getString("phone_number"), result.getLong("time_joined"), new String[0]);
         }
     }
 }

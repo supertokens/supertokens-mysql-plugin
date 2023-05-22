@@ -19,7 +19,7 @@ package io.supertokens.storage.mysql;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
-import io.supertokens.pluginInterface.exceptions.QuitProgramFromPluginException;
+import io.supertokens.pluginInterface.exceptions.DbInitException;
 import io.supertokens.storage.mysql.config.Config;
 import io.supertokens.storage.mysql.config.MySQLConfig;
 import io.supertokens.storage.mysql.output.Logging;
@@ -106,12 +106,12 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
         return (ConnectionPool) start.getResourceDistributor().getResource(RESOURCE_KEY);
     }
 
-    public static void initPool(Start start) {
+    public static void initPool(Start start, boolean shouldWait) throws DbInitException {
         if (getInstance(start) != null) {
             return;
         }
         if (Thread.currentThread() != start.mainThread) {
-            throw new QuitProgramFromPluginException("Should not come here");
+            throw new DbInitException("Should not come here");
         }
         Logging.info(start, "Setting up MySQL connection pool.", true);
         boolean longMessagePrinted = false;
@@ -125,10 +125,13 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
                     start.getResourceDistributor().setResource(RESOURCE_KEY, new ConnectionPool(start));
                     break;
                 } catch (Exception e) {
+                    if (!shouldWait) {
+                        throw new DbInitException(e);
+                    }
                     if (e.getMessage().contains("Connection refused")) {
                         start.handleKillSignalForWhenItHappens();
                         if (System.currentTimeMillis() > maxTryTime) {
-                            throw new QuitProgramFromPluginException(errorMessage);
+                            throw new DbInitException(errorMessage);
                         }
                         if (!longMessagePrinted) {
                             longMessagePrinted = true;
@@ -145,7 +148,7 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
                             }
                             Thread.sleep(getRetryIntervalIfInitFails(start));
                         } catch (InterruptedException ex) {
-                            throw new QuitProgramFromPluginException(errorMessage);
+                            throw new DbInitException(errorMessage);
                         }
                     } else {
                         throw e;
@@ -159,7 +162,7 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
 
     public static Connection getConnection(Start start) throws SQLException {
         if (getInstance(start) == null) {
-            throw new QuitProgramFromPluginException("Please call initPool before getConnection");
+            throw new IllegalStateException("Please call initPool before getConnection");
         }
         if (!start.enabled) {
             throw new SQLException("Storage layer disabled");
@@ -173,5 +176,9 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
         }
         ConnectionPool.hikariDataSource.close();
         ConnectionPool.hikariDataSource = null;
+    }
+
+    static boolean isAlreadyInitialised(Start start) {
+        return getInstance(start) != null && getInstance(start).hikariDataSource != null;
     }
 }

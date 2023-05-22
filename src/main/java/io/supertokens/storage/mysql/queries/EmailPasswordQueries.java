@@ -136,9 +136,9 @@ public class EmailPasswordQueries {
         });
     }
 
-    public static void signUp(Start start, String userId, String email, String passwordHash, long timeJoined)
+    public static UserInfo signUp(Start start, String userId, String email, String passwordHash, long timeJoined)
             throws StorageQueryException, StorageTransactionLogicException {
-        start.startTransaction(con -> {
+        return start.startTransaction(con -> {
             Connection sqlCon = (Connection) con.getConnection();
             try {
                 {
@@ -164,10 +164,11 @@ public class EmailPasswordQueries {
                 }
 
                 sqlCon.commit();
+                return new UserInfo(userId, email, passwordHash, timeJoined, new String[0]);
+
             } catch (SQLException throwables) {
                 throw new StorageTransactionLogicException(throwables);
             }
-            return null;
         });
     }
 
@@ -354,7 +355,7 @@ public class EmailPasswordQueries {
         @Override
         public UserInfo map(ResultSet result) throws Exception {
             return new UserInfo(result.getString("user_id"), result.getString("email"),
-                    result.getString("password_hash"), result.getLong("time_joined"));
+                    result.getString("password_hash"), result.getLong("time_joined"), new String[0]);
         }
     }
 }

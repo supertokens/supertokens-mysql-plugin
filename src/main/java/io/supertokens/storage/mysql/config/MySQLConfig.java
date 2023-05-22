@@ -19,7 +19,7 @@ package io.supertokens.storage.mysql.config;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.supertokens.pluginInterface.exceptions.QuitProgramFromPluginException;
+import io.supertokens.pluginInterface.exceptions.InvalidConfigException;
 
 import java.net.URI;
 
@@ -322,24 +322,24 @@ public class MySQLConfig {
         return tableName;
     }
 
-    void validateAndInitialise() {
+    void validate() throws InvalidConfigException {
         if (mysql_connection_uri != null) {
             try {
                 URI ignored = URI.create(mysql_connection_uri);
             } catch (Exception e) {
-                throw new QuitProgramFromPluginException(
+                throw new InvalidConfigException(
                         "The provided mysql connection URI has an incorrect format. Please use a format like "
                                 + "mysql://[user[:[password]]@]host[:port][/dbname][?attr1=val1&attr2=val2...");
             }
         } else {
             if (this.getUser() == null) {
-                throw new QuitProgramFromPluginException(
+                throw new InvalidConfigException(
                         "'mysql_user' and 'mysql_connection_uri' are not set. Please set at least one of "
                                 + "these values");
             }
         }
         if (getConnectionPoolSize() <= 0) {
-            throw new QuitProgramFromPluginException(
+            throw new InvalidConfigException(
                     "'mysql_connection_pool_size' in the config.yaml file must be > 0");
         }
     }

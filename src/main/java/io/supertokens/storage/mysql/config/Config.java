@@ -19,8 +19,9 @@ package io.supertokens.storage.mysql.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.google.gson.JsonObject;
 import io.supertokens.pluginInterface.LOG_LEVEL;
-import io.supertokens.pluginInterface.exceptions.QuitProgramFromPluginException;
+import io.supertokens.pluginInterface.exceptions.InvalidConfigException;
 import io.supertokens.storage.mysql.ResourceDistributor;
 import io.supertokens.storage.mysql.Start;
 import io.supertokens.storage.mysql.output.Logging;
@@ -36,13 +37,13 @@ public class Config extends ResourceDistributor.SingletonResource {
     private final Start start;
     private final Set<LOG_LEVEL> logLevels;
 
-    private Config(Start start, String configFilePath, Set<LOG_LEVEL> logLevels) {
+    private Config(Start start, JsonObject configJson, Set<LOG_LEVEL> logLevels) throws InvalidConfigException {
         this.start = start;
         this.logLevels = logLevels;
         try {
-            config = loadMySQLConfig(configFilePath);
+            config = loadMySQLConfig(configJson);
         } catch (IOException e) {
-            throw new QuitProgramFromPluginException(e);
+            throw new RuntimeException(e);
         }
     }
 
@@ -50,11 +51,12 @@ public class Config extends ResourceDistributor.SingletonResource {
         return (Config) start.getResourceDistributor().getResource(RESOURCE_KEY);
     }
 
-    public static void loadConfig(Start start, String configFilePath, Set<LOG_LEVEL> logLevels) {
+    public static void loadConfig(Start start, JsonObject configJson, Set<LOG_LEVEL> logLevels)
+            throws InvalidConfigException {
         if (getInstance(start) != null) {
             return;
         }
-        start.getResourceDistributor().setResource(RESOURCE_KEY, new Config(start, configFilePath, logLevels));
+        start.getResourceDistributor().setResource(RESOURCE_KEY, new Config(start, configJson, logLevels));
         Logging.info(start, "Loading MySQL config.", true);
     }
 
@@ -64,22 +66,22 @@ public class Config extends ResourceDistributor.SingletonResource {
 
     public static MySQLConfig getConfig(Start start) {
         if (getInstance(start) == null) {
-            throw new QuitProgramFromPluginException("Please call loadConfig() before calling getConfig()");
+            throw new IllegalStateException("Please call loadConfig() before calling getConfig()");
         }
         return getInstance(start).config;
     }
 
-    private MySQLConfig loadMySQLConfig(String configFilePath) throws IOException {
+    private MySQLConfig loadMySQLConfig(JsonObject configJson) throws IOException, InvalidConfigException {
         final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
-        MySQLConfig config = mapper.readValue(new File(configFilePath), MySQLConfig.class);
-        config.validateAndInitialise();
+        MySQLConfig config = mapper.readValue(configJson.toString(), MySQLConfig.class);
+        config.validate();
         return config;
     }
 
-    public static boolean canBeUsed(String configFilePath) {
+    public static boolean canBeUsed(JsonObject configJson) {
         try {
             final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
-            MySQLConfig config = mapper.readValue(new File(configFilePath), MySQLConfig.class);
+            MySQLConfig config = mapper.readValue(configJson.toString(), MySQLConfig.class);
             return config.getUser() != null || config.getPassword() != null || config.getConnectionURI() != null;
         } catch (Exception e) {
             return false;
