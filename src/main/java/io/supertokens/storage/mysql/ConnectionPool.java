@@ -41,7 +41,7 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
         this.start = start;
     }
 
-    private synchronized void initialiseHikariDataSource() {
+    private synchronized void initialiseHikariDataSource() throws SQLException {
         if (this.hikariDataSource != null) {
             return;
         }
@@ -80,6 +80,7 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
             config.setPassword(userConfig.getPassword());
         }
         config.setMaximumPoolSize(userConfig.getConnectionPoolSize());
+		config.setConnectionTimeout(5000);
         config.addDataSourceProperty("cachePrepStmts", "true");
         config.addDataSourceProperty("prepStmtCacheSize", "250");
         config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
@@ -88,7 +89,11 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
         // - Failed to validate connection org.mariadb.jdbc.MariaDbConnection@79af83ae (Connection.setNetworkTimeout
         // cannot be called on a closed connection). Possibly consider using a shorter maxLifetime value.
         config.setPoolName(start.getUserPoolId() + "~" + start.getConnectionPoolId());
-        hikariDataSource = new HikariDataSource(config);
+        try {
+            hikariDataSource = new HikariDataSource(config);
+        } catch (Exception e) {
+            throw new SQLException(e);
+        }
     }
 
     private static int getTimeToWaitToInit(Start start) {
@@ -115,8 +120,12 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
         return (ConnectionPool) start.getResourceDistributor().getResource(RESOURCE_KEY);
     }
 
-    public static void initPool(Start start, boolean shouldWait) throws DbInitException {
-        if (getInstance(start) != null) {
+    static boolean isAlreadyInitialised(Start start) {
+        return getInstance(start) != null && getInstance(start).hikariDataSource != null;
+    }
+
+    static void initPool(Start start, boolean shouldWait) throws DbInitException, SQLException {
+		if (isAlreadyInitialised(start)) {
             return;
         }
         if (Thread.currentThread() != start.mainThread) {
@@ -129,9 +138,11 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
                 + "you have"
                 + " specified the correct values for ('mysql_host' and 'mysql_port') or for 'mysql_connection_uri'";
         try {
+            ConnectionPool con = new ConnectionPool(start);
+            start.getResourceDistributor().setResource(RESOURCE_KEY, con);
             while (true) {
                 try {
-                    start.getResourceDistributor().setResource(RESOURCE_KEY, new ConnectionPool(start));
+                    con.initialiseHikariDataSource();
                     break;
                 } catch (Exception e) {
                     if (!shouldWait) {
@@ -182,7 +193,7 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
         return getInstance(start).hikariDataSource.getConnection();
     }
 
-    public static void close(Start start) {
+    static void close(Start start) {
         if (getInstance(start) == null) {
             return;
         }
@@ -194,9 +205,5 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
                 getInstance(start).hikariDataSource = null;
             }
         }
-    }
-
-    static boolean isAlreadyInitialised(Start start) {
-        return getInstance(start) != null && getInstance(start).hikariDataSource != null;
     }
 }

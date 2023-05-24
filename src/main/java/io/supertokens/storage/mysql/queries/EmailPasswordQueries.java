@@ -72,8 +72,10 @@ public class EmailPasswordQueries {
     static String getQueryToCreatePasswordResetTokensTable(Start start) {
         return "CREATE TABLE IF NOT EXISTS " + getConfig(start).getPasswordResetTokensTable() + " ("
                 + "app_id VARCHAR(64) DEFAULT 'public',"
-                + "user_id CHAR(36) NOT NULL," + "token VARCHAR(128) NOT NULL UNIQUE,"
-                + "token_expiry BIGINT UNSIGNED NOT NULL," + "PRIMARY KEY (app_id, user_id, token),"
+                + "user_id CHAR(36) NOT NULL,"
+                + "token VARCHAR(128) NOT NULL UNIQUE,"
+                + "token_expiry BIGINT UNSIGNED NOT NULL,"
+                + "PRIMARY KEY (app_id, user_id, token),"
                 + "FOREIGN KEY (app_id, user_id) REFERENCES " + getConfig(start).getEmailPasswordUsersTable()
                 + "(app_id, user_id) ON DELETE CASCADE ON UPDATE CASCADE);";
     }

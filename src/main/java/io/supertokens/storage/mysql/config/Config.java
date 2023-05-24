@@ -28,6 +28,7 @@ import io.supertokens.storage.mysql.Start;
 import io.supertokens.storage.mysql.output.Logging;
 
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.Set;
 
 public class Config extends ResourceDistributor.SingletonResource {
@@ -51,8 +52,7 @@ public class Config extends ResourceDistributor.SingletonResource {
         return (Config) start.getResourceDistributor().getResource(RESOURCE_KEY);
     }
 
-    public static void loadConfig(Start start, JsonObject configJson, Set<LOG_LEVEL> logLevels,
-                                  TenantIdentifier tenantIdentifier)
+    public static void loadConfig(Start start, JsonObject configJson, Set<LOG_LEVEL> logLevels, TenantIdentifier tenantIdentifier)
             throws InvalidConfigException {
         if (getInstance(start) != null) {
             return;
@@ -61,16 +61,6 @@ public class Config extends ResourceDistributor.SingletonResource {
         Logging.info(start, "Loading MySQL config.", tenantIdentifier.equals(TenantIdentifier.BASE_TENANT));
     }
 
-    public static Set<LOG_LEVEL> getLogLevels(Start start) {
-        return getInstance(start).logLevels;
-    }
-
-    public static MySQLConfig getConfig(Start start) {
-        if (getInstance(start) == null) {
-            throw new IllegalStateException("Please call loadConfig() before calling getConfig()");
-        }
-        return getInstance(start).config;
-    }
 
     public static String getUserPoolId(Start start) {
         // TODO: The way things are implemented right now, this function has the issue that if the user points to the
@@ -83,9 +73,25 @@ public class Config extends ResourceDistributor.SingletonResource {
         return getConfig(start).getConnectionPoolId();
     }
 
-    public static void assertThatConfigFromSameUserPoolIsNotConflicting(Start start, JsonObject otherConfig) {
+    public static void assertThatConfigFromSameUserPoolIsNotConflicting(Start start, JsonObject otherConfigJson)
+            throws InvalidConfigException {
+        Set<LOG_LEVEL> temp = new HashSet<>();
+        temp.add(LOG_LEVEL.NONE);
+        MySQLConfig otherConfig = new Config(start, otherConfigJson, temp).config;
+        MySQLConfig thisConfig = getConfig(start);
+        thisConfig.assertThatConfigFromSameUserPoolIsNotConflicting(otherConfig);
     }
 
+    public static MySQLConfig getConfig(Start start) {
+        if (getInstance(start) == null) {
+            throw new IllegalStateException("Please call loadConfig() before calling getConfig()");
+        }
+        return getInstance(start).config;
+    }
+
+    public static Set<LOG_LEVEL> getLogLevels(Start start) {
+        return getInstance(start).logLevels;
+    }
     public static void setLogLevels(Start start, Set<LOG_LEVEL> logLevels) {
         getInstance(start).logLevels = logLevels;
     }

@@ -45,7 +45,9 @@ public class JWTSigningQueries {
          */
         return "CREATE TABLE IF NOT EXISTS " + Config.getConfig(start).getJWTSigningKeysTable() + " ("
                 + "app_id VARCHAR(64) DEFAULT 'public',"
-                + "key_id VARCHAR(255) NOT NULL," + "key_string TEXT NOT NULL," + "algorithm VARCHAR(10) NOT NULL,"
+                + "key_id VARCHAR(255) NOT NULL," 
+				+ "key_string TEXT NOT NULL," 
+				+ "algorithm VARCHAR(10) NOT NULL,"
                 + "created_at BIGINT UNSIGNED,"
                 + "PRIMARY KEY(app_id, key_id),"
                 + "FOREIGN KEY(app_id)"

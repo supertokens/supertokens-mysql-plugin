@@ -343,6 +343,16 @@ public class GeneralQueries {
         }
     }
 
+    @TestOnly
+    public static void deleteAllTables(Start start) throws SQLException, StorageQueryException {
+        String DROP_QUERY = "DROP DATABASE " + Config.getConfig(start).getDatabaseName();
+        String CREATE_QUERY = "CREATE DATABASE " + Config.getConfig(start).getDatabaseName();
+        Connection con = ConnectionPool.getConnection(start);
+        update(con, DROP_QUERY, NO_OP_SETTER);
+        update(con, CREATE_QUERY, NO_OP_SETTER);
+    }
+
+
     public static void setKeyValue_Transaction(Start start, Connection con, TenantIdentifier tenantIdentifier,
                                                String key, KeyValueInfo info)
             throws SQLException, StorageQueryException {
@@ -361,47 +371,11 @@ public class GeneralQueries {
         });
     }
 
-    public static boolean doesUserIdExist(Start start, AppIdentifier appIdentifier, String userId)
-            throws SQLException, StorageQueryException {
-
-        String QUERY = "SELECT 1 FROM " + Config.getConfig(start).getAppIdToUserIdTable()
-                + " WHERE app_id = ? AND user_id = ?";
-        return execute(start, QUERY, pst -> {
-            pst.setString(1, appIdentifier.getAppId());
-            pst.setString(2, userId);
-        }, ResultSet::next);
-    }
-
-    public static boolean doesUserIdExist(Start start, TenantIdentifier tenantIdentifier, String userId)
-            throws SQLException, StorageQueryException {
-
-        String QUERY = "SELECT 1 FROM " + Config.getConfig(start).getUsersTable()
-                + " WHERE app_id = ? AND tenant_id = ? AND user_id = ?";
-        return execute(start, QUERY, pst -> {
-            pst.setString(1, tenantIdentifier.getAppId());
-            pst.setString(2, tenantIdentifier.getTenantId());
-            pst.setString(3, userId);
-        }, ResultSet::next);
-    }
-
     public static void setKeyValue(Start start, TenantIdentifier tenantIdentifier, String key, KeyValueInfo info)
             throws SQLException, StorageQueryException {
         try (Connection con = ConnectionPool.getConnection(start)) {
             setKeyValue_Transaction(start, con, tenantIdentifier, key, info);
         }
-    }
-
-    public static void deleteKeyValue_Transaction(Start start, Connection con, TenantIdentifier tenantIdentifier,
-                                                  String key)
-            throws SQLException, StorageQueryException {
-        String QUERY = "DELETE FROM " + Config.getConfig(start).getKeyValueTable()
-                + " WHERE app_id = ? AND tenant_id = ? AND name = ?";
-
-        update(con, QUERY, pst -> {
-            pst.setString(1, tenantIdentifier.getAppId());
-            pst.setString(2, tenantIdentifier.getTenantId());
-            pst.setString(3, key);
-        });
     }
 
     public static KeyValueInfo getKeyValue(Start start, TenantIdentifier tenantIdentifier, String key)
@@ -439,45 +413,17 @@ public class GeneralQueries {
         });
     }
 
-    private static List<? extends AuthRecipeUserInfo> getUserInfoForRecipeIdFromUserIds(Start start,
-                                                                                        TenantIdentifier tenantIdentifier,
-                                                                                        RECIPE_ID recipeId,
-                                                                                        List<String> userIds)
-            throws StorageQueryException, SQLException {
-        if (recipeId == RECIPE_ID.EMAIL_PASSWORD) {
-            return EmailPasswordQueries.getUsersInfoUsingIdList(start, userIds);
-        } else if (recipeId == RECIPE_ID.THIRD_PARTY) {
-            return ThirdPartyQueries.getUsersInfoUsingIdList(start, userIds);
-        } else if (recipeId == RECIPE_ID.PASSWORDLESS) {
-            return PasswordlessQueries.getUsersByIdList(start, userIds);
-        } else {
-            throw new IllegalArgumentException("No implementation of get users for recipe: " + recipeId.toString());
-        }
-    }
-
-    public static String getRecipeIdForUser_Transaction(Start start, Connection sqlCon, TenantIdentifier tenantIdentifier, String userId)
+    public static void deleteKeyValue_Transaction(Start start, Connection con, TenantIdentifier tenantIdentifier,
+                                                  String key)
             throws SQLException, StorageQueryException {
-        String QUERY = "SELECT recipe_id FROM " + Config.getConfig(start).getAppIdToUserIdTable()
-                + " WHERE app_id = ? AND user_id = ? FOR UPDATE";
+        String QUERY = "DELETE FROM " + Config.getConfig(start).getKeyValueTable()
+                + " WHERE app_id = ? AND tenant_id = ? AND name = ?";
 
-        return execute(sqlCon, QUERY, pst -> {
+        update(con, QUERY, pst -> {
             pst.setString(1, tenantIdentifier.getAppId());
-            pst.setString(2, userId);
-        }, result -> {
-            if (result.next()) {
-                return result.getString("recipe_id");
-            }
-            return null;
+            pst.setString(2, tenantIdentifier.getTenantId());
+            pst.setString(3, key);
         });
-    }
-
-    @TestOnly
-    public static void deleteAllTables(Start start) throws SQLException, StorageQueryException {
-        String DROP_QUERY = "DROP DATABASE " + Config.getConfig(start).getDatabaseName();
-        String CREATE_QUERY = "CREATE DATABASE " + Config.getConfig(start).getDatabaseName();
-        Connection con = ConnectionPool.getConnection(start);
-        update(con, DROP_QUERY, NO_OP_SETTER);
-        update(con, CREATE_QUERY, NO_OP_SETTER);
     }
 
     public static long getUsersCount(Start start, AppIdentifier appIdentifier, RECIPE_ID[] includeRecipeIds)
@@ -544,6 +490,30 @@ public class GeneralQueries {
             return 0L;
         });
     }
+
+    public static boolean doesUserIdExist(Start start, AppIdentifier appIdentifier, String userId)
+            throws SQLException, StorageQueryException {
+
+        String QUERY = "SELECT 1 FROM " + Config.getConfig(start).getAppIdToUserIdTable()
+                + " WHERE app_id = ? AND user_id = ?";
+        return execute(start, QUERY, pst -> {
+            pst.setString(1, appIdentifier.getAppId());
+            pst.setString(2, userId);
+        }, ResultSet::next);
+    }
+
+    public static boolean doesUserIdExist(Start start, TenantIdentifier tenantIdentifier, String userId)
+            throws SQLException, StorageQueryException {
+
+        String QUERY = "SELECT 1 FROM " + Config.getConfig(start).getUsersTable()
+                + " WHERE app_id = ? AND tenant_id = ? AND user_id = ?";
+        return execute(start, QUERY, pst -> {
+            pst.setString(1, tenantIdentifier.getAppId());
+            pst.setString(2, tenantIdentifier.getTenantId());
+            pst.setString(3, userId);
+        }, ResultSet::next);
+    }
+
 
     public static AuthRecipeUserInfo[] getUsers(Start start, TenantIdentifier tenantIdentifier, @NotNull Integer limit,
                                                 @NotNull String timeJoinedOrder,
@@ -858,21 +828,38 @@ public class GeneralQueries {
         return finalResult;
     }
 
-    private static class KeyValueInfoRowMapper implements RowMapper<KeyValueInfo, ResultSet> {
-        public static final KeyValueInfoRowMapper INSTANCE = new KeyValueInfoRowMapper();
-
-        private KeyValueInfoRowMapper() {
-        }
-
-        private static KeyValueInfoRowMapper getInstance() {
-            return INSTANCE;
-        }
-
-        @Override
-        public KeyValueInfo map(ResultSet result) throws Exception {
-            return new KeyValueInfo(result.getString("value"), result.getLong("created_at_time"));
+    private static List<? extends AuthRecipeUserInfo> getUserInfoForRecipeIdFromUserIds(Start start,
+                                                                                        TenantIdentifier tenantIdentifier,
+                                                                                        RECIPE_ID recipeId,
+                                                                                        List<String> userIds)
+            throws StorageQueryException, SQLException {
+        if (recipeId == RECIPE_ID.EMAIL_PASSWORD) {
+            return EmailPasswordQueries.getUsersInfoUsingIdList(start, userIds);
+        } else if (recipeId == RECIPE_ID.THIRD_PARTY) {
+            return ThirdPartyQueries.getUsersInfoUsingIdList(start, userIds);
+        } else if (recipeId == RECIPE_ID.PASSWORDLESS) {
+            return PasswordlessQueries.getUsersByIdList(start, userIds);
+        } else {
+            throw new IllegalArgumentException("No implementation of get users for recipe: " + recipeId.toString());
         }
     }
+
+    public static String getRecipeIdForUser_Transaction(Start start, Connection sqlCon, TenantIdentifier tenantIdentifier, String userId)
+            throws SQLException, StorageQueryException {
+        String QUERY = "SELECT recipe_id FROM " + Config.getConfig(start).getAppIdToUserIdTable()
+                + " WHERE app_id = ? AND user_id = ? FOR UPDATE";
+
+        return execute(sqlCon, QUERY, pst -> {
+            pst.setString(1, tenantIdentifier.getAppId());
+            pst.setString(2, userId);
+        }, result -> {
+            if (result.next()) {
+                return result.getString("recipe_id");
+            }
+            return null;
+        });
+    }
+
 
     public static Map<String, List<String>> getTenantIdsForUserIds_transaction(Start start, Connection sqlCon, String[] userIds)
             throws SQLException, StorageQueryException {
@@ -922,4 +909,21 @@ public class GeneralQueries {
             this.recipeId = recipeId;
         }
     }
+
+    private static class KeyValueInfoRowMapper implements RowMapper<KeyValueInfo, ResultSet> {
+        public static final KeyValueInfoRowMapper INSTANCE = new KeyValueInfoRowMapper();
+
+        private KeyValueInfoRowMapper() {
+        }
+
+        private static KeyValueInfoRowMapper getInstance() {
+            return INSTANCE;
+        }
+
+        @Override
+        public KeyValueInfo map(ResultSet result) throws Exception {
+            return new KeyValueInfo(result.getString("value"), result.getLong("created_at_time"));
+        }
+    }
+
 }

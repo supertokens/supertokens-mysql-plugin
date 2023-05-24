@@ -41,10 +41,14 @@ public class DashboardQueries {
         return "CREATE TABLE IF NOT EXISTS " + tableName + " ("
                 + "app_id VARCHAR(64) DEFAULT 'public',"
                 + "user_id CHAR(36) NOT NULL,"
-                + "email VARCHAR(256) NOT NULL UNIQUE,"
+                + "email VARCHAR(256) NOT NULL,"
                 + "password_hash VARCHAR(256) NOT NULL,"
                 + "time_joined BIGINT UNSIGNED NOT NULL,"
-                + "PRIMARY KEY(app_id, user_id));";
+                + "PRIMARY KEY(app_id, user_id),"
+                + "CONSTRAINT email UNIQUE (app_id, email),"
+                + "FOREIGN KEY (app_id) REFERENCES "
+                + Config.getConfig(start).getAppsTable() + "(app_id) ON DELETE CASCADE"
+                + ");";
         // @formatter:on
     }
 

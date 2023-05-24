@@ -16,7 +16,8 @@ public class ActiveUsersQueries {
                 + "app_id VARCHAR(64) DEFAULT 'public',"
                 + "user_id VARCHAR(128),"
                 + "last_active_time BIGINT UNSIGNED,"
-                + "PRIMARY KEY(app_id, user_id)" + " );";
+                + "PRIMARY KEY(app_id, user_id)"
+                + " );";
     }
 
     public static int countUsersActiveSince(Start start, AppIdentifier appIdentifier, long sinceTime) throws SQLException, StorageQueryException {

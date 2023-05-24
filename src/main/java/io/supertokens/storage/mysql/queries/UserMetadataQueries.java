@@ -40,7 +40,9 @@ public class UserMetadataQueries {
                 + "app_id VARCHAR(64) DEFAULT 'public',"
                 + "user_id VARCHAR(128) NOT NULL,"
                 + "user_metadata TEXT NOT NULL," 
-                + "PRIMARY KEY(app_id, user_id)" + " );";
+                + "PRIMARY KEY(app_id, user_id),"
+                + "FOREIGN KEY (app_id) REFERENCES " + Config.getConfig(start).getAppsTable() + "(app_id) ON DELETE CASCADE"
+                + " );";
         // @formatter:on
 
     }

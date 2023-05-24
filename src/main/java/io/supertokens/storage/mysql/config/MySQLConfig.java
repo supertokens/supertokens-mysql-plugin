@@ -32,6 +32,7 @@ import java.lang.reflect.Field;
 import java.net.URI;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -147,13 +148,14 @@ public class MySQLConfig {
         return mysql_password;
     }
 
+    public String getDatabaseName() {
+        return mysql_database_name;
+    }
+
     public String getConnectionURI() {
         return mysql_connection_uri;
     }
 
-    public String getDatabaseName() {
-        return mysql_database_name;
-    }
 
     public String getUsersTable() {
         return addPrefixToTableName("all_auth_recipe_users");
@@ -441,6 +443,22 @@ public class MySQLConfig {
         }
     }
 
+    public void assertThatConfigFromSameUserPoolIsNotConflicting(MySQLConfig otherConfig) throws InvalidConfigException {
+        for (Field field : MySQLConfig.class.getDeclaredFields()) {
+            if (field.isAnnotationPresent(NotConflictingWithinUserPool.class)) {
+                try {
+                    if (!Objects.equals(field.get(this), field.get(otherConfig))) {
+                        throw new InvalidConfigException(
+                                "You cannot set different values for " + field.getName() +
+                                        " for the same user pool");
+                    }
+                } catch (IllegalAccessException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+    }
+
     public String getUserPoolId() {
         StringBuilder userPoolId = new StringBuilder();
         for (Field field : MySQLConfig.class.getDeclaredFields()) {
@@ -474,4 +492,5 @@ public class MySQLConfig {
         }
         return connectionPoolId.toString();
     }
+
 }
