@@ -33,9 +33,18 @@ import java.util.Objects;
 public class ConnectionPool extends ResourceDistributor.SingletonResource {
 
     private static final String RESOURCE_KEY = "io.supertokens.storage.mysql.ConnectionPool";
-    private static HikariDataSource hikariDataSource = null;
+    private HikariDataSource hikariDataSource = null;
+
+    private final Start start;
 
     private ConnectionPool(Start start) {
+        this.start = start;
+    }
+
+    private synchronized void initialiseHikariDataSource() {
+        if (this.hikariDataSource != null) {
+            return;
+        }
         if (!start.enabled) {
             throw new RuntimeException("Connection refused"); // emulates exception thrown by Hikari
         }
@@ -78,7 +87,7 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
         // io.supertokens.storage.mysql.HikariLoggingAppender.doAppend(HikariLoggingAppender.java:117) | SuperTokens
         // - Failed to validate connection org.mariadb.jdbc.MariaDbConnection@79af83ae (Connection.setNetworkTimeout
         // cannot be called on a closed connection). Possibly consider using a shorter maxLifetime value.
-        config.setPoolName("SuperTokens");
+        config.setPoolName(start.getUserPoolId() + "~" + start.getConnectionPoolId());
         hikariDataSource = new HikariDataSource(config);
     }
 
@@ -167,15 +176,24 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
         if (!start.enabled) {
             throw new SQLException("Storage layer disabled");
         }
-        return ConnectionPool.hikariDataSource.getConnection();
+        if (getInstance(start).hikariDataSource == null) {
+            getInstance(start).initialiseHikariDataSource();
+        }
+        return getInstance(start).hikariDataSource.getConnection();
     }
 
     public static void close(Start start) {
         if (getInstance(start) == null) {
             return;
         }
-        ConnectionPool.hikariDataSource.close();
-        ConnectionPool.hikariDataSource = null;
+        if (getInstance(start).hikariDataSource != null) {
+            try {
+                getInstance(start).hikariDataSource.close();
+            } finally {
+                // we mark it as null so that next time it's being initialised, it will be initialised again
+                getInstance(start).hikariDataSource = null;
+            }
+        }
     }
 
     static boolean isAlreadyInitialised(Start start) {

@@ -22,11 +22,11 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.gson.JsonObject;
 import io.supertokens.pluginInterface.LOG_LEVEL;
 import io.supertokens.pluginInterface.exceptions.InvalidConfigException;
+import io.supertokens.pluginInterface.multitenancy.TenantIdentifier;
 import io.supertokens.storage.mysql.ResourceDistributor;
 import io.supertokens.storage.mysql.Start;
 import io.supertokens.storage.mysql.output.Logging;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Set;
 
@@ -35,7 +35,7 @@ public class Config extends ResourceDistributor.SingletonResource {
     private static final String RESOURCE_KEY = "io.supertokens.storage.mysql.config.Config";
     private final MySQLConfig config;
     private final Start start;
-    private final Set<LOG_LEVEL> logLevels;
+    private Set<LOG_LEVEL> logLevels;
 
     private Config(Start start, JsonObject configJson, Set<LOG_LEVEL> logLevels) throws InvalidConfigException {
         this.start = start;
@@ -51,13 +51,14 @@ public class Config extends ResourceDistributor.SingletonResource {
         return (Config) start.getResourceDistributor().getResource(RESOURCE_KEY);
     }
 
-    public static void loadConfig(Start start, JsonObject configJson, Set<LOG_LEVEL> logLevels)
+    public static void loadConfig(Start start, JsonObject configJson, Set<LOG_LEVEL> logLevels,
+                                  TenantIdentifier tenantIdentifier)
             throws InvalidConfigException {
         if (getInstance(start) != null) {
             return;
         }
         start.getResourceDistributor().setResource(RESOURCE_KEY, new Config(start, configJson, logLevels));
-        Logging.info(start, "Loading MySQL config.", true);
+        Logging.info(start, "Loading MySQL config.", tenantIdentifier.equals(TenantIdentifier.BASE_TENANT));
     }
 
     public static Set<LOG_LEVEL> getLogLevels(Start start) {
@@ -71,10 +72,28 @@ public class Config extends ResourceDistributor.SingletonResource {
         return getInstance(start).config;
     }
 
+    public static String getUserPoolId(Start start) {
+        // TODO: The way things are implemented right now, this function has the issue that if the user points to the
+        //  same database, but with a different host (cause the db is reachable via two hosts as an example),
+        //  then it will return two different user pool IDs - which is technically the wrong thing to do.
+        return getConfig(start).getUserPoolId();
+    }
+
+    public static String getConnectionPoolId(Start start) {
+        return getConfig(start).getConnectionPoolId();
+    }
+
+    public static void assertThatConfigFromSameUserPoolIsNotConflicting(Start start, JsonObject otherConfig) {
+    }
+
+    public static void setLogLevels(Start start, Set<LOG_LEVEL> logLevels) {
+        getInstance(start).logLevels = logLevels;
+    }
+
     private MySQLConfig loadMySQLConfig(JsonObject configJson) throws IOException, InvalidConfigException {
         final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
         MySQLConfig config = mapper.readValue(configJson.toString(), MySQLConfig.class);
-        config.validate();
+        config.validateAndNormalise();
         return config;
     }
 
