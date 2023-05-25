@@ -32,11 +32,11 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Arrays;
 
-abstract class Utils extends Mockito {
+public abstract class Utils extends Mockito {
 
     private static ByteArrayOutputStream byteArrayOutputStream;
 
-    static void afterTesting() {
+    public static void afterTesting() {
         String installDir = "../";
         try {
             // we remove the license key file
@@ -70,7 +70,7 @@ abstract class Utils extends Mockito {
         }
     }
 
-    static void reset() {
+    public static void reset() {
         Main.isTesting = true;
         PluginInterfaceTesting.isTesting = true;
         Start.isTesting = true;
@@ -147,7 +147,7 @@ abstract class Utils extends Mockito {
 
     }
 
-    static TestRule getOnFailure() {
+    public static TestRule getOnFailure() {
         return new TestWatcher() {
             @Override
             protected void failed(Throwable e, Description description) {

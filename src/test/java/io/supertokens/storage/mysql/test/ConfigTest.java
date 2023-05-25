@@ -22,6 +22,10 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.supertokens.ProcessState;
 import io.supertokens.storage.mysql.ConnectionPoolTestContent;
 import io.supertokens.storage.mysql.Start;
+import io.supertokens.storage.mysql.annotations.ConnectionPoolProperty;
+import io.supertokens.storage.mysql.annotations.IgnoreForAnnotationCheck;
+import io.supertokens.storage.mysql.annotations.NotConflictingWithinUserPool;
+import io.supertokens.storage.mysql.annotations.UserPoolProperty;
 import io.supertokens.storage.mysql.config.Config;
 import io.supertokens.storage.mysql.config.MySQLConfig;
 import io.supertokens.storageLayer.StorageLayer;
@@ -34,9 +38,9 @@ import org.junit.rules.TestRule;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Field;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 public class ConfigTest {
 
@@ -97,7 +101,8 @@ public class ConfigTest {
         ProcessState.EventAndException e = process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.INIT_FAILURE);
         assertNotNull(e);
         TestCase.assertEquals(e.exception.getMessage(),
-                "'mysql_connection_pool_size' in the config.yaml file must be > 0");
+                "io.supertokens.pluginInterface.exceptions.InvalidConfigException: " +
+                        "'mysql_connection_pool_size' in the config.yaml file must be > 0");
 
         process.kill();
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
@@ -118,7 +123,7 @@ public class ConfigTest {
         ProcessState.EventAndException e = process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.INIT_FAILURE);
         assertNotNull(e);
         TestCase.assertEquals(e.exception.getMessage(),
-                "java.io.FileNotFoundException: ../config.yaml (No such file or directory)");
+                "../config.yaml (No such file or directory)");
 
         process.kill();
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
@@ -169,7 +174,7 @@ public class ConfigTest {
 
         ProcessState.EventAndException e = process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.INIT_FAILURE, 7000);
         assertNotNull(e);
-        assertEquals(e.exception.getMessage(),
+        assertEquals(e.exception.getCause().getCause().getMessage(),
                 "Error connecting to MySQL instance. Please make sure that MySQL is running and that you have "
                         + "specified the correct values for ('mysql_host' and 'mysql_port') or for "
                         + "'mysql_connection_uri'");
@@ -214,7 +219,7 @@ public class ConfigTest {
         assertNotNull(e);
 
         assertEquals("Failed to initialize pool: Could not connect to address=(host=random)(port=3306)(type=master) : "
-                + "Socket fail to connect to host:random, port:3306. random", e.exception.getMessage());
+                + "Socket fail to connect to host:random, port:3306. random", e.exception.getCause().getCause().getCause().getMessage());
 
         process.kill();
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
@@ -383,7 +388,8 @@ public class ConfigTest {
             ProcessState.EventAndException e = process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.INIT_FAILURE);
             assertNotNull(e);
             assertEquals(
-                    "The provided mysql connection URI has an incorrect format. Please use a format like "
+                    "io.supertokens.pluginInterface.exceptions.InvalidConfigException: "
+                            + "The provided mysql connection URI has an incorrect format. Please use a format like "
                             + "mysql://[user[:[password]]@]host[:port][/dbname][?attr1=val1&attr2=val2...",
                     e.exception.getMessage());
 
@@ -472,4 +478,17 @@ public class ConfigTest {
                 "emailpassword_pswd_reset_tokens");
     }
 
+    @Test
+    public void testAllConfigsHaveAnAnnotation() throws Exception {
+        for (Field field : MySQLConfig.class.getDeclaredFields()) {
+            if (field.isAnnotationPresent(IgnoreForAnnotationCheck.class)) {
+                continue;
+            }
+
+            if (!(field.isAnnotationPresent(UserPoolProperty.class) || field.isAnnotationPresent(ConnectionPoolProperty.class) || field.isAnnotationPresent(
+                    NotConflictingWithinUserPool.class))) {
+                fail(field.getName() + " does not have UserPoolProperty, ConnectionPoolProperty or NotConflictingWithinUserPool annotation");
+            }
+        }
+    }
 }

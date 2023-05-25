@@ -493,4 +493,7 @@ public class MySQLConfig {
         return connectionPoolId.toString();
     }
 
+    public String getTablePrefix() {
+        return mysql_table_names_prefix;
+    }
 }

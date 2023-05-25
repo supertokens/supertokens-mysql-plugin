@@ -174,8 +174,9 @@ public class InMemoryDBTest {
 
         ProcessState.EventAndException e = process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.INIT_FAILURE, 15000);
         assertNotNull(e);
-        TestCase.assertEquals(e.exception.getMessage(),
-                "'mysql_user' and 'mysql_connection_uri' are not set. Please set at least one of " + "these values");
+        TestCase.assertEquals(e.exception.getCause().getMessage(),
+                "'mysql_user' and 'mysql_connection_uri' are not set. Please set at least one of " +
+                        "these values");
 
         process.kill();
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
@@ -192,7 +193,9 @@ public class InMemoryDBTest {
         ProcessState.EventAndException e = process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.INIT_FAILURE, 15000);
         assertNotNull(e);
         TestCase.assertEquals(e.exception.getMessage(),
-                "'mysql_user' and 'mysql_connection_uri' are not set. Please set at least one of " + "these values");
+                "io.supertokens.pluginInterface.exceptions.InvalidConfigException: " +
+                        "'mysql_user' and 'mysql_connection_uri' are not set. Please set at least one of " +
+                        "these values");
 
         process.kill();
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
