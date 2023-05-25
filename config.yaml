@@ -1,18 +1,18 @@
 mysql_config_version: 0
 
 
-# (OPTIONAL | Default: 10) integer value. Defines the connection pool size to MySQL.
+# (DIFFERENT_ACROSS_TENANTS | OPTIONAL | Default: 10) integer value. Defines the connection pool size to MySQL.
 # Please see https://github.com/brettwooldridge/HikariCP/wiki/About-Pool-Sizing
 # mysql_connection_pool_size:
 
 
-# (OPTIONAL | Default: null) string value. Specify the MySQL connection URI in the following
+# (DIFFERENT_ACROSS_TENANTS | OPTIONAL | Default: null) string value. Specify the MySQL connection URI in the following
 # format: mysql://[user[:[password]]@]host[:port][/dbname][?attr1=val1&attr2=val2...
 # Values provided via other configs will override values provided by this config.
 # mysql_connection_uri:
 
 
-# (OPTIONAL | Default: "localhost") string value. Specify the mysql host url here. For example:
+# (DIFFERENT_ACROSS_TENANTS | OPTIONAL | Default: "localhost") string value. Specify the mysql host url here. For example:
 # - "localhost"
 # - "192.168.0.1"
 # - "<IP to cloud instance>"
@@ -20,59 +20,59 @@ mysql_config_version: 0
 # mysql_host:
 
 
-# (OPTIONAL | Default: 3306) integer value. Specify the port to use when connecting to MySQL instance.
+# (DIFFERENT_ACROSS_TENANTS | OPTIONAL | Default: 3306) integer value. Specify the port to use when connecting to MySQL instance.
 # mysql_port:
 
 
-# (OPTIONAL | Default: root) string value. The MySQL user to use to query the database.
+# (DIFFERENT_ACROSS_TENANTS | OPTIONAL | Default: root) string value. The MySQL user to use to query the database.
 # If the relevant tables are not already created by you, this user should have the
 # ability to create new tables. To see the tables needed, visit: https://supertokens.io/docs/community/getting-started/database-setup/mysql
 # mysql_user:
 
 
-# (OPTIONAL | Default: no password) string value. Password for the MySQL user. If you have not set a password
+# (DIFFERENT_ACROSS_TENANTS | OPTIONAL | Default: no password) string value. Password for the MySQL user. If you have not set a password
 # make this an empty string.
 # mysql_password:
 
 
-# (OPTIONAL | Default: "supertokens") string value. The database name to store SuperTokens related data.
+# (DIFFERENT_ACROSS_TENANTS | OPTIONAL | Default: "supertokens") string value. The database name to store SuperTokens related data.
 # mysql_database_name:
 
-# (OPTIONAL | Default: "") string value. A prefix to add to all table names managed by SuperTokens. An "_" will be
+# (DIFFERENT_ACROSS_TENANTS | OPTIONAL | Default: "") string value. A prefix to add to all table names managed by SuperTokens. An "_" will be
 # added between this prefix and the actual table name if the prefix is defined
 # mysql_table_names_prefix:
 
 
-# (OPTIONAL | Default: "key_value") string value. Specify the name of the table that will store secret keys
+# (DIFFERENT_ACROSS_TENANTS | OPTIONAL | Default: "key_value") string value. Specify the name of the table that will store secret keys
 # and app info necessary for the functioning sessions.
 # mysql_key_value_table_name:
 
 
-# (OPTIONAL | Default: "session_info") string value. Specify the name of the table that will store the
+# (DIFFERENT_ACROSS_TENANTS | OPTIONAL | Default: "session_info") string value. Specify the name of the table that will store the
 # session info for users.
 # mysql_session_info_table_name:
 
 
-# (OPTIONAL | Default: "emailpassword_users") string value. Specify the name of the table that will store the
+# (DIFFERENT_ACROSS_TENANTS | OPTIONAL | Default: "emailpassword_users") string value. Specify the name of the table that will store the
 # user information, along with their email and hashed password.
 # mysql_emailpassword_users_table_name:
 
 
-# (OPTIONAL | Default: "emailpassword_pswd_reset_tokens") string value. Specify the name of the table that will
+# (DIFFERENT_ACROSS_TENANTS | OPTIONAL | Default: "emailpassword_pswd_reset_tokens") string value. Specify the name of the table that will
 # store the password reset tokens for users.
 # mysql_emailpassword_pswd_reset_tokens_table_name:
 
 
-# (OPTIONAL | Default: "emailverification_tokens") string value. Specify the name of the table that will
+# (DIFFERENT_ACROSS_TENANTS | OPTIONAL | Default: "emailverification_tokens") string value. Specify the name of the table that will
 # store the email verification tokens for users.
 # mysql_emailverification_tokens_table_name:
 
 
-# (OPTIONAL | Default: "emailverification_verified_emails") string value. Specify the name of the table that will
+# (DIFFERENT_ACROSS_TENANTS | OPTIONAL | Default: "emailverification_verified_emails") string value. Specify the name of the table that will
 # store the verified email addresses.
 # mysql_emailverification_verified_emails_table_name:
 
 
-# (OPTIONAL | Default: "thirdparty_users") string value. Specify the name of the table that will
+# (DIFFERENT_ACROSS_TENANTS | OPTIONAL | Default: "thirdparty_users") string value. Specify the name of the table that will
 # store the thirdparty recipe users.
 # mysql_thirdparty_users_table_name
