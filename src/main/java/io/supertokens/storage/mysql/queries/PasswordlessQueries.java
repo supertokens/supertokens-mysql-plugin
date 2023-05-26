@@ -94,7 +94,7 @@ public class PasswordlessQueries {
                 + "tenant_id VARCHAR(64) DEFAULT 'public',"
                 + "code_id CHAR(36) NOT NULL," 
 				+ "device_id_hash CHAR(44) NOT NULL,"
-                + "link_code_hash CHAR(44) NOT NULL UNIQUE," 
+                + "link_code_hash CHAR(44) NOT NULL,"
 				+ "created_at BIGINT UNSIGNED NOT NULL,"
                 + "PRIMARY KEY (app_id, tenant_id, code_id),"
                 + "CONSTRAINT link_code_hash UNIQUE (app_id, tenant_id, link_code_hash),"
