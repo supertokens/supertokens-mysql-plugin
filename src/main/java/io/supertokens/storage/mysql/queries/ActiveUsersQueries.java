@@ -16,7 +16,9 @@ public class ActiveUsersQueries {
                 + "app_id VARCHAR(64) DEFAULT 'public',"
                 + "user_id VARCHAR(128),"
                 + "last_active_time BIGINT UNSIGNED,"
-                + "PRIMARY KEY(app_id, user_id)"
+                + "PRIMARY KEY(app_id, user_id),"
+                + "FOREIGN KEY (app_id) REFERENCES "
+                + Config.getConfig(start).getAppsTable() + "(app_id) ON DELETE CASCADE"
                 + " );";
     }
 
@@ -76,6 +78,37 @@ public class ActiveUsersQueries {
             pst.setString(2, userId);
             pst.setLong(3, now);
             pst.setLong(4, now);
+        });
+    }
+
+    public static Long getLastActiveByUserId(Start start, AppIdentifier appIdentifier, String userId)
+            throws StorageQueryException {
+        String QUERY = "SELECT last_active_time FROM " + Config.getConfig(start).getUserLastActiveTable()
+                + " WHERE app_id = ? AND user_id = ?";
+
+        try {
+            return execute(start, QUERY, pst -> {
+                pst.setString(1, appIdentifier.getAppId());
+                pst.setString(2, userId);
+            }, res -> {
+                if (res.next()) {
+                    return res.getLong("last_active_time");
+                }
+                return null;
+            });
+        } catch (SQLException e) {
+            throw new StorageQueryException(e);
+        }
+    }
+
+    public static void deleteUserActive(Start start, AppIdentifier appIdentifier, String userId)
+            throws StorageQueryException, SQLException {
+        String QUERY = "DELETE FROM " + Config.getConfig(start).getUserLastActiveTable()
+                + " WHERE app_id = ? AND user_id = ?";
+
+        update(start, QUERY, pst -> {
+            pst.setString(1, appIdentifier.getAppId());
+            pst.setString(2, userId);
         });
     }
 }

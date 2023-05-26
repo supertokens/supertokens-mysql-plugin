@@ -766,6 +766,12 @@ public class Start
             }
         } else if (className.equals(JWTRecipeStorage.class.getName())) {
             /* Since JWT recipe tables do not store userId we do not add any data to them */
+        } else if (className.equals(ActiveUsersStorage.class.getName())) {
+            try {
+                ActiveUsersQueries.updateUserLastActive(this, tenantIdentifier.toAppIdentifier(), userId);
+            } catch (SQLException e) {
+                throw new StorageQueryException(e);
+            }
         } else {
             throw new IllegalStateException("ClassName: " + className + " is not part of NonAuthRecipeStorage");
         }
@@ -1309,6 +1315,15 @@ public class Start
             throws StorageQueryException {
         try {
             return ActiveUsersQueries.countUsersEnabledTotpAndActiveSince(this, appIdentifier, time);
+        } catch (SQLException e) {
+            throw new StorageQueryException(e);
+        }
+    }
+
+    @Override
+    public void deleteUserActive(AppIdentifier appIdentifier, String userId) throws StorageQueryException {
+        try {
+            ActiveUsersQueries.deleteUserActive(this, appIdentifier, userId);
         } catch (SQLException e) {
             throw new StorageQueryException(e);
         }
