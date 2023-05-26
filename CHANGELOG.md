@@ -88,8 +88,6 @@ ALTER TABLE key_value
   ADD FOREIGN KEY (app_id, tenant_id)
     REFERENCES tenants (app_id, tenant_id) ON DELETE CASCADE;
 
--- CREATE INDEX key_value_tenant_id_index ON key_value (app_id, tenant_id);
-
 ------------------------------------------------------------
 
 CREATE TABLE IF NOT EXISTS app_id_to_user_id (
@@ -189,7 +187,6 @@ CREATE TABLE IF NOT EXISTS tenant_thirdparty_provider_clients (
     REFERENCES tenant_thirdparty_providers (connection_uri_domain, app_id, tenant_id, third_party_id) ON DELETE CASCADE
 );
 
-
 -- Session
 
 ALTER TABLE session_info
@@ -287,7 +284,7 @@ ALTER TABLE emailpassword_users
   ADD FOREIGN KEY (app_id, user_id)
     REFERENCES app_id_to_user_id (app_id, user_id) ON DELETE CASCADE;
 
--- ------------------------------------------------------------
+------------------------------------------------------------
 
 CREATE TABLE IF NOT EXISTS emailpassword_user_to_tenant (
   app_id VARCHAR(64) DEFAULT 'public',
@@ -435,13 +432,7 @@ ALTER TABLE thirdparty_users
   ADD FOREIGN KEY (app_id, user_id)
     REFERENCES app_id_to_user_id (app_id, user_id) ON DELETE CASCADE;
 
--- ALTER TABLE thirdparty_users
---   DROP INDEX thirdparty_users_thirdparty_user_id_index;
-
 CREATE INDEX thirdparty_users_thirdparty_user_id_index ON thirdparty_users (app_id, third_party_id, third_party_user_id);
-
--- ALTER TABLE thirdparty_users
---   DROP INDEX thirdparty_users_email_index;
 
 CREATE INDEX thirdparty_users_email_index ON thirdparty_users (app_id, email);
 
