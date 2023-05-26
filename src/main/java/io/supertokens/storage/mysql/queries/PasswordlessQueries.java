@@ -97,7 +97,7 @@ public class PasswordlessQueries {
                 + "link_code_hash CHAR(44) NOT NULL UNIQUE," 
 				+ "created_at BIGINT UNSIGNED NOT NULL,"
                 + "PRIMARY KEY (app_id, tenant_id, code_id),"
-                + "UNIQUE (app_id, tenant_id, link_code_hash),"
+                + "CONSTRAINT link_code_hash UNIQUE (app_id, tenant_id, link_code_hash),"
                 + "FOREIGN KEY (app_id, tenant_id, device_id_hash)"
                 + " REFERENCES " + getConfig(start).getPasswordlessDevicesTable() + "(app_id, tenant_id, device_id_hash) ON DELETE CASCADE ON UPDATE CASCADE"
                 + ");";
