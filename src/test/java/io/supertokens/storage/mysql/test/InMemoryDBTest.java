@@ -19,8 +19,8 @@ package io.supertokens.storage.mysql.test;
 
 import com.google.gson.JsonObject;
 import io.supertokens.ProcessState;
-import io.supertokens.pluginInterface.exceptions.StorageQueryException;
-import io.supertokens.pluginInterface.exceptions.StorageTransactionLogicException;
+import io.supertokens.pluginInterface.multitenancy.TenantIdentifier;
+import io.supertokens.pluginInterface.session.SessionStorage;
 import io.supertokens.session.Session;
 import io.supertokens.session.info.SessionInformationHolder;
 import io.supertokens.storageLayer.StorageLayer;
@@ -31,16 +31,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.security.SignatureException;
-import java.security.spec.InvalidKeySpecException;
 
 import static junit.framework.TestCase.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -81,7 +72,8 @@ public class InMemoryDBTest {
             assert sessionInfo.accessToken != null;
             assert sessionInfo.refreshToken != null;
 
-            assertEquals(StorageLayer.getSessionStorage(process.getProcess()).getNumberOfSessions(), 1);
+            assertEquals(((SessionStorage)StorageLayer.getStorage(process.getProcess())).getNumberOfSessions(
+                    TenantIdentifier.BASE_TENANT), 1);
 
             process.kill();
             assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
@@ -93,7 +85,7 @@ public class InMemoryDBTest {
             TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
             assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
 
-            assertEquals(StorageLayer.getSessionStorage(process.getProcess()).getNumberOfSessions(), 0);
+            assertEquals(((SessionStorage)StorageLayer.getStorage(process.getProcess())).getNumberOfSessions(TenantIdentifier.BASE_TENANT), 0);
 
             process.kill();
             assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
@@ -119,7 +111,7 @@ public class InMemoryDBTest {
             assert sessionInfo.accessToken != null;
             assert sessionInfo.refreshToken != null;
 
-            assertEquals(StorageLayer.getSessionStorage(process.getProcess()).getNumberOfSessions(), 1);
+            assertEquals(((SessionStorage)StorageLayer.getStorage(process.getProcess())).getNumberOfSessions(TenantIdentifier.BASE_TENANT), 1);
 
             process.kill();
             assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
@@ -129,7 +121,7 @@ public class InMemoryDBTest {
             TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
             assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
 
-            assertEquals(StorageLayer.getSessionStorage(process.getProcess()).getNumberOfSessions(), 1);
+            assertEquals(((SessionStorage)StorageLayer.getStorage(process.getProcess())).getNumberOfSessions(TenantIdentifier.BASE_TENANT), 1);
 
             process.kill();
             assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
@@ -155,7 +147,7 @@ public class InMemoryDBTest {
             assert sessionInfo.accessToken != null;
             assert sessionInfo.refreshToken != null;
 
-            assertEquals(StorageLayer.getSessionStorage(process.getProcess()).getNumberOfSessions(), 1);
+            assertEquals(((SessionStorage)StorageLayer.getStorage(process.getProcess())).getNumberOfSessions(TenantIdentifier.BASE_TENANT), 1);
 
             process.kill();
             assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
@@ -165,7 +157,7 @@ public class InMemoryDBTest {
             TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
             assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
 
-            assertEquals(StorageLayer.getSessionStorage(process.getProcess()).getNumberOfSessions(), 1);
+            assertEquals(((SessionStorage)StorageLayer.getStorage(process.getProcess())).getNumberOfSessions(TenantIdentifier.BASE_TENANT), 1);
 
             process.kill();
             assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
@@ -182,8 +174,9 @@ public class InMemoryDBTest {
 
         ProcessState.EventAndException e = process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.INIT_FAILURE, 15000);
         assertNotNull(e);
-        TestCase.assertEquals(e.exception.getMessage(),
-                "'mysql_user' and 'mysql_connection_uri' are not set. Please set at least one of " + "these values");
+        TestCase.assertEquals(e.exception.getCause().getMessage(),
+                "'mysql_user' and 'mysql_connection_uri' are not set. Please set at least one of " +
+                        "these values");
 
         process.kill();
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
@@ -200,7 +193,9 @@ public class InMemoryDBTest {
         ProcessState.EventAndException e = process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.INIT_FAILURE, 15000);
         assertNotNull(e);
         TestCase.assertEquals(e.exception.getMessage(),
-                "'mysql_user' and 'mysql_connection_uri' are not set. Please set at least one of " + "these values");
+                "io.supertokens.pluginInterface.exceptions.InvalidConfigException: " +
+                        "'mysql_user' and 'mysql_connection_uri' are not set. Please set at least one of " +
+                        "these values");
 
         process.kill();
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));

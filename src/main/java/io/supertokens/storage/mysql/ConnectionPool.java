@@ -19,7 +19,7 @@ package io.supertokens.storage.mysql;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
-import io.supertokens.pluginInterface.exceptions.QuitProgramFromPluginException;
+import io.supertokens.pluginInterface.exceptions.DbInitException;
 import io.supertokens.storage.mysql.config.Config;
 import io.supertokens.storage.mysql.config.MySQLConfig;
 import io.supertokens.storage.mysql.output.Logging;
@@ -33,9 +33,18 @@ import java.util.Objects;
 public class ConnectionPool extends ResourceDistributor.SingletonResource {
 
     private static final String RESOURCE_KEY = "io.supertokens.storage.mysql.ConnectionPool";
-    private static HikariDataSource hikariDataSource = null;
+    private HikariDataSource hikariDataSource = null;
+
+    private final Start start;
 
     private ConnectionPool(Start start) {
+        this.start = start;
+    }
+
+    private synchronized void initialiseHikariDataSource() throws SQLException {
+        if (this.hikariDataSource != null) {
+            return;
+        }
         if (!start.enabled) {
             throw new RuntimeException("Connection refused"); // emulates exception thrown by Hikari
         }
@@ -71,6 +80,7 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
             config.setPassword(userConfig.getPassword());
         }
         config.setMaximumPoolSize(userConfig.getConnectionPoolSize());
+        config.setConnectionTimeout(5000);
         config.addDataSourceProperty("cachePrepStmts", "true");
         config.addDataSourceProperty("prepStmtCacheSize", "250");
         config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
@@ -78,8 +88,12 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
         // io.supertokens.storage.mysql.HikariLoggingAppender.doAppend(HikariLoggingAppender.java:117) | SuperTokens
         // - Failed to validate connection org.mariadb.jdbc.MariaDbConnection@79af83ae (Connection.setNetworkTimeout
         // cannot be called on a closed connection). Possibly consider using a shorter maxLifetime value.
-        config.setPoolName("SuperTokens");
-        hikariDataSource = new HikariDataSource(config);
+        config.setPoolName(start.getUserPoolId() + "~" + start.getConnectionPoolId());
+        try {
+            hikariDataSource = new HikariDataSource(config);
+        } catch (Exception e) {
+            throw new SQLException(e);
+        }
     }
 
     private static int getTimeToWaitToInit(Start start) {
@@ -106,12 +120,16 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
         return (ConnectionPool) start.getResourceDistributor().getResource(RESOURCE_KEY);
     }
 
-    public static void initPool(Start start) {
-        if (getInstance(start) != null) {
+    static boolean isAlreadyInitialised(Start start) {
+        return getInstance(start) != null && getInstance(start).hikariDataSource != null;
+    }
+
+    static void initPool(Start start, boolean shouldWait) throws DbInitException, SQLException {
+		if (isAlreadyInitialised(start)) {
             return;
         }
         if (Thread.currentThread() != start.mainThread) {
-            throw new QuitProgramFromPluginException("Should not come here");
+            throw new DbInitException("Should not come here");
         }
         Logging.info(start, "Setting up MySQL connection pool.", true);
         boolean longMessagePrinted = false;
@@ -120,15 +138,20 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
                 + "you have"
                 + " specified the correct values for ('mysql_host' and 'mysql_port') or for 'mysql_connection_uri'";
         try {
+            ConnectionPool con = new ConnectionPool(start);
+            start.getResourceDistributor().setResource(RESOURCE_KEY, con);
             while (true) {
                 try {
-                    start.getResourceDistributor().setResource(RESOURCE_KEY, new ConnectionPool(start));
+                    con.initialiseHikariDataSource();
                     break;
                 } catch (Exception e) {
+                    if (!shouldWait) {
+                        throw new DbInitException(e);
+                    }
                     if (e.getMessage().contains("Connection refused")) {
                         start.handleKillSignalForWhenItHappens();
                         if (System.currentTimeMillis() > maxTryTime) {
-                            throw new QuitProgramFromPluginException(errorMessage);
+                            throw new DbInitException(errorMessage);
                         }
                         if (!longMessagePrinted) {
                             longMessagePrinted = true;
@@ -145,7 +168,7 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
                             }
                             Thread.sleep(getRetryIntervalIfInitFails(start));
                         } catch (InterruptedException ex) {
-                            throw new QuitProgramFromPluginException(errorMessage);
+                            throw new DbInitException(errorMessage);
                         }
                     } else {
                         throw e;
@@ -159,19 +182,28 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
 
     public static Connection getConnection(Start start) throws SQLException {
         if (getInstance(start) == null) {
-            throw new QuitProgramFromPluginException("Please call initPool before getConnection");
+            throw new IllegalStateException("Please call initPool before getConnection");
         }
         if (!start.enabled) {
             throw new SQLException("Storage layer disabled");
         }
-        return ConnectionPool.hikariDataSource.getConnection();
+        if (getInstance(start).hikariDataSource == null) {
+            getInstance(start).initialiseHikariDataSource();
+        }
+        return getInstance(start).hikariDataSource.getConnection();
     }
 
-    public static void close(Start start) {
+    static void close(Start start) {
         if (getInstance(start) == null) {
             return;
         }
-        ConnectionPool.hikariDataSource.close();
-        ConnectionPool.hikariDataSource = null;
+        if (getInstance(start).hikariDataSource != null) {
+            try {
+                getInstance(start).hikariDataSource.close();
+            } finally {
+                // we mark it as null so that next time it's being initialised, it will be initialised again
+                getInstance(start).hikariDataSource = null;
+            }
+        }
     }
 }

@@ -19,176 +19,172 @@ package io.supertokens.storage.mysql.config;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.supertokens.pluginInterface.exceptions.QuitProgramFromPluginException;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import io.supertokens.pluginInterface.exceptions.InvalidConfigException;
+import io.supertokens.storage.mysql.annotations.ConnectionPoolProperty;
+import io.supertokens.storage.mysql.annotations.IgnoreForAnnotationCheck;
+import io.supertokens.storage.mysql.annotations.NotConflictingWithinUserPool;
+import io.supertokens.storage.mysql.annotations.UserPoolProperty;
 
+import java.lang.reflect.Field;
 import java.net.URI;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class MySQLConfig {
 
     @JsonProperty
+    @IgnoreForAnnotationCheck
     private int mysql_config_version = -1;
 
     @JsonProperty
+    @ConnectionPoolProperty
     private int mysql_connection_pool_size = 10;
 
     @JsonProperty
-    private String mysql_host = null;
+    @UserPoolProperty
+    private String mysql_host = "localhost";
 
     @JsonProperty
-    private int mysql_port = -1;
+    @UserPoolProperty
+    private int mysql_port = 3306;
 
     @JsonProperty
+    @ConnectionPoolProperty
     private String mysql_user = null;
 
     @JsonProperty
+    @ConnectionPoolProperty
     private String mysql_password = null;
 
     @JsonProperty
-    private String mysql_database_name = null;
+    @UserPoolProperty
+    private String mysql_database_name = "supertokens";
 
     @JsonProperty
+    @NotConflictingWithinUserPool
     private String mysql_key_value_table_name = null;
 
     @JsonProperty
+    @NotConflictingWithinUserPool
     private String mysql_session_info_table_name = null;
 
     @JsonProperty
+    @NotConflictingWithinUserPool
     private String mysql_emailpassword_users_table_name = null;
 
     @JsonProperty
+    @NotConflictingWithinUserPool
     private String mysql_emailpassword_pswd_reset_tokens_table_name = null;
 
     @JsonProperty
+    @NotConflictingWithinUserPool
     private String mysql_emailverification_tokens_table_name = null;
 
     @JsonProperty
+    @NotConflictingWithinUserPool
     private String mysql_emailverification_verified_emails_table_name = null;
 
     @JsonProperty
+    @NotConflictingWithinUserPool
     private String mysql_thirdparty_users_table_name = null;
 
     @JsonProperty
+    @NotConflictingWithinUserPool
     private String mysql_table_names_prefix = "";
 
     @JsonProperty
+    @IgnoreForAnnotationCheck
     private String mysql_connection_uri = null;
+
+    @ConnectionPoolProperty
+    private String mysql_connection_attributes = "allowPublicKeyRetrieval=true";
+
+    @ConnectionPoolProperty
+    private String mysql_connection_scheme = "mysql";
+
+
+    public static Set<String> getValidFields() {
+        MySQLConfig config = new MySQLConfig();
+        JsonObject configObj = new GsonBuilder().serializeNulls().create().toJsonTree(config).getAsJsonObject();
+
+        Set<String> validFields = new HashSet<>();
+        for (Map.Entry<String, JsonElement> entry : configObj.entrySet()) {
+            validFields.add(entry.getKey());
+        }
+        return validFields;
+    }
 
     public int getConnectionPoolSize() {
         return mysql_connection_pool_size;
     }
 
     public String getConnectionScheme() {
-        if (mysql_connection_uri != null) {
-            URI uri = URI.create(mysql_connection_uri);
-
-            // sometimes if the scheme is missing, the host is returned as the scheme. To
-            // prevent that,
-            // we have a check
-            String host = this.getHostName();
-            if (uri.getScheme() != null && !uri.getScheme().equals(host)) {
-                return uri.getScheme();
-            }
-        }
-        return "mysql";
+        return mysql_connection_scheme;
     }
 
     public String getConnectionAttributes() {
-        if (mysql_connection_uri != null) {
-            URI uri = URI.create(mysql_connection_uri);
-            String query = uri.getQuery();
-            if (query != null) {
-                if (query.contains("allowPublicKeyRetrieval=")) {
-                    return query;
-                } else {
-                    return query + "&allowPublicKeyRetrieval=true";
-                }
-            }
-        }
-        return "allowPublicKeyRetrieval=true";
+        return mysql_connection_attributes;
     }
 
     public String getHostName() {
-        if (mysql_host == null) {
-            if (mysql_connection_uri != null) {
-                URI uri = URI.create(mysql_connection_uri);
-                if (uri.getHost() != null) {
-                    return uri.getHost();
-                }
-            }
-            return "localhost";
-        }
         return mysql_host;
     }
 
     public int getPort() {
-        if (mysql_port == -1) {
-            if (mysql_connection_uri != null) {
-                URI uri = URI.create(mysql_connection_uri);
-                return uri.getPort();
-            }
-            return 3306;
-        }
         return mysql_port;
     }
 
     public String getUser() {
-        if (mysql_user == null) {
-            if (mysql_connection_uri != null) {
-                URI uri = URI.create(mysql_connection_uri);
-                String userInfo = uri.getUserInfo();
-                if (userInfo != null) {
-                    String[] userInfoArray = userInfo.split(":");
-                    if (userInfoArray.length > 0 && !userInfoArray[0].equals("")) {
-                        return userInfoArray[0];
-                    }
-                }
-            }
-            return null;
-        }
         return mysql_user;
     }
 
     public String getPassword() {
-        if (mysql_password == null) {
-            if (mysql_connection_uri != null) {
-                URI uri = URI.create(mysql_connection_uri);
-                String userInfo = uri.getUserInfo();
-                if (userInfo != null) {
-                    String[] userInfoArray = userInfo.split(":");
-                    if (userInfoArray.length > 1 && !userInfoArray[1].equals("")) {
-                        return userInfoArray[1];
-                    }
-                }
-            }
-            return null;
-        }
         return mysql_password;
+    }
+
+    public String getDatabaseName() {
+        return mysql_database_name;
     }
 
     public String getConnectionURI() {
         return mysql_connection_uri;
     }
 
-    public String getDatabaseName() {
-        if (mysql_database_name == null) {
-            if (mysql_connection_uri != null) {
-                URI uri = URI.create(mysql_connection_uri);
-                String path = uri.getPath();
-                if (path != null && !path.equals("") && !path.equals("/")) {
-                    if (path.startsWith("/")) {
-                        return path.substring(1);
-                    }
-                    return path;
-                }
-            }
-            return "supertokens";
-        }
-        return mysql_database_name;
-    }
 
     public String getUsersTable() {
         return addPrefixToTableName("all_auth_recipe_users");
+    }
+
+
+    public String getAppsTable() {
+        String tableName = "apps";
+        return addPrefixToTableName(tableName);
+    }
+
+    public String getTenantsTable() {
+        String tableName = "tenants";
+        return addPrefixToTableName(tableName);
+    }
+
+    public String getTenantConfigsTable() {
+        String tableName = "tenant_configs";
+        return addPrefixToTableName(tableName);
+    }
+
+    public String getTenantThirdPartyProvidersTable() {
+        String tableName = "tenant_thirdparty_providers";
+        return addPrefixToTableName(tableName);
+    }
+
+    public String getTenantThirdPartyProviderClientsTable() {
+        String tableName = "tenant_thirdparty_provider_clients";
+        return addPrefixToTableName(tableName);
     }
 
     public String getKeyValueTable() {
@@ -197,6 +193,10 @@ public class MySQLConfig {
             return mysql_key_value_table_name;
         }
         return addPrefixToTableName(tableName);
+    }
+
+    public String getAppIdToUserIdTable() {
+        return addPrefixToTableName("app_id_to_user_id");
     }
 
     public String getUserLastActiveTable() {
@@ -212,6 +212,11 @@ public class MySQLConfig {
         if (mysql_session_info_table_name != null) {
             return mysql_session_info_table_name;
         }
+        return addPrefixToTableName(tableName);
+    }
+
+    public String getEmailPasswordUserToTenantTable() {
+        String tableName = "emailpassword_user_to_tenant";
         return addPrefixToTableName(tableName);
     }
 
@@ -255,10 +260,20 @@ public class MySQLConfig {
         return addPrefixToTableName(tableName);
     }
 
+    public String getThirdPartyUserToTenantTable() {
+        String tableName = "thirdparty_user_to_tenant";
+        return addPrefixToTableName(tableName);
+    }
+
     public String getPasswordlessUsersTable() {
         String tableName = "passwordless_users";
         return addPrefixToTableName(tableName);
 
+    }
+
+    public String getPasswordlessUserToTenantTable() {
+        String tableName = "passwordless_user_to_tenant";
+        return addPrefixToTableName(tableName);
     }
 
     public String getPasswordlessDevicesTable() {
@@ -322,26 +337,163 @@ public class MySQLConfig {
         return tableName;
     }
 
-    void validateAndInitialise() {
+    void validateAndNormalise() throws InvalidConfigException {
         if (mysql_connection_uri != null) {
             try {
                 URI ignored = URI.create(mysql_connection_uri);
             } catch (Exception e) {
-                throw new QuitProgramFromPluginException(
+                throw new InvalidConfigException(
                         "The provided mysql connection URI has an incorrect format. Please use a format like "
                                 + "mysql://[user[:[password]]@]host[:port][/dbname][?attr1=val1&attr2=val2...");
             }
         } else {
             if (this.getUser() == null) {
-                throw new QuitProgramFromPluginException(
+                throw new InvalidConfigException(
                         "'mysql_user' and 'mysql_connection_uri' are not set. Please set at least one of "
                                 + "these values");
             }
         }
         if (getConnectionPoolSize() <= 0) {
-            throw new QuitProgramFromPluginException(
+            throw new InvalidConfigException(
                     "'mysql_connection_pool_size' in the config.yaml file must be > 0");
+        }
+
+        if (mysql_connection_uri != null) {
+            {
+                URI uri = URI.create(mysql_connection_uri);
+                String query = uri.getQuery();
+                if (query != null) {
+                    if (query.contains("allowPublicKeyRetrieval=")) {
+                        mysql_connection_attributes = query;
+                    } else {
+                        mysql_connection_attributes = query + "&allowPublicKeyRetrieval=true";
+                    }
+                }
+            }
+
+            {
+                if (mysql_connection_uri != null) {
+                    URI uri = URI.create(mysql_connection_uri);
+                    if (uri.getHost() != null) {
+                        mysql_host = uri.getHost();
+                    }
+                }
+            }
+
+            {
+                URI uri = URI.create(mysql_connection_uri);
+
+                // sometimes if the scheme is missing, the host is returned as the scheme. To
+                // prevent that,
+                // we have a check
+                String host = this.getHostName();
+                if (uri.getScheme() != null && !uri.getScheme().equals(host)) {
+                    mysql_connection_scheme = uri.getScheme();
+                }
+            }
+
+            {
+                if (mysql_connection_uri != null) {
+                    URI uri = URI.create(mysql_connection_uri);
+                    mysql_port = uri.getPort();
+                }
+            }
+
+            {
+                if (mysql_user == null) {
+                    if (mysql_connection_uri != null) {
+                        URI uri = URI.create(mysql_connection_uri);
+                        String userInfo = uri.getUserInfo();
+                        if (userInfo != null) {
+                            String[] userInfoArray = userInfo.split(":");
+                            if (userInfoArray.length > 0 && !userInfoArray[0].equals("")) {
+                                mysql_user = userInfoArray[0];
+                            }
+                        }
+                    }
+                }
+            }
+            {
+                if (mysql_password == null) {
+                    if (mysql_connection_uri != null) {
+                        URI uri = URI.create(mysql_connection_uri);
+                        String userInfo = uri.getUserInfo();
+                        if (userInfo != null) {
+                            String[] userInfoArray = userInfo.split(":");
+                            if (userInfoArray.length > 1 && !userInfoArray[1].equals("")) {
+                                mysql_password = userInfoArray[1];
+                            }
+                        }
+                    }
+                }
+            }
+            {
+
+                if (mysql_connection_uri != null) {
+                    URI uri = URI.create(mysql_connection_uri);
+                    String path = uri.getPath();
+                    if (path != null && !path.equals("") && !path.equals("/")) {
+                        mysql_database_name = path;
+                        if (path.startsWith("/")) {
+                            mysql_database_name = path.substring(1);
+                        }
+                    }
+                }
+            }
         }
     }
 
+    public void assertThatConfigFromSameUserPoolIsNotConflicting(MySQLConfig otherConfig) throws InvalidConfigException {
+        for (Field field : MySQLConfig.class.getDeclaredFields()) {
+            if (field.isAnnotationPresent(NotConflictingWithinUserPool.class)) {
+                try {
+                    if (!Objects.equals(field.get(this), field.get(otherConfig))) {
+                        throw new InvalidConfigException(
+                                "You cannot set different values for " + field.getName() +
+                                        " for the same user pool");
+                    }
+                } catch (IllegalAccessException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+    }
+
+    public String getUserPoolId() {
+        StringBuilder userPoolId = new StringBuilder();
+        for (Field field : MySQLConfig.class.getDeclaredFields()) {
+            if (field.isAnnotationPresent(UserPoolProperty.class)) {
+                userPoolId.append("|");
+                try {
+                    if (field.get(this) != null) {
+                        userPoolId.append(field.get(this).toString());
+                    }
+                } catch (IllegalAccessException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+        return userPoolId.toString();
+    }
+
+    public String getConnectionPoolId() {
+        StringBuilder connectionPoolId = new StringBuilder();
+        for (Field field : MySQLConfig.class.getDeclaredFields()) {
+            if (field.isAnnotationPresent(ConnectionPoolProperty.class)) {
+                connectionPoolId.append("|");
+                try {
+                    if (field.get(this) != null) {
+                        connectionPoolId.append(field.get(this).toString());
+                    }
+                } catch (IllegalAccessException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+        return connectionPoolId.toString();
+    }
+
+    public String getTablePrefix() {
+        return mysql_table_names_prefix;
+    }
 }

@@ -48,10 +48,13 @@ public class Logging extends ResourceDistributor.SingletonResource {
         return (Logging) start.getResourceDistributor().getResource(RESOURCE_ID);
     }
 
+    public static boolean isAlreadyInitialised(Start start) {
+        return getInstance(start) != null;
+    }
+
     public static void initFileLogging(Start start, String infoLogPath, String errorLogPath) {
         if (getInstance(start) == null) {
             start.getResourceDistributor().setResource(RESOURCE_ID, new Logging(start, infoLogPath, errorLogPath));
-
         }
     }
 
