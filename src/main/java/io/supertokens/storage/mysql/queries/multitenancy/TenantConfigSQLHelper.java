@@ -18,6 +18,7 @@ package io.supertokens.storage.mysql.queries.multitenancy;
 
 import io.supertokens.pluginInterface.RowMapper;
 import io.supertokens.pluginInterface.exceptions.StorageQueryException;
+import io.supertokens.pluginInterface.exceptions.StorageTransactionLogicException;
 import io.supertokens.pluginInterface.multitenancy.*;
 import io.supertokens.storage.mysql.Start;
 import io.supertokens.storage.mysql.queries.utils.JsonUtils;
@@ -86,19 +87,23 @@ public class TenantConfigSQLHelper {
     }
 
     public static void create(Start start, Connection sqlCon, TenantConfig tenantConfig)
-            throws SQLException, StorageQueryException {
+            throws SQLException, StorageTransactionLogicException {
         String QUERY = "INSERT INTO " + getConfig(start).getTenantConfigsTable()
                 + "(connection_uri_domain, app_id, tenant_id, core_config, email_password_enabled, passwordless_enabled, third_party_enabled)" + " VALUES(?, ?, ?, ?, ?, ?, ?)";
 
-        update(sqlCon, QUERY, pst -> {
-            pst.setString(1, tenantConfig.tenantIdentifier.getConnectionUriDomain());
-            pst.setString(2, tenantConfig.tenantIdentifier.getAppId());
-            pst.setString(3, tenantConfig.tenantIdentifier.getTenantId());
-            pst.setString(4, tenantConfig.coreConfig.toString());
-            pst.setBoolean(5, tenantConfig.emailPasswordConfig.enabled);
-            pst.setBoolean(6, tenantConfig.passwordlessConfig.enabled);
-            pst.setBoolean(7, tenantConfig.thirdPartyConfig.enabled);
-        });
+        try {
+            update(sqlCon, QUERY, pst -> {
+                pst.setString(1, tenantConfig.tenantIdentifier.getConnectionUriDomain());
+                pst.setString(2, tenantConfig.tenantIdentifier.getAppId());
+                pst.setString(3, tenantConfig.tenantIdentifier.getTenantId());
+                pst.setString(4, tenantConfig.coreConfig.toString());
+                pst.setBoolean(5, tenantConfig.emailPasswordConfig.enabled);
+                pst.setBoolean(6, tenantConfig.passwordlessConfig.enabled);
+                pst.setBoolean(7, tenantConfig.thirdPartyConfig.enabled);
+            });
+        } catch (StorageQueryException e) {
+            throw new StorageTransactionLogicException(e);
+        }
     }
 
 }

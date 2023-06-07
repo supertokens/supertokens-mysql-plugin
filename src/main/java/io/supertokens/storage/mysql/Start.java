@@ -235,7 +235,7 @@ public class Start
                 // https://github.com/supertokens/supertokens-mysql-plugin/pull/2
                 if ((e instanceof SQLTransactionRollbackException
                         || (e.getMessage() != null && e.getMessage().toLowerCase().contains("deadlock")))
-                        && tries < 20) {
+                        && tries < 50) {
                     try {
                         Thread.sleep((long) (10 + Math.min(tries, 10) * (Math.random() * 20)));
                     } catch (InterruptedException ignored) {
@@ -1387,9 +1387,14 @@ public class Start
                 && serverMessage.contains(columnName);
     }
 
-    private boolean isPrimaryKeyError(String serverMessage, String tableName) {
+    public boolean isPrimaryKeyError(String serverMessage, String tableName) {
         return serverMessage.endsWith("'" + tableName + ".PRIMARY'")
                         || serverMessage.endsWith("'PRIMARY'");
+    }
+
+    private boolean isPrimaryKeyError(String serverMessage, String tableName, String value) {
+        return serverMessage.endsWith("'" + tableName + ".PRIMARY'")
+                || (serverMessage.endsWith("'PRIMARY'") && serverMessage.contains(value));
     }
 
     @Override
@@ -1581,13 +1586,14 @@ public class Start
             if (e.actualException instanceof SQLIntegrityConstraintViolationException) {
                 String serverMessage = e.actualException.getMessage();
                 MySQLConfig config = Config.getConfig(this);
-
-                if (isPrimaryKeyError(serverMessage, config.getPasswordlessDevicesTable())) {
+                if (isPrimaryKeyError(serverMessage, config.getPasswordlessDevicesTable(), code.deviceIdHash)) {
                     throw new DuplicateDeviceIdHashException();
                 }
-                if (isPrimaryKeyError(serverMessage, config.getPasswordlessCodesTable())) {
+
+                if (isPrimaryKeyError(serverMessage, config.getPasswordlessCodesTable(), code.id)) {
                     throw new DuplicateCodeIdException();
                 }
+
                 if (isUniqueConstraintError(serverMessage, config.getPasswordlessCodesTable(), "link_code_hash")) {
                     throw new DuplicateLinkCodeHashException();
                 }
@@ -2163,19 +2169,21 @@ public class Start
         try {
             MultitenancyQueries.createTenantConfig(this, tenantConfig);
         } catch (StorageTransactionLogicException e) {
-            if (e.actualException instanceof SQLIntegrityConstraintViolationException) {
-                String errorMessage = e.actualException.getMessage();
-                MySQLConfig config = Config.getConfig(this);
-                if (isPrimaryKeyError(errorMessage, config.getTenantConfigsTable())) {
-                    throw new DuplicateTenantException();
-                }
-                if (isPrimaryKeyError(errorMessage, config.getTenantThirdPartyProvidersTable())) {
-                    throw new DuplicateThirdPartyIdException();
-                }
-                if (isPrimaryKeyError(errorMessage, config.getTenantThirdPartyProviderClientsTable())) {
-                    throw new DuplicateClientTypeException();
-                }
+            // We are not doing PRIMARY KEY checks here as there are multiple insert queries happening on multiple tables
+            // and it is easier to catch which PRIMARY KEY failed around the insert query itself.
+            if (e.actualException instanceof DuplicateTenantException) {
+                throw (DuplicateTenantException) e.actualException;
             }
+            if (e.actualException instanceof DuplicateThirdPartyIdException) {
+                throw (DuplicateThirdPartyIdException) e.actualException;
+            }
+            if (e.actualException instanceof DuplicateClientTypeException) {
+                throw (DuplicateClientTypeException) e.actualException;
+            }
+            if (e.actualException instanceof StorageQueryException) {
+                throw (StorageQueryException) e.actualException;
+            }
+
             throw new StorageQueryException(e.actualException);
         }
     }
@@ -2203,19 +2211,19 @@ public class Start
         try {
             MultitenancyQueries.overwriteTenantConfig(this, tenantConfig);
         } catch (StorageTransactionLogicException e) {
+            // We are not doing PRIMARY KEY checks here as there are multiple insert queries happening on multiple tables
+            // and it is easier to catch which PRIMARY KEY failed around the insert query itself.
             if (e.actualException instanceof TenantOrAppNotFoundException) {
                 throw (TenantOrAppNotFoundException) e.actualException;
             }
-            if (e.actualException instanceof SQLIntegrityConstraintViolationException) {
-                MySQLConfig config = Config.getConfig(this);
-                if (isPrimaryKeyError(e.actualException.getMessage(),
-                        config.getTenantThirdPartyProvidersTable())) {
-                    throw new DuplicateThirdPartyIdException();
-                }
-                if (isPrimaryKeyError(e.actualException.getMessage(),
-                        config.getTenantThirdPartyProviderClientsTable())) {
-                    throw new DuplicateClientTypeException();
-                }
+            if (e.actualException instanceof DuplicateThirdPartyIdException) {
+                throw (DuplicateThirdPartyIdException) e.actualException;
+            }
+            if (e.actualException instanceof DuplicateClientTypeException) {
+                throw (DuplicateClientTypeException) e.actualException;
+            }
+            if (e.actualException instanceof StorageQueryException) {
+                throw (StorageQueryException) e.actualException;
             }
             throw new StorageQueryException(e.actualException);
         }

@@ -18,6 +18,7 @@ package io.supertokens.storage.mysql.queries.multitenancy;
 
 import io.supertokens.pluginInterface.RowMapper;
 import io.supertokens.pluginInterface.exceptions.StorageQueryException;
+import io.supertokens.pluginInterface.exceptions.StorageTransactionLogicException;
 import io.supertokens.pluginInterface.multitenancy.TenantConfig;
 import io.supertokens.pluginInterface.multitenancy.TenantIdentifier;
 import io.supertokens.pluginInterface.multitenancy.ThirdPartyConfig;
@@ -112,36 +113,40 @@ public class ThirdPartyProviderSQLHelper {
     }
 
     public static void create(Start start, Connection sqlCon, TenantConfig tenantConfig, ThirdPartyConfig.Provider provider)
-            throws SQLException, StorageQueryException {
+            throws SQLException, StorageTransactionLogicException {
         String QUERY = "INSERT INTO " + getConfig(start).getTenantThirdPartyProvidersTable()
                 + "(connection_uri_domain, app_id, tenant_id, third_party_id, name, authorization_endpoint, authorization_endpoint_query_params, token_endpoint, token_endpoint_body_params, user_info_endpoint, user_info_endpoint_query_params, user_info_endpoint_headers, jwks_uri, oidc_discovery_endpoint, require_email, user_info_map_from_id_token_payload_user_id, user_info_map_from_id_token_payload_email, user_info_map_from_id_token_payload_email_verified, user_info_map_from_user_info_endpoint_user_id, user_info_map_from_user_info_endpoint_email, user_info_map_from_user_info_endpoint_email_verified)" + " VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-        update(sqlCon, QUERY, pst -> {
-            pst.setString(1, tenantConfig.tenantIdentifier.getConnectionUriDomain());
-            pst.setString(2, tenantConfig.tenantIdentifier.getAppId());
-            pst.setString(3, tenantConfig.tenantIdentifier.getTenantId());
-            pst.setString(4, provider.thirdPartyId);
-            pst.setString(5, provider.name);
-            pst.setString(6, provider.authorizationEndpoint);
-            pst.setString(7, JsonUtils.jsonObjectToString(provider.authorizationEndpointQueryParams));
-            pst.setString(8, provider.tokenEndpoint);
-            pst.setString(9, JsonUtils.jsonObjectToString(provider.tokenEndpointBodyParams));
-            pst.setString(10, provider.userInfoEndpoint);
-            pst.setString(11, JsonUtils.jsonObjectToString(provider.userInfoEndpointQueryParams));
-            pst.setString(12, JsonUtils.jsonObjectToString(provider.userInfoEndpointHeaders));
-            pst.setString(13, provider.jwksURI);
-            pst.setString(14, provider.oidcDiscoveryEndpoint);
-            if (provider.requireEmail == null) {
-                pst.setNull(15, Types.BOOLEAN);
-            } else {
-                pst.setBoolean(15, provider.requireEmail.booleanValue());
-            }
-            pst.setString(16, provider.userInfoMap.fromIdTokenPayload.userId);
-            pst.setString(17, provider.userInfoMap.fromIdTokenPayload.email);
-            pst.setString(18, provider.userInfoMap.fromIdTokenPayload.emailVerified);
-            pst.setString(19, provider.userInfoMap.fromUserInfoAPI.userId);
-            pst.setString(20, provider.userInfoMap.fromUserInfoAPI.email);
-            pst.setString(21, provider.userInfoMap.fromUserInfoAPI.emailVerified);
-        });
+        try {
+            update(sqlCon, QUERY, pst -> {
+                pst.setString(1, tenantConfig.tenantIdentifier.getConnectionUriDomain());
+                pst.setString(2, tenantConfig.tenantIdentifier.getAppId());
+                pst.setString(3, tenantConfig.tenantIdentifier.getTenantId());
+                pst.setString(4, provider.thirdPartyId);
+                pst.setString(5, provider.name);
+                pst.setString(6, provider.authorizationEndpoint);
+                pst.setString(7, JsonUtils.jsonObjectToString(provider.authorizationEndpointQueryParams));
+                pst.setString(8, provider.tokenEndpoint);
+                pst.setString(9, JsonUtils.jsonObjectToString(provider.tokenEndpointBodyParams));
+                pst.setString(10, provider.userInfoEndpoint);
+                pst.setString(11, JsonUtils.jsonObjectToString(provider.userInfoEndpointQueryParams));
+                pst.setString(12, JsonUtils.jsonObjectToString(provider.userInfoEndpointHeaders));
+                pst.setString(13, provider.jwksURI);
+                pst.setString(14, provider.oidcDiscoveryEndpoint);
+                if (provider.requireEmail == null) {
+                    pst.setNull(15, Types.BOOLEAN);
+                } else {
+                    pst.setBoolean(15, provider.requireEmail.booleanValue());
+                }
+                pst.setString(16, provider.userInfoMap.fromIdTokenPayload.userId);
+                pst.setString(17, provider.userInfoMap.fromIdTokenPayload.email);
+                pst.setString(18, provider.userInfoMap.fromIdTokenPayload.emailVerified);
+                pst.setString(19, provider.userInfoMap.fromUserInfoAPI.userId);
+                pst.setString(20, provider.userInfoMap.fromUserInfoAPI.email);
+                pst.setString(21, provider.userInfoMap.fromUserInfoAPI.emailVerified);
+            });
+        } catch (StorageQueryException e) {
+            throw new StorageTransactionLogicException(e);
+        }
     }
 }
