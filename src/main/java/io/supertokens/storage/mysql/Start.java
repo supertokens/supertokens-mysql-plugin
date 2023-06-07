@@ -1392,6 +1392,11 @@ public class Start
                         || serverMessage.endsWith("'PRIMARY'");
     }
 
+    public boolean isPrimaryKeyError(String serverMessage, String tableName, String value) {
+        return serverMessage.endsWith("'" + tableName + ".PRIMARY'")
+                || (serverMessage.endsWith("'PRIMARY'") && serverMessage.contains(value));
+    }
+
     @Override
     public PasswordlessDevice getDevice_Transaction(TenantIdentifier tenantIdentifier, TransactionConnection
             con,
@@ -1578,16 +1583,16 @@ public class Start
             PasswordlessQueries.createDeviceWithCode(this, tenantIdentifier, email, phoneNumber, linkCodeSalt,
                     code);
         } catch (StorageTransactionLogicException e) {
-            if (e.actualException instanceof DuplicateDeviceIdHashException) {
-                throw (DuplicateDeviceIdHashException) e.actualException;
-            }
-            if (e.actualException instanceof DuplicateCodeIdException) {
-                throw (DuplicateCodeIdException) e.actualException;
-            }
-
             if (e.actualException instanceof SQLIntegrityConstraintViolationException) {
                 String serverMessage = e.actualException.getMessage();
                 MySQLConfig config = Config.getConfig(this);
+                if (isPrimaryKeyError(serverMessage, config.getPasswordlessDevicesTable(), code.deviceIdHash)) {
+                    throw new DuplicateDeviceIdHashException();
+                }
+
+                if (isPrimaryKeyError(serverMessage, config.getPasswordlessCodesTable(), code.id)) {
+                    throw new DuplicateCodeIdException();
+                }
 
                 if (isUniqueConstraintError(serverMessage, config.getPasswordlessCodesTable(), "link_code_hash")) {
                     throw new DuplicateLinkCodeHashException();
@@ -2164,6 +2169,8 @@ public class Start
         try {
             MultitenancyQueries.createTenantConfig(this, tenantConfig);
         } catch (StorageTransactionLogicException e) {
+            // We are not doing PRIMARY KEY checks here as there are multiple insert queries happening on multiple tables
+            // and it is easier to catch which PRIMARY KEY failed around the insert query itself.
             if (e.actualException instanceof DuplicateTenantException) {
                 throw (DuplicateTenantException) e.actualException;
             }
@@ -2204,6 +2211,8 @@ public class Start
         try {
             MultitenancyQueries.overwriteTenantConfig(this, tenantConfig);
         } catch (StorageTransactionLogicException e) {
+            // We are not doing PRIMARY KEY checks here as there are multiple insert queries happening on multiple tables
+            // and it is easier to catch which PRIMARY KEY failed around the insert query itself.
             if (e.actualException instanceof TenantOrAppNotFoundException) {
                 throw (TenantOrAppNotFoundException) e.actualException;
             }

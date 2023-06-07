@@ -129,32 +129,16 @@ public class PasswordlessQueries {
                 String QUERY = "INSERT INTO " + getConfig(start).getPasswordlessDevicesTable()
                         + "(app_id, tenant_id, device_id_hash, email, phone_number, link_code_salt, failed_attempts)"
                         + " VALUES(?, ?, ?, ?, ?, ?, 0)";
-                try {
-                    update(sqlCon, QUERY, pst -> {
-                        pst.setString(1, tenantIdentifier.getAppId());
-                        pst.setString(2, tenantIdentifier.getTenantId());
-                        pst.setString(3, code.deviceIdHash);
-                        pst.setString(4, email);
-                        pst.setString(5, phoneNumber);
-                        pst.setString(6, linkCodeSalt);
-                    });
-                } catch (SQLIntegrityConstraintViolationException e) {
-                    if (start.isPrimaryKeyError(e.getMessage(), getConfig(start).getPasswordlessDevicesTable())) {
-                        throw new StorageTransactionLogicException(new DuplicateDeviceIdHashException());
-                    } else {
-                        throw e;
-                    }
-                }
+                update(sqlCon, QUERY, pst -> {
+                    pst.setString(1, tenantIdentifier.getAppId());
+                    pst.setString(2, tenantIdentifier.getTenantId());
+                    pst.setString(3, code.deviceIdHash);
+                    pst.setString(4, email);
+                    pst.setString(5, phoneNumber);
+                    pst.setString(6, linkCodeSalt);
+                });
 
-                try {
-                    createCode_Transaction(start, sqlCon, tenantIdentifier, code);
-                } catch (SQLIntegrityConstraintViolationException e) {
-                    if (start.isPrimaryKeyError(e.getMessage(), getConfig(start).getPasswordlessCodesTable())) {
-                        throw new StorageTransactionLogicException(new DuplicateCodeIdException());
-                    } else {
-                        throw e;
-                    }
-                }
+                createCode_Transaction(start, sqlCon, tenantIdentifier, code);
                 sqlCon.commit();
             } catch (SQLException throwables) {
                 throw new StorageTransactionLogicException(throwables);
