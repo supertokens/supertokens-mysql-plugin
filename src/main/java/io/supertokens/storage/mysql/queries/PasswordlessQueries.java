@@ -24,8 +24,6 @@ import io.supertokens.pluginInterface.multitenancy.TenantIdentifier;
 import io.supertokens.pluginInterface.passwordless.PasswordlessCode;
 import io.supertokens.pluginInterface.passwordless.PasswordlessDevice;
 import io.supertokens.pluginInterface.passwordless.UserInfo;
-import io.supertokens.pluginInterface.passwordless.exception.DuplicateCodeIdException;
-import io.supertokens.pluginInterface.passwordless.exception.DuplicateDeviceIdHashException;
 import io.supertokens.pluginInterface.sqlStorage.SQLStorage.TransactionIsolationLevel;
 import io.supertokens.storage.mysql.ConnectionPool;
 import io.supertokens.storage.mysql.Start;
@@ -36,7 +34,6 @@ import javax.annotation.Nullable;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.*;
 
 import static io.supertokens.pluginInterface.RECIPE_ID.PASSWORDLESS;
