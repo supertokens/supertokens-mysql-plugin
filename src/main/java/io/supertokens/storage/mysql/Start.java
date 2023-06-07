@@ -1392,7 +1392,7 @@ public class Start
                         || serverMessage.endsWith("'PRIMARY'");
     }
 
-    public boolean isPrimaryKeyError(String serverMessage, String tableName, String value) {
+    private boolean isPrimaryKeyError(String serverMessage, String tableName, String value) {
         return serverMessage.endsWith("'" + tableName + ".PRIMARY'")
                 || (serverMessage.endsWith("'PRIMARY'") && serverMessage.contains(value));
     }
