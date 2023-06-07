@@ -245,7 +245,8 @@ public class Start
                     continue; // this because deadlocks are not necessarily a result of faulty logic. They can
                     // happen
                 }
-                if (e.getMessage() != null && e.getMessage().toLowerCase().contains("deadlock") && tries == NUM_TRIES) {
+                if ((e instanceof SQLTransactionRollbackException
+                        || (e.getMessage() != null && e.getMessage().toLowerCase().contains("deadlock"))) && tries == NUM_TRIES) {
                     ProcessState.getInstance(this).addState(ProcessState.PROCESS_STATE.DEADLOCK_NOT_RESOLVED, e);
                 }
                 if (e instanceof StorageQueryException) {
