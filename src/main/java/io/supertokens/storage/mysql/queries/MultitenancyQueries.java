@@ -21,6 +21,9 @@ import io.supertokens.pluginInterface.exceptions.StorageTransactionLogicExceptio
 import io.supertokens.pluginInterface.multitenancy.TenantConfig;
 import io.supertokens.pluginInterface.multitenancy.TenantIdentifier;
 import io.supertokens.pluginInterface.multitenancy.ThirdPartyConfig;
+import io.supertokens.pluginInterface.multitenancy.exceptions.DuplicateClientTypeException;
+import io.supertokens.pluginInterface.multitenancy.exceptions.DuplicateTenantException;
+import io.supertokens.pluginInterface.multitenancy.exceptions.DuplicateThirdPartyIdException;
 import io.supertokens.pluginInterface.multitenancy.exceptions.TenantOrAppNotFoundException;
 import io.supertokens.storage.mysql.Start;
 import io.supertokens.storage.mysql.config.Config;
@@ -30,6 +33,7 @@ import io.supertokens.storage.mysql.queries.multitenancy.ThirdPartyProviderSQLHe
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.HashMap;
 
 import static io.supertokens.storage.mysql.QueryExecutorTemplate.update;
@@ -104,15 +108,39 @@ public class MultitenancyQueries {
     }
 
     private static void executeCreateTenantQueries(Start start, Connection sqlCon, TenantConfig tenantConfig)
-            throws SQLException, StorageQueryException {
+            throws SQLException, StorageTransactionLogicException {
 
-        TenantConfigSQLHelper.create(start, sqlCon, tenantConfig);
+        try {
+            TenantConfigSQLHelper.create(start, sqlCon, tenantConfig);
+        } catch (SQLIntegrityConstraintViolationException e) {
+            if (start.isPrimaryKeyError(e.getMessage(), Config.getConfig(start).getTenantConfigsTable())) {
+                throw new StorageTransactionLogicException(new DuplicateTenantException());
+            } else {
+                throw e;
+            }
+        }
 
         for (ThirdPartyConfig.Provider provider : tenantConfig.thirdPartyConfig.providers) {
-            ThirdPartyProviderSQLHelper.create(start, sqlCon, tenantConfig, provider);
+            try {
+                ThirdPartyProviderSQLHelper.create(start, sqlCon, tenantConfig, provider);
+            } catch (SQLIntegrityConstraintViolationException e) {
+                if (start.isPrimaryKeyError(e.getMessage(), Config.getConfig(start).getTenantThirdPartyProvidersTable())) {
+                    throw new StorageTransactionLogicException(new DuplicateThirdPartyIdException());
+                } else {
+                    throw e;
+                }
+            }
 
             for (ThirdPartyConfig.ProviderClient providerClient : provider.clients) {
-                ThirdPartyProviderClientSQLHelper.create(start, sqlCon, tenantConfig, provider, providerClient);
+                try {
+                    ThirdPartyProviderClientSQLHelper.create(start, sqlCon, tenantConfig, provider, providerClient);
+                } catch (SQLIntegrityConstraintViolationException e) {
+                    if (start.isPrimaryKeyError(e.getMessage(), Config.getConfig(start).getTenantThirdPartyProviderClientsTable())) {
+                        throw new StorageTransactionLogicException(new DuplicateClientTypeException());
+                    } else {
+                        throw e;
+                    }
+                }
             }
         }
     }

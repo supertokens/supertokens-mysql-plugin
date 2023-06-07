@@ -1387,7 +1387,7 @@ public class Start
                 && serverMessage.contains(columnName);
     }
 
-    private boolean isPrimaryKeyError(String serverMessage, String tableName) {
+    public boolean isPrimaryKeyError(String serverMessage, String tableName) {
         return serverMessage.endsWith("'" + tableName + ".PRIMARY'")
                         || serverMessage.endsWith("'PRIMARY'");
     }
@@ -1578,16 +1578,17 @@ public class Start
             PasswordlessQueries.createDeviceWithCode(this, tenantIdentifier, email, phoneNumber, linkCodeSalt,
                     code);
         } catch (StorageTransactionLogicException e) {
+            if (e.actualException instanceof DuplicateDeviceIdHashException) {
+                throw (DuplicateDeviceIdHashException) e.actualException;
+            }
+            if (e.actualException instanceof DuplicateCodeIdException) {
+                throw (DuplicateCodeIdException) e.actualException;
+            }
+
             if (e.actualException instanceof SQLIntegrityConstraintViolationException) {
                 String serverMessage = e.actualException.getMessage();
                 MySQLConfig config = Config.getConfig(this);
 
-                if (isPrimaryKeyError(serverMessage, config.getPasswordlessDevicesTable())) {
-                    throw new DuplicateDeviceIdHashException();
-                }
-                if (isPrimaryKeyError(serverMessage, config.getPasswordlessCodesTable())) {
-                    throw new DuplicateCodeIdException();
-                }
                 if (isUniqueConstraintError(serverMessage, config.getPasswordlessCodesTable(), "link_code_hash")) {
                     throw new DuplicateLinkCodeHashException();
                 }
@@ -2163,19 +2164,19 @@ public class Start
         try {
             MultitenancyQueries.createTenantConfig(this, tenantConfig);
         } catch (StorageTransactionLogicException e) {
-            if (e.actualException instanceof SQLIntegrityConstraintViolationException) {
-                String errorMessage = e.actualException.getMessage();
-                MySQLConfig config = Config.getConfig(this);
-                if (isPrimaryKeyError(errorMessage, config.getTenantConfigsTable())) {
-                    throw new DuplicateTenantException();
-                }
-                if (isPrimaryKeyError(errorMessage, config.getTenantThirdPartyProvidersTable())) {
-                    throw new DuplicateThirdPartyIdException();
-                }
-                if (isPrimaryKeyError(errorMessage, config.getTenantThirdPartyProviderClientsTable())) {
-                    throw new DuplicateClientTypeException();
-                }
+            if (e.actualException instanceof DuplicateTenantException) {
+                throw (DuplicateTenantException) e.actualException;
             }
+            if (e.actualException instanceof DuplicateThirdPartyIdException) {
+                throw (DuplicateThirdPartyIdException) e.actualException;
+            }
+            if (e.actualException instanceof DuplicateClientTypeException) {
+                throw (DuplicateClientTypeException) e.actualException;
+            }
+            if (e.actualException instanceof StorageQueryException) {
+                throw (StorageQueryException) e.actualException;
+            }
+
             throw new StorageQueryException(e.actualException);
         }
     }
@@ -2206,16 +2207,14 @@ public class Start
             if (e.actualException instanceof TenantOrAppNotFoundException) {
                 throw (TenantOrAppNotFoundException) e.actualException;
             }
-            if (e.actualException instanceof SQLIntegrityConstraintViolationException) {
-                MySQLConfig config = Config.getConfig(this);
-                if (isPrimaryKeyError(e.actualException.getMessage(),
-                        config.getTenantThirdPartyProvidersTable())) {
-                    throw new DuplicateThirdPartyIdException();
-                }
-                if (isPrimaryKeyError(e.actualException.getMessage(),
-                        config.getTenantThirdPartyProviderClientsTable())) {
-                    throw new DuplicateClientTypeException();
-                }
+            if (e.actualException instanceof DuplicateThirdPartyIdException) {
+                throw (DuplicateThirdPartyIdException) e.actualException;
+            }
+            if (e.actualException instanceof DuplicateClientTypeException) {
+                throw (DuplicateClientTypeException) e.actualException;
+            }
+            if (e.actualException instanceof StorageQueryException) {
+                throw (StorageQueryException) e.actualException;
             }
             throw new StorageQueryException(e.actualException);
         }

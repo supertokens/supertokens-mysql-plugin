@@ -22,6 +22,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
 import io.supertokens.pluginInterface.RowMapper;
 import io.supertokens.pluginInterface.exceptions.StorageQueryException;
+import io.supertokens.pluginInterface.exceptions.StorageTransactionLogicException;
 import io.supertokens.pluginInterface.multitenancy.TenantConfig;
 import io.supertokens.pluginInterface.multitenancy.TenantIdentifier;
 import io.supertokens.pluginInterface.multitenancy.ThirdPartyConfig;
@@ -111,7 +112,7 @@ public class ThirdPartyProviderClientSQLHelper {
     }
 
     public static void create(Start start, Connection sqlCon, TenantConfig tenantConfig, ThirdPartyConfig.Provider provider, ThirdPartyConfig.ProviderClient providerClient)
-            throws SQLException, StorageQueryException {
+            throws SQLException, StorageTransactionLogicException {
 
         String QUERY = "INSERT INTO " + getConfig(start).getTenantThirdPartyProviderClientsTable()
                 + "(connection_uri_domain, app_id, tenant_id, third_party_id, client_type, client_id, client_secret, scope, force_pkce, additional_config)"
@@ -128,21 +129,25 @@ public class ThirdPartyProviderClientSQLHelper {
             scopeArrayStr = "";
         }
 
-        update(sqlCon, QUERY, pst -> {
-            pst.setString(1, tenantConfig.tenantIdentifier.getConnectionUriDomain());
-            pst.setString(2, tenantConfig.tenantIdentifier.getAppId());
-            pst.setString(3, tenantConfig.tenantIdentifier.getTenantId());
-            pst.setString(4, provider.thirdPartyId);
-            pst.setString(5, Objects.requireNonNullElse(providerClient.clientType, ""));
-            pst.setString(6, providerClient.clientId);
-            pst.setString(7, providerClient.clientSecret);
-            pst.setString(8, scopeArrayStr);
-            if (providerClient.forcePKCE == null) {
-                pst.setNull(9, Types.BOOLEAN);
-            } else {
-                pst.setBoolean(9, providerClient.forcePKCE.booleanValue());
-            }
-            pst.setString(10, JsonUtils.jsonObjectToString(providerClient.additionalConfig));
-        });
+        try {
+            update(sqlCon, QUERY, pst -> {
+                pst.setString(1, tenantConfig.tenantIdentifier.getConnectionUriDomain());
+                pst.setString(2, tenantConfig.tenantIdentifier.getAppId());
+                pst.setString(3, tenantConfig.tenantIdentifier.getTenantId());
+                pst.setString(4, provider.thirdPartyId);
+                pst.setString(5, Objects.requireNonNullElse(providerClient.clientType, ""));
+                pst.setString(6, providerClient.clientId);
+                pst.setString(7, providerClient.clientSecret);
+                pst.setString(8, scopeArrayStr);
+                if (providerClient.forcePKCE == null) {
+                    pst.setNull(9, Types.BOOLEAN);
+                } else {
+                    pst.setBoolean(9, providerClient.forcePKCE.booleanValue());
+                }
+                pst.setString(10, JsonUtils.jsonObjectToString(providerClient.additionalConfig));
+            });
+        } catch (StorageQueryException e) {
+            throw new StorageTransactionLogicException(e);
+        }
     }
 }
