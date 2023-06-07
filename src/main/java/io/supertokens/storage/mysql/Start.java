@@ -225,6 +225,7 @@ public class Start
     @Override
     public <T> T startTransaction(TransactionLogic<T> logic, TransactionIsolationLevel isolationLevel)
             throws StorageTransactionLogicException, StorageQueryException {
+        final int NUM_TRIES = 50;
         int tries = 0;
         while (true) {
             tries++;
@@ -235,7 +236,7 @@ public class Start
                 // https://github.com/supertokens/supertokens-mysql-plugin/pull/2
                 if ((e instanceof SQLTransactionRollbackException
                         || (e.getMessage() != null && e.getMessage().toLowerCase().contains("deadlock")))
-                        && tries < 50) {
+                        && tries < NUM_TRIES) {
                     try {
                         Thread.sleep((long) (10 + Math.min(tries, 10) * (Math.random() * 20)));
                     } catch (InterruptedException ignored) {
@@ -243,6 +244,9 @@ public class Start
                     ProcessState.getInstance(this).addState(ProcessState.PROCESS_STATE.DEADLOCK_FOUND, e);
                     continue; // this because deadlocks are not necessarily a result of faulty logic. They can
                     // happen
+                }
+                if (e.getMessage() != null && e.getMessage().toLowerCase().contains("deadlock") && tries == NUM_TRIES) {
+                    ProcessState.getInstance(this).addState(ProcessState.PROCESS_STATE.DEADLOCK_NOT_RESOLVED, e);
                 }
                 if (e instanceof StorageQueryException) {
                     throw (StorageQueryException) e;
