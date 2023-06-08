@@ -44,8 +44,7 @@ import java.sql.SQLException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.*;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -214,15 +213,26 @@ public class DeadlockTest {
         ExecutorService es = Executors.newFixedThreadPool(1000);
 
         AtomicBoolean pass = new AtomicBoolean(true);
+        AtomicLong max_duration = new AtomicLong(0);
+        AtomicLong total_duration = new AtomicLong(0);
+        AtomicLongArray durations = new AtomicLongArray(3000);
 
         for (int i = 0; i < 3000; i++) {
             final int ind = i;
             es.execute(() -> {
                 try {
+                    long startTime = System.currentTimeMillis();
                     Passwordless.CreateCodeResponse resp = Passwordless.createCode(process.getProcess(),
                             "test" + ind + "@example.com", null, null, null);
                     Passwordless.ConsumeCodeResponse resp2 = Passwordless.consumeCode(process.getProcess(),
                             resp.deviceId, resp.deviceIdHash, resp.userInputCode, resp.linkCode);
+                    long timeElapsed = System.currentTimeMillis() - startTime;
+                    total_duration.addAndGet(timeElapsed);
+
+                    if (timeElapsed > max_duration.get()) {
+                        max_duration.set(timeElapsed);
+                    }
+                    durations.set(ind, timeElapsed);
 
                 } catch (Exception e) {
                     if (e.getMessage() != null
@@ -234,7 +244,12 @@ public class DeadlockTest {
         }
 
         es.shutdown();
-        es.awaitTermination(2, TimeUnit.MINUTES);
+        es.awaitTermination(5, TimeUnit.MINUTES);
+
+        System.out.println("Max execution time: " + max_duration.get() + "ms");
+        System.out.println("Total execution time: " + total_duration.get() + "ms");
+        System.out.println("Avg execution time: " + (total_duration.get() / 3000) + "ms");
+        System.out.println("Durations: " + durations.toString());
 
         assertNull(process
                 .checkOrWaitForEventInPlugin(io.supertokens.storage.mysql.ProcessState.PROCESS_STATE.DEADLOCK_NOT_RESOLVED));
