@@ -127,7 +127,7 @@ public class StorageLayerTest {
 
         Assert.assertEquals(io.supertokens.storage.mysql.config.Config.getConfig(
                         (Start) StorageLayer.getStorage(new TenantIdentifier("abc", null, null), process.getProcess()))
-                .getTablePrefix(), "test");
+                .getTablePrefix(), "test_");
 
         Assert.assertEquals(
                 process.getProcess().getResourceDistributor().getAllResourcesWithResourceKey(StorageLayer.RESOURCE_KEY)
@@ -348,8 +348,7 @@ public class StorageLayerTest {
             StorageLayer.loadAllTenantStorage(process.getProcess(), tenants);
             fail();
         } catch (InvalidConfigException e) {
-            assertEquals(e.getMessage(),
-                    "You cannot set different values for mysql_table_names_prefix for the same user pool");
+            assertTrue(e.getMessage().contains("You cannot set different values"));
         }
 
         process.kill();

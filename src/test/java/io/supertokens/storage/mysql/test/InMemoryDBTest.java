@@ -113,7 +113,7 @@ public class InMemoryDBTest {
 
             assertEquals(((SessionStorage)StorageLayer.getStorage(process.getProcess())).getNumberOfSessions(TenantIdentifier.BASE_TENANT), 1);
 
-            process.kill();
+            process.kill(false);
             assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
         }
         {
@@ -149,7 +149,7 @@ public class InMemoryDBTest {
 
             assertEquals(((SessionStorage)StorageLayer.getStorage(process.getProcess())).getNumberOfSessions(TenantIdentifier.BASE_TENANT), 1);
 
-            process.kill();
+            process.kill(false);
             assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
         }
         {

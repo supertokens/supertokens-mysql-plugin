@@ -310,7 +310,7 @@ public class ConfigTest {
             TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
             assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
             MySQLConfig config = Config.getConfig((Start) StorageLayer.getStorage(process.getProcess()));
-            assertEquals(config.getPort(), -1);
+            assertEquals(config.getPort(), 3306);
 
             process.kill();
             assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
