@@ -18,8 +18,15 @@
 package io.supertokens.storage.mysql.test;
 
 import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.Appender;
+import com.google.gson.JsonObject;
 import io.supertokens.ProcessState;
 import io.supertokens.config.Config;
+import io.supertokens.featureflag.EE_FEATURES;
+import io.supertokens.featureflag.FeatureFlagTestContent;
+import io.supertokens.multitenancy.Multitenancy;
+import io.supertokens.pluginInterface.multitenancy.*;
 import io.supertokens.storage.mysql.Start;
 import io.supertokens.storage.mysql.output.Logging;
 import io.supertokens.storageLayer.StorageLayer;
@@ -33,6 +40,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Scanner;
 
@@ -184,6 +192,33 @@ public class LoggingTest {
     }
 
     @Test
+    public void confirmLoggerClosed() throws Exception {
+        StorageLayer.close();
+        String[] args = { "../" };
+        TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
+
+        assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
+
+        ch.qos.logback.classic.Logger mysqlInfo = (ch.qos.logback.classic.Logger) LoggerFactory
+                .getLogger("io.supertokens.storage.mysql.Info");
+        ch.qos.logback.classic.Logger mysqlError = (ch.qos.logback.classic.Logger) LoggerFactory
+                .getLogger("io.supertokens.storage.mysql.Error");
+
+        ch.qos.logback.classic.Logger hikariLogger = (Logger) LoggerFactory.getLogger("com.zaxxer.hikari");
+
+        assertTrue(List.of(mysqlError.iteratorForAppenders()).size() == 1
+                && List.of(mysqlInfo.iteratorForAppenders()).size() == 1);
+        assertEquals(1, List.of(hikariLogger.iteratorForAppenders()).size());
+
+        process.kill();
+        assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
+
+        assertTrue(!mysqlInfo.iteratorForAppenders().hasNext() && !mysqlError.iteratorForAppenders().hasNext());
+        assertFalse(hikariLogger.iteratorForAppenders().hasNext());
+
+    }
+
+    @Test
     public void testStandardOutLoggingWithNull() throws Exception {
         String[] args = { "../" };
         ByteArrayOutputStream stdOutput = new ByteArrayOutputStream();
@@ -217,6 +252,71 @@ public class LoggingTest {
             System.setErr(new PrintStream(new FileOutputStream(FileDescriptor.err)));
         }
 
+    }
+
+    @Test
+    public void confirmHikariLoggerClosedOnlyWhenProcessEnds() throws Exception {
+        StorageLayer.close();
+        String[] args = { "../" };
+        TestingProcessManager.TestingProcess process = TestingProcessManager.start(args, false);
+        FeatureFlagTestContent.getInstance(process.getProcess())
+                .setKeyValue(FeatureFlagTestContent.ENABLED_FEATURES, new EE_FEATURES[]{EE_FEATURES.MULTI_TENANCY});
+
+        process.startProcess();
+        assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
+
+        ch.qos.logback.classic.Logger hikariLogger = (Logger) LoggerFactory.getLogger("com.zaxxer.hikari");
+        ch.qos.logback.classic.Logger mysqlInfo = (ch.qos.logback.classic.Logger) LoggerFactory
+                .getLogger("io.supertokens.storage.mysql.Info");
+        ch.qos.logback.classic.Logger mysqlError = (ch.qos.logback.classic.Logger) LoggerFactory
+                .getLogger("io.supertokens.storage.mysql.Error");
+
+        assertEquals(1, countAppenders(mysqlError));
+        assertEquals(1, countAppenders(mysqlInfo));
+        assertEquals(1, countAppenders(hikariLogger));
+
+        TenantIdentifier tenant = new TenantIdentifier(null, null, "t1");
+        JsonObject config = new JsonObject();
+        StorageLayer.getBaseStorage(process.getProcess()).modifyConfigToAddANewUserPoolForTesting(config, 1);
+        Multitenancy.addNewOrUpdateAppOrTenant(process.getProcess(), new TenantConfig(
+                tenant,
+                new EmailPasswordConfig(true),
+                new ThirdPartyConfig(true, null),
+                new PasswordlessConfig(true),
+                config
+        ), false);
+
+        // No new appenders were added
+        assertEquals(1, countAppenders(mysqlError));
+        assertEquals(1, countAppenders(mysqlInfo));
+        assertEquals(1, countAppenders(hikariLogger));
+
+        Multitenancy.deleteTenant(tenant, process.getProcess());
+
+        // No appenders were removed
+        assertEquals(1, countAppenders(mysqlError));
+        assertEquals(1, countAppenders(mysqlInfo));
+        assertEquals(1, countAppenders(hikariLogger));
+
+        process.kill();
+        assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
+
+        assertEquals(0, countAppenders(mysqlError));
+        assertEquals(0, countAppenders(mysqlInfo));
+        assertEquals(0, countAppenders(hikariLogger));
+
+        assertFalse(hikariLogger.iteratorForAppenders().hasNext());
+    }
+
+    private static int countAppenders(ch.qos.logback.classic.Logger logger) {
+        int count = 0;
+        Iterator<Appender<ILoggingEvent>> appenderIter = logger.iteratorForAppenders();
+        while (appenderIter.hasNext()) {
+            Appender<ILoggingEvent> appender = appenderIter.next();
+            System.out.println(appender.getName());
+            count++;
+        }
+        return count;
     }
 
     private static boolean fileContainsString(ByteArrayOutputStream log, String value) throws IOException {
