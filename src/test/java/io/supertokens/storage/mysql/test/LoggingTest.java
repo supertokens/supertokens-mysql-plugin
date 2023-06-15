@@ -287,8 +287,8 @@ public class LoggingTest {
         ), false);
 
         // No new appenders were added
-        assertEquals(2, countAppenders(mysqlError));
-        assertEquals(2, countAppenders(mysqlInfo));
+        assertEquals(1, countAppenders(mysqlError));
+        assertEquals(1, countAppenders(mysqlInfo));
         assertEquals(1, countAppenders(hikariLogger));
 
         Multitenancy.deleteTenant(tenant, process.getProcess());
@@ -300,6 +300,10 @@ public class LoggingTest {
 
         process.kill();
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
+
+        assertEquals(0, countAppenders(mysqlError));
+        assertEquals(0, countAppenders(mysqlInfo));
+        assertEquals(0, countAppenders(hikariLogger));
 
         assertFalse(hikariLogger.iteratorForAppenders().hasNext());
     }
