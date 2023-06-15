@@ -170,21 +170,21 @@ public class Start
         if (Logging.isAlreadyInitialised(this)) {
             return;
         }
-        Logging.initFileLogging(this, infoLogPath, errorLogPath);
-
-        /*
-         * NOTE: The log this produces is only accurate in production or development.
-         *
-         * For testing, it may happen that multiple processes are running at the same
-         * time which can lead to one of them being the winner and its start instance
-         * being attached to logger class. This would yield inaccurate processIds during
-         * logging.
-         *
-         * Finally, during testing, the winner's logger might be removed, in which case
-         * nothing will be handling logging and hikari's logs would not be outputed
-         * anywhere.
-         */
         synchronized (appenderLock) {
+            Logging.initFileLogging(this, infoLogPath, errorLogPath);
+
+            /*
+             * NOTE: The log this produces is only accurate in production or development.
+             *
+             * For testing, it may happen that multiple processes are running at the same
+             * time which can lead to one of them being the winner and its start instance
+             * being attached to logger class. This would yield inaccurate processIds during
+             * logging.
+             *
+             * Finally, during testing, the winner's logger might be removed, in which case
+             * nothing will be handling logging and hikari's logs would not be outputed
+             * anywhere.
+             */
             final Logger infoLog = (Logger) LoggerFactory.getLogger("com.zaxxer.hikari");
             if (infoLog.getAppender(HikariLoggingAppender.NAME) == null) {
                 infoLog.setAdditive(false);
@@ -196,10 +196,10 @@ public class Start
 
     @Override
     public void stopLogging() {
-        Logging.stopLogging(this);
-
         if (isBaseTenant) {
             synchronized (appenderLock) {
+                Logging.stopLogging(this);
+
                 final Logger infoLog = (Logger) LoggerFactory.getLogger("com.zaxxer.hikari");
                 if (infoLog.getAppender(HikariLoggingAppender.NAME) != null) {
                     infoLog.detachAppender(HikariLoggingAppender.NAME);
