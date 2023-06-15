@@ -35,8 +35,6 @@ public class Logging extends ResourceDistributor.SingletonResource {
     private final Logger infoLogger;
     private final Logger errorLogger;
 
-    private static final String APPENDER_NAME = "io.supertokens.storage.mysql.output.Logging";
-
     private Logging(Start start, String infoLogPath, String errorLogPath) {
         this.infoLogger = infoLogPath.equals("null")
                 ? createLoggerForConsole(start, "io.supertokens.storage.mysql.Info")
@@ -176,7 +174,7 @@ public class Logging extends ResourceDistributor.SingletonResource {
         Logger logger = (Logger) LoggerFactory.getLogger(name);
 
         // We don't need to add appender if it is already added
-        if (logger.getAppender(APPENDER_NAME) != null) {
+        if (logger.iteratorForAppenders().hasNext()) {
             return logger;
         }
 
@@ -185,7 +183,6 @@ public class Logging extends ResourceDistributor.SingletonResource {
         ple.setContext(lc);
         ple.start();
         FileAppender<ILoggingEvent> fileAppender = new FileAppender<>();
-        fileAppender.setName(APPENDER_NAME);
         fileAppender.setFile(file);
         fileAppender.setEncoder(ple);
         fileAppender.setContext(lc);
@@ -201,7 +198,7 @@ public class Logging extends ResourceDistributor.SingletonResource {
         Logger logger = (Logger) LoggerFactory.getLogger(name);
 
         // We don't need to add appender if it is already added
-        if (logger.getAppender(APPENDER_NAME) != null) {
+        if (logger.iteratorForAppenders().hasNext()) {
             return logger;
         }
 
@@ -210,7 +207,6 @@ public class Logging extends ResourceDistributor.SingletonResource {
         ple.setContext(lc);
         ple.start();
         ConsoleAppender<ILoggingEvent> logConsoleAppender = new ConsoleAppender<>();
-        logConsoleAppender.setName(APPENDER_NAME);
         logConsoleAppender.setEncoder(ple);
         logConsoleAppender.setContext(lc);
         logConsoleAppender.start();
