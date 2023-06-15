@@ -423,6 +423,10 @@ public class Start
         try {
             initStorage(false);
             GeneralQueries.deleteAllTables(this);
+
+            // had initStorage with false, so stop logging needs to be forced here
+            isBaseTenant = true;
+            stopLogging();
             close();
         } catch (SQLException e) {
             if (e.getCause() instanceof HikariPool.PoolInitializationException) {
