@@ -68,6 +68,10 @@ public class MySQLConfig {
 
     @JsonProperty
     @NotConflictingWithinUserPool
+    private String mysql_table_names_prefix = "";
+
+    @JsonProperty
+    @NotConflictingWithinUserPool
     private String mysql_key_value_table_name = null;
 
     @JsonProperty
@@ -93,10 +97,6 @@ public class MySQLConfig {
     @JsonProperty
     @NotConflictingWithinUserPool
     private String mysql_thirdparty_users_table_name = null;
-
-    @JsonProperty
-    @NotConflictingWithinUserPool
-    private String mysql_table_names_prefix = "";
 
     @JsonProperty
     @IgnoreForAnnotationCheck
