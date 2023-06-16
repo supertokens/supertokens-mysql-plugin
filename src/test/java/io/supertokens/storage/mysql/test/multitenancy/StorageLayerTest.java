@@ -348,7 +348,8 @@ public class StorageLayerTest {
             StorageLayer.loadAllTenantStorage(process.getProcess(), tenants);
             fail();
         } catch (InvalidConfigException e) {
-            assertTrue(e.getMessage().contains("You cannot set different values"));
+            assertEquals(e.getMessage(),
+                    "You cannot set different values for mysql_table_names_prefix for the same user pool");
         }
 
         process.kill();
