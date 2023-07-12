@@ -32,6 +32,7 @@ import io.supertokens.pluginInterface.totp.exception.TotpNotEnabledException;
 import io.supertokens.pluginInterface.totp.exception.UsedCodeAlreadyExistsException;
 import io.supertokens.pluginInterface.totp.sqlStorage.TOTPSQLStorage;
 import io.supertokens.pluginInterface.sqlStorage.SQLStorage.TransactionIsolationLevel;
+import io.supertokens.storage.mysql.Start;
 import io.supertokens.storageLayer.StorageLayer;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -209,6 +210,8 @@ public class DeadlockTest {
 
         TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
+
+        Start.setEnableForDeadlockTesting(true);
 
         ExecutorService es = Executors.newFixedThreadPool(1000);
 

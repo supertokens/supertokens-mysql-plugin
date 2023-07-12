@@ -869,40 +869,77 @@ public class GeneralQueries {
     public static Map<String, List<String>> getTenantIdsForUserIds_transaction(Start start, Connection sqlCon, AppIdentifier appIdentifier, String[] userIds)
             throws SQLException, StorageQueryException {
         if (userIds != null && userIds.length > 0) {
-            StringBuilder QUERY = new StringBuilder("SELECT user_id, tenant_id "
-                    + "FROM " + Config.getConfig(start).getUsersTable());
-            QUERY.append(" WHERE app_id = ? AND user_id IN (");
-            for (int i = 0; i < userIds.length; i++) {
-
-                QUERY.append("?");
-                if (i != userIds.length - 1) {
-                    // not the last element
-                    QUERY.append(",");
-                }
-            }
-            QUERY.append(")");
-
-            return execute(sqlCon, QUERY.toString(), pst -> {
-                pst.setString(1, appIdentifier.getAppId());
+            if (Start.isEnabledForDeadlockTesting()) {
+                assert(Start.isTesting);
+                // we don't want the following query to be optimized while doing a deadlock testing
+                // so that we can ensure that the deadlock is happening and test that the deadlock recovery is working
+                // as expected
+                StringBuilder QUERY = new StringBuilder("SELECT user_id, tenant_id "
+                        + "FROM " + Config.getConfig(start).getUsersTable());
+                QUERY.append(" WHERE user_id IN (");
                 for (int i = 0; i < userIds.length; i++) {
-                    // i+2 cause this starts with 1 and not 0, and 1 is appId
-                    pst.setString(i + 2, userIds[i]);
-                }
-            }, result -> {
-                Map<String, List<String>> finalResult = new HashMap<>();
-                while (result.next()) {
-                    String userId = result.getString("user_id").trim();
-                    String tenantId = result.getString("tenant_id");
 
-                    if (!finalResult.containsKey(userId)) {
-                        finalResult.put(userId, new ArrayList<>());
+                    QUERY.append("?");
+                    if (i != userIds.length - 1) {
+                        // not the last element
+                        QUERY.append(",");
                     }
-                    finalResult.get(userId).add(tenantId);
                 }
-                return finalResult;
-            });
-        }
+                QUERY.append(")");
 
+                return execute(sqlCon, QUERY.toString(), pst -> {
+                    for (int i = 0; i < userIds.length; i++) {
+                        // i+1 cause this starts with 1 and not 0
+                        pst.setString(i + 1, userIds[i]);
+                    }
+                }, result -> {
+                    Map<String, List<String>> finalResult = new HashMap<>();
+                    while (result.next()) {
+                        String userId = result.getString("user_id").trim();
+                        String tenantId = result.getString("tenant_id");
+
+                        if (!finalResult.containsKey(userId)) {
+                            finalResult.put(userId, new ArrayList<>());
+                        }
+                        finalResult.get(userId).add(tenantId);
+                    }
+                    return finalResult;
+                });
+            } else {
+                StringBuilder QUERY = new StringBuilder("SELECT user_id, tenant_id "
+                        + "FROM " + Config.getConfig(start).getUsersTable());
+                QUERY.append(" WHERE app_id = ? AND user_id IN (");
+                for (int i = 0; i < userIds.length; i++) {
+
+                    QUERY.append("?");
+                    if (i != userIds.length - 1) {
+                        // not the last element
+                        QUERY.append(",");
+                    }
+                }
+                QUERY.append(")");
+
+                return execute(sqlCon, QUERY.toString(), pst -> {
+                    pst.setString(1, appIdentifier.getAppId());
+                    for (int i = 0; i < userIds.length; i++) {
+                        // i+2 cause this starts with 1 and not 0, and 1 is appId
+                        pst.setString(i + 2, userIds[i]);
+                    }
+                }, result -> {
+                    Map<String, List<String>> finalResult = new HashMap<>();
+                    while (result.next()) {
+                        String userId = result.getString("user_id").trim();
+                        String tenantId = result.getString("tenant_id");
+
+                        if (!finalResult.containsKey(userId)) {
+                            finalResult.put(userId, new ArrayList<>());
+                        }
+                        finalResult.get(userId).add(tenantId);
+                    }
+                    return finalResult;
+                });
+            }
+        }
         return new HashMap<>();
     }
 

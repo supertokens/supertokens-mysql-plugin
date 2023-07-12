@@ -634,33 +634,65 @@ public class PasswordlessQueries {
     public static List<UserInfo> getUsersByIdList(Start start, AppIdentifier appIdentifier, List<String> ids)
             throws SQLException, StorageQueryException {
         if (ids.size() > 0) {
-            // No need to filter based on tenantId because the id list is already filtered for a tenant
-            StringBuilder QUERY = new StringBuilder("SELECT user_id, email, phone_number, time_joined "
-                    + "FROM " + getConfig(start).getPasswordlessUsersTable());
-            QUERY.append(" WHERE app_id = ? AND user_id IN (");
-            for (int i = 0; i < ids.size(); i++) {
-                QUERY.append("?");
-                if (i != ids.size() - 1) {
-                    // not the last element
-                    QUERY.append(",");
-                }
-            }
-            QUERY.append(")");
-
-            List<UserInfoPartial> userInfos = execute(start, QUERY.toString(), pst -> {
-                pst.setString(1, appIdentifier.getAppId());
+            if (Start.isEnabledForDeadlockTesting()) {
+                assert(Start.isTesting);
+                // we don't want the following query to be optimized while doing a deadlock testing
+                // so that we can ensure that the deadlock is happening and test that the deadlock recovery is working
+                // as expected
+                StringBuilder QUERY = new StringBuilder("SELECT user_id, email, phone_number, time_joined "
+                        + "FROM " + getConfig(start).getPasswordlessUsersTable());
+                QUERY.append(" WHERE user_id IN (");
                 for (int i = 0; i < ids.size(); i++) {
-                    // i+2 cause this starts with 1 and not 0, and 1 is appId
-                    pst.setString(i + 2, ids.get(i));
+                    QUERY.append("?");
+                    if (i != ids.size() - 1) {
+                        // not the last element
+                        QUERY.append(",");
+                    }
                 }
-            }, result -> {
-                List<UserInfoPartial> finalResult = new ArrayList<>();
-                while (result.next()) {
-                    finalResult.add(UserInfoRowMapper.getInstance().mapOrThrow(result));
+                QUERY.append(")");
+
+                List<UserInfoPartial> userInfos = execute(start, QUERY.toString(), pst -> {
+                    for (int i = 0; i < ids.size(); i++) {
+                        // i+1 cause this starts with 1 and not 0
+                        pst.setString(i + 1, ids.get(i));
+                    }
+                }, result -> {
+                    List<UserInfoPartial> finalResult = new ArrayList<>();
+                    while (result.next()) {
+                        finalResult.add(UserInfoRowMapper.getInstance().mapOrThrow(result));
+                    }
+                    return finalResult;
+                });
+                return userInfoWithTenantIds(start, appIdentifier, userInfos);
+            } else {
+                // No need to filter based on tenantId because the id list is already filtered for a tenant
+                StringBuilder QUERY = new StringBuilder("SELECT user_id, email, phone_number, time_joined "
+                        + "FROM " + getConfig(start).getPasswordlessUsersTable());
+                QUERY.append(" WHERE app_id = ? AND user_id IN (");
+                for (int i = 0; i < ids.size(); i++) {
+                    QUERY.append("?");
+                    if (i != ids.size() - 1) {
+                        // not the last element
+                        QUERY.append(",");
+                    }
                 }
-                return finalResult;
-            });
-            return userInfoWithTenantIds(start, appIdentifier, userInfos);
+                QUERY.append(")");
+
+                List<UserInfoPartial> userInfos = execute(start, QUERY.toString(), pst -> {
+                    pst.setString(1, appIdentifier.getAppId());
+                    for (int i = 0; i < ids.size(); i++) {
+                        // i+2 cause this starts with 1 and not 0, and 1 is appId
+                        pst.setString(i + 2, ids.get(i));
+                    }
+                }, result -> {
+                    List<UserInfoPartial> finalResult = new ArrayList<>();
+                    while (result.next()) {
+                        finalResult.add(UserInfoRowMapper.getInstance().mapOrThrow(result));
+                    }
+                    return finalResult;
+                });
+                return userInfoWithTenantIds(start, appIdentifier, userInfos);
+            }
         }
         return Collections.emptyList();
     }
