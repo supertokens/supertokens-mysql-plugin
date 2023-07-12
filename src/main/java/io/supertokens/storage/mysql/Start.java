@@ -119,6 +119,7 @@ public class Start
     private static final String ACCESS_TOKEN_SIGNING_KEY_NAME = "access_token_signing_key";
     private static final String REFRESH_TOKEN_KEY_NAME = "refresh_token_key";
     public static boolean isTesting = false;
+    private static boolean enableForDeadlockTesting = false;
     boolean enabled = true;
     static Thread mainThread = Thread.currentThread();
     private Thread shutdownHook;
@@ -2754,5 +2755,14 @@ public class Start
     @TestOnly
     public Thread getMainThread() {
         return mainThread;
+    }
+
+    @TestOnly
+    public static void enableForDeadlockTesting() {
+        enableForDeadlockTesting = true;
+    }
+
+    public static boolean isEnabledForDeadlockTesting() {
+        return enableForDeadlockTesting;
     }
 }
