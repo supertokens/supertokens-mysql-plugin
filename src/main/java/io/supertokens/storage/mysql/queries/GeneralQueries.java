@@ -870,6 +870,7 @@ public class GeneralQueries {
             throws SQLException, StorageQueryException {
         if (userIds != null && userIds.length > 0) {
             if (Start.isEnabledForDeadlockTesting()) {
+                assert(Start.isTesting);
                 // we don't want the following query to be optimized while doing a deadlock testing
                 // so that we can ensure that the deadlock is happening and test that the deadlock recovery is working
                 // as expected

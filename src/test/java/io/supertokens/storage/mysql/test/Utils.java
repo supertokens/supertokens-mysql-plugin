@@ -74,6 +74,7 @@ public abstract class Utils extends Mockito {
         Main.isTesting = true;
         PluginInterfaceTesting.isTesting = true;
         Start.isTesting = true;
+        Start.setEnableForDeadlockTesting(false);
         Main.makeConsolePrintSilent = true;
         String installDir = "../";
         try {

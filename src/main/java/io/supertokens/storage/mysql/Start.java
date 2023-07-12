@@ -2757,12 +2757,13 @@ public class Start
         return mainThread;
     }
 
-    @TestOnly
-    public static void enableForDeadlockTesting() {
-        enableForDeadlockTesting = true;
-    }
-
     public static boolean isEnabledForDeadlockTesting() {
         return enableForDeadlockTesting;
+    }
+
+    @TestOnly
+    public static void setEnableForDeadlockTesting(boolean value) {
+        assert(isTesting);
+        enableForDeadlockTesting = value;
     }
 }
