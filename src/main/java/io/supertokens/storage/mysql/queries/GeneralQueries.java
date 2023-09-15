@@ -1414,39 +1414,75 @@ public class GeneralQueries {
                                                                                String[] userIds)
             throws SQLException, StorageQueryException {
         if (userIds != null && userIds.length > 0) {
-            StringBuilder QUERY = new StringBuilder("SELECT user_id, tenant_id "
-                    + "FROM " + Config.getConfig(start).getUsersTable());
-            QUERY.append(" WHERE user_id IN (");
-            for (int i = 0; i < userIds.length; i++) {
-
-                QUERY.append("?");
-                if (i != userIds.length - 1) {
-                    // not the last element
-                    QUERY.append(",");
-                }
-            }
-            QUERY.append(") AND app_id = ?");
-
-            return execute(sqlCon, QUERY.toString(), pst -> {
+            if (Start.isEnabledForDeadlockTesting()) {
+                assert (Start.isTesting);
+                StringBuilder QUERY = new StringBuilder("SELECT user_id, tenant_id "
+                        + "FROM " + Config.getConfig(start).getUsersTable());
+                QUERY.append(" WHERE user_id IN (");
                 for (int i = 0; i < userIds.length; i++) {
-                    // i+1 cause this starts with 1 and not 0, and 1 is appId
-                    pst.setString(i + 1, userIds[i]);
-                }
-                pst.setString(userIds.length + 1, appIdentifier.getAppId());
-            }, result -> {
-                Map<String, List<String>> finalResult = new HashMap<>();
-                for (String userId : userIds) {
-                    finalResult.put(userId, new ArrayList<>());
-                }
 
-                while (result.next()) {
-                    String userId = result.getString("user_id").trim();
-                    String tenantId = result.getString("tenant_id");
-
-                    finalResult.get(userId).add(tenantId);
+                    QUERY.append("?");
+                    if (i != userIds.length - 1) {
+                        // not the last element
+                        QUERY.append(",");
+                    }
                 }
-                return finalResult;
-            });
+                QUERY.append(")");
+
+                return execute(sqlCon, QUERY.toString(), pst -> {
+                    for (int i = 0; i < userIds.length; i++) {
+                        // i+1 cause this starts with 1 and not 0, and 1 is appId
+                        pst.setString(i + 1, userIds[i]);
+                    }
+                }, result -> {
+                    Map<String, List<String>> finalResult = new HashMap<>();
+                    for (String userId : userIds) {
+                        finalResult.put(userId, new ArrayList<>());
+                    }
+
+                    while (result.next()) {
+                        String userId = result.getString("user_id").trim();
+                        String tenantId = result.getString("tenant_id");
+
+                        finalResult.get(userId).add(tenantId);
+                    }
+                    return finalResult;
+                });
+            } else {
+                StringBuilder QUERY = new StringBuilder("SELECT user_id, tenant_id "
+                        + "FROM " + Config.getConfig(start).getUsersTable());
+                QUERY.append(" WHERE user_id IN (");
+                for (int i = 0; i < userIds.length; i++) {
+
+                    QUERY.append("?");
+                    if (i != userIds.length - 1) {
+                        // not the last element
+                        QUERY.append(",");
+                    }
+                }
+                QUERY.append(") AND app_id = ?");
+
+                return execute(sqlCon, QUERY.toString(), pst -> {
+                    for (int i = 0; i < userIds.length; i++) {
+                        // i+1 cause this starts with 1 and not 0, and 1 is appId
+                        pst.setString(i + 1, userIds[i]);
+                    }
+                    pst.setString(userIds.length + 1, appIdentifier.getAppId());
+                }, result -> {
+                    Map<String, List<String>> finalResult = new HashMap<>();
+                    for (String userId : userIds) {
+                        finalResult.put(userId, new ArrayList<>());
+                    }
+
+                    while (result.next()) {
+                        String userId = result.getString("user_id").trim();
+                        String tenantId = result.getString("tenant_id");
+
+                        finalResult.get(userId).add(tenantId);
+                    }
+                    return finalResult;
+                });
+            }
         }
 
         return new HashMap<>();

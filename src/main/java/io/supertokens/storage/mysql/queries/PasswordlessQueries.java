@@ -684,10 +684,9 @@ public class PasswordlessQueries {
                 // we don't want the following query to be optimized while doing a deadlock testing
                 // so that we can ensure that the deadlock is happening and test that the deadlock recovery is working
                 // as expected
-                // TODO
                 String QUERY = "SELECT user_id, email, phone_number, time_joined "
                         + "FROM " + getConfig(start).getPasswordlessUsersTable() + " WHERE user_id IN (" +
-                        Utils.generateCommaSeperatedQuestionMarks(ids.size()) + ") AND app_id = ?";
+                        Utils.generateCommaSeperatedQuestionMarks(ids.size()) + ")";
 
                 List<UserInfoPartial> userInfos = execute(start, QUERY, pst -> {
                     int index = 1;
@@ -695,7 +694,6 @@ public class PasswordlessQueries {
                         pst.setString(index, id);
                         index++;
                     }
-                    pst.setString(index, appIdentifier.getAppId());
                 }, result -> {
                     List<UserInfoPartial> finalResult = new ArrayList<>();
                     while (result.next()) {
