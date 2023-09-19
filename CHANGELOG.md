@@ -7,6 +7,96 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [5.0.0] - 2023-09-19
+
+### Changes
+
+- Support for Account Linking
+  - Adds columns `primary_or_recipe_user_id`, `is_linked_or_is_a_primary_user` and `primary_or_recipe_user_time_joined` to `all_auth_recipe_users` table
+  - Adds columns `primary_or_recipe_user_id` and `is_linked_or_is_a_primary_user` to `app_id_to_user_id` table
+  - Removes index `all_auth_recipe_users_pagination_index` and addes `all_auth_recipe_users_pagination_index1`, 
+    `all_auth_recipe_users_pagination_index2`, `all_auth_recipe_users_pagination_index3` and 
+    `all_auth_recipe_users_pagination_index4` indexes instead on `all_auth_recipe_users` table
+  - Adds `all_auth_recipe_users_recipe_id_index` on `all_auth_recipe_users` table
+  - Adds `all_auth_recipe_users_primary_user_id_index` on `all_auth_recipe_users` table
+  - Adds `email` column to `emailpassword_pswd_reset_tokens` table
+  - Changes `user_id` foreign key constraint on `emailpassword_pswd_reset_tokens` to `app_id_to_user_id` table
+
+### Migration
+
+1. Ensure that the core is already upgraded to the version 6.0.13 (CDI version 3.0)
+2. Stop the core instance(s)
+3. Run the migration script
+   ```sql
+    ALTER TABLE all_auth_recipe_users
+      ADD primary_or_recipe_user_id CHAR(36) NOT NULL DEFAULT ('0');
+
+    ALTER TABLE all_auth_recipe_users
+      ADD is_linked_or_is_a_primary_user BOOLEAN NOT NULL DEFAULT FALSE;
+
+    ALTER TABLE all_auth_recipe_users
+      ADD primary_or_recipe_user_time_joined BIGINT UNSIGNED NOT NULL DEFAULT 0;
+
+    UPDATE all_auth_recipe_users
+      SET primary_or_recipe_user_id = user_id
+      WHERE primary_or_recipe_user_id = '0';
+
+    UPDATE all_auth_recipe_users
+      SET primary_or_recipe_user_time_joined = time_joined
+      WHERE primary_or_recipe_user_time_joined = 0;
+
+    ALTER TABLE all_auth_recipe_users
+      ADD FOREIGN KEY (app_id, primary_or_recipe_user_id)
+      REFERENCES app_id_to_user_id (app_id, user_id) ON DELETE CASCADE;
+
+    ALTER TABLE all_auth_recipe_users
+      ALTER primary_or_recipe_user_id DROP DEFAULT;
+
+    ALTER TABLE app_id_to_user_id
+      ADD primary_or_recipe_user_id CHAR(36) NOT NULL DEFAULT ('0');
+
+    ALTER TABLE app_id_to_user_id
+      ADD is_linked_or_is_a_primary_user BOOLEAN NOT NULL DEFAULT FALSE;
+
+    UPDATE app_id_to_user_id
+      SET primary_or_recipe_user_id = user_id
+      WHERE primary_or_recipe_user_id = '0';
+
+    ALTER TABLE app_id_to_user_id
+      ADD FOREIGN KEY (app_id, primary_or_recipe_user_id)
+      REFERENCES app_id_to_user_id (app_id, user_id) ON DELETE CASCADE;
+
+    ALTER TABLE app_id_to_user_id
+      ALTER primary_or_recipe_user_id DROP DEFAULT;
+
+    DROP INDEX all_auth_recipe_users_pagination_index ON all_auth_recipe_users;
+
+    CREATE INDEX all_auth_recipe_users_pagination_index1 ON all_auth_recipe_users (
+      app_id, tenant_id, primary_or_recipe_user_time_joined DESC, primary_or_recipe_user_id DESC);
+
+    CREATE INDEX all_auth_recipe_users_pagination_index2 ON all_auth_recipe_users (
+      app_id, tenant_id, primary_or_recipe_user_time_joined ASC, primary_or_recipe_user_id DESC);
+
+    CREATE INDEX all_auth_recipe_users_pagination_index3 ON all_auth_recipe_users (
+      recipe_id, app_id, tenant_id, primary_or_recipe_user_time_joined DESC, primary_or_recipe_user_id DESC);
+
+    CREATE INDEX all_auth_recipe_users_pagination_index4 ON all_auth_recipe_users (
+      recipe_id, app_id, tenant_id, primary_or_recipe_user_time_joined ASC, primary_or_recipe_user_id DESC);
+
+    CREATE INDEX all_auth_recipe_users_primary_user_id_index ON all_auth_recipe_users (primary_or_recipe_user_id, app_id);
+
+    CREATE INDEX all_auth_recipe_users_recipe_id_index ON all_auth_recipe_users (app_id, recipe_id, tenant_id);
+
+    ALTER TABLE emailpassword_pswd_reset_tokens 
+      DROP FOREIGN KEY emailpassword_pswd_reset_tokens_ibfk_1;
+
+    ALTER TABLE emailpassword_pswd_reset_tokens
+      ADD FOREIGN KEY (app_id, user_id) REFERENCES app_id_to_user_id (app_id, user_id) ON DELETE CASCADE;
+
+    ALTER TABLE emailpassword_pswd_reset_tokens ADD email VARCHAR(256);
+   ```
+4. Run the new instance(s) of the core (version 7.0.0)
+
 ## [4.0.2]
 
 - Fixes null pointer issue when user belongs to no tenant.
