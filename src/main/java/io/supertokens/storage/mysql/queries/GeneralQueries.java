@@ -183,9 +183,10 @@ public class GeneralQueries {
                 + "is_linked_or_is_a_primary_user BOOLEAN NOT NULL DEFAULT FALSE,"
                 + "recipe_id VARCHAR(128) NOT NULL,"
                 + "PRIMARY KEY (app_id, user_id), "
+                + "FOREIGN KEY (app_id)"
+                + " REFERENCES " + Config.getConfig(start).getAppsTable() + " (app_id) ON DELETE CASCADE,"
                 + "FOREIGN KEY(app_id, primary_or_recipe_user_id)"
-                + " REFERENCES " + Config.getConfig(start).getAppIdToUserIdTable() + " (app_id, user_id) ON DELETE CASCADE,"
-                + "FOREIGN KEY(app_id) REFERENCES " + Config.getConfig(start).getAppsTable() + " (app_id) ON DELETE CASCADE"
+                + " REFERENCES " + Config.getConfig(start).getAppIdToUserIdTable() + " (app_id, user_id) ON DELETE CASCADE"
                 + ");";
         // @formatter:on
     }
