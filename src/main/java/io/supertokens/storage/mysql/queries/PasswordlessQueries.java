@@ -936,6 +936,8 @@ public class PasswordlessQueries {
                 pst.setString(10, tenantIdentifier.getTenantId());
                 pst.setString(11, userInfo.id);
             });
+
+            GeneralQueries.updateTimeJoinedForPrimaryUser_Transaction(start, sqlCon, tenantIdentifier.toAppIdentifier(), accountLinkingInfo.primaryUserId);
         }
 
         { // passwordless_user_to_tenant

@@ -470,6 +470,8 @@ public class ThirdPartyQueries {
                 pst.setString(10, tenantIdentifier.getTenantId());
                 pst.setString(11, userInfo.id);
             });
+
+            GeneralQueries.updateTimeJoinedForPrimaryUser_Transaction(start, sqlCon, tenantIdentifier.toAppIdentifier(), accountLinkingInfo.primaryUserId);
         }
 
         { // thirdparty_user_to_tenant
