@@ -33,7 +33,7 @@ import io.supertokens.pluginInterface.multitenancy.exceptions.TenantOrAppNotFoun
 import io.supertokens.pluginInterface.sqlStorage.SQLStorage;
 import io.supertokens.pluginInterface.totp.TOTPDevice;
 import io.supertokens.pluginInterface.totp.TOTPUsedCode;
-import io.supertokens.pluginInterface.totp.exception.TotpNotEnabledException;
+import io.supertokens.pluginInterface.totp.exception.UnknownTotpUserIdException;
 import io.supertokens.pluginInterface.totp.exception.UsedCodeAlreadyExistsException;
 import io.supertokens.pluginInterface.totp.sqlStorage.TOTPSQLStorage;
 import io.supertokens.pluginInterface.sqlStorage.SQLStorage.TransactionIsolationLevel;
@@ -290,7 +290,7 @@ public class DeadlockTest {
             try {
                 totpStorage.insertUsedCode_Transaction(con, TenantIdentifier.BASE_TENANT, code);
                 totpStorage.commitTransaction(con);
-            } catch (TotpNotEnabledException | UsedCodeAlreadyExistsException | TenantOrAppNotFoundException e) {
+            } catch (UnknownTotpUserIdException | UsedCodeAlreadyExistsException | TenantOrAppNotFoundException e) {
                 // This should not happen
                 throw new StorageTransactionLogicException(e);
             }
@@ -392,7 +392,7 @@ public class DeadlockTest {
                     TOTPUsedCode code2 = new TOTPUsedCode("user", "1234", false, nextDay, now + 1);
                     try {
                         totpStorage.insertUsedCode_Transaction(con, TenantIdentifier.BASE_TENANT, code2);
-                    } catch (TotpNotEnabledException | UsedCodeAlreadyExistsException | TenantOrAppNotFoundException e) {
+                    } catch (UnknownTotpUserIdException | UsedCodeAlreadyExistsException | TenantOrAppNotFoundException e) {
                         // This should not happen
                         throw new StorageTransactionLogicException(e);
                     }
@@ -405,7 +405,7 @@ public class DeadlockTest {
             } catch (StorageTransactionLogicException e) {
                 Exception e2 = e.actualException;
 
-                if (e2 instanceof TotpNotEnabledException) {
+                if (e2 instanceof UnknownTotpUserIdException) {
                     t2Failed.set(true);
                 }
             } catch (StorageQueryException e) {
@@ -455,7 +455,7 @@ public class DeadlockTest {
             try {
                 totpStorage.insertUsedCode_Transaction(con, TenantIdentifier.BASE_TENANT, code);
                 totpStorage.commitTransaction(con);
-            } catch (TotpNotEnabledException | UsedCodeAlreadyExistsException | TenantOrAppNotFoundException e) {
+            } catch (UnknownTotpUserIdException | UsedCodeAlreadyExistsException | TenantOrAppNotFoundException e) {
                 // This should not happen
                 throw new StorageTransactionLogicException(e);
             }
@@ -573,7 +573,7 @@ public class DeadlockTest {
             } catch (StorageTransactionLogicException e) {
                 Exception e2 = e.actualException;
 
-                if (e2 instanceof TotpNotEnabledException) {
+                if (e2 instanceof UnknownTotpUserIdException) {
                     t2Failed.set(true);
                 }
             } catch (StorageQueryException e) {
