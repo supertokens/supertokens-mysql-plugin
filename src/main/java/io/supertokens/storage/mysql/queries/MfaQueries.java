@@ -43,16 +43,24 @@ public class MfaQueries {
 
     public static int enableFactor(Start start, TenantIdentifier tenantIdentifier, String userId, String factorId)
             throws StorageQueryException, SQLException {
-        String QUERY = "INSERT INTO " + Config.getConfig(start).getMfaUserFactorsTable() + " (app_id, tenant_id, user_id, factor_id) VALUES (?, ?, ?, ?) ON CONFLICT DO NOTHING";
+        // ON CONFLICT DO NOTHING
+        String QUERY = "INSERT INTO " + Config.getConfig(start).getMfaUserFactorsTable()
+                + " (app_id, tenant_id, user_id, factor_id) SELECT ?, ?, ?, ? WHERE NOT EXISTS ("
+                + " SELECT app_id, tenant_id, user_id, factor_id FROM " + Config.getConfig(start).getMfaUserFactorsTable()
+                + " WHERE app_id = ? AND tenant_id = ? AND user_id = ? AND factor_id = ?"
+                + ")";
 
         return update(start, QUERY, pst -> {
             pst.setString(1, tenantIdentifier.getAppId());
             pst.setString(2, tenantIdentifier.getTenantId());
             pst.setString(3, userId);
             pst.setString(4, factorId);
+            pst.setString(5, tenantIdentifier.getAppId());
+            pst.setString(6, tenantIdentifier.getTenantId());
+            pst.setString(7, userId);
+            pst.setString(8, factorId);
         });
     }
-
 
     public static String[] listFactors(Start start, TenantIdentifier tenantIdentifier, String userId)
             throws StorageQueryException, SQLException {
@@ -62,6 +70,23 @@ public class MfaQueries {
             pst.setString(1, tenantIdentifier.getAppId());
             pst.setString(2, tenantIdentifier.getTenantId());
             pst.setString(3, userId);
+        }, result -> {
+            List<String> factors = new ArrayList<>();
+            while (result.next()) {
+                factors.add(result.getString("factor_id"));
+            }
+
+            return factors.toArray(String[]::new);
+        });
+    }
+
+    public static String[] listFactors(Start start, AppIdentifier appIdentifier, String userId)
+            throws StorageQueryException, SQLException {
+        String QUERY = "SELECT factor_id FROM " + Config.getConfig(start).getMfaUserFactorsTable() + " WHERE app_id = ? AND user_id = ?";
+
+        return execute(start, QUERY, pst -> {
+            pst.setString(1, appIdentifier.getAppId());
+            pst.setString(2, userId);
         }, result -> {
             List<String> factors = new ArrayList<>();
             while (result.next()) {
