@@ -407,11 +407,6 @@ public class GeneralQueries {
             // index:
             update(start, TOTPQueries.getQueryToCreateUsedCodesExpiryTimeIndex(start), NO_OP_SETTER);
         }
-
-        if (!doesTableExists(start, Config.getConfig(start).getMfaUserFactorsTable())) {
-            getInstance(start).addState(CREATING_NEW_TABLE, null);
-            update(start, MfaQueries.getQueryToCreateUserFactorsTable(start), NO_OP_SETTER);
-        }
     }
 
     @TestOnly
@@ -1569,19 +1564,19 @@ public class GeneralQueries {
     public static int getUsersCountWithMoreThanOneLoginMethodOrTOTPEnabled(Start start, AppIdentifier appIdentifier)
             throws SQLException, StorageQueryException {
         String QUERY =
-                "SELECT COUNT (DISTINCT user_id) as c FROM ("
-                        + "  (" // Users with number of login methods > 1
+                "SELECT COUNT(user_id) as c FROM ("
+                        + "  " // Users with number of login methods > 1
                         + "    SELECT primary_or_recipe_user_id AS user_id FROM ("
                         + "      SELECT COUNT(user_id) as num_login_methods, app_id, primary_or_recipe_user_id"
                         + "      FROM " + Config.getConfig(start).getAppIdToUserIdTable()
                         + "      WHERE app_id = ? "
-                        + "      GROUP BY (app_id, primary_or_recipe_user_id)"
+                        + "      GROUP BY app_id, primary_or_recipe_user_id"
                         + "    ) AS nloginmethods"
                         + "    WHERE num_login_methods > 1"
-                        + "  ) UNION (" // TOTP users
+                        + "  UNION" // TOTP users
                         + "    SELECT user_id FROM " + Config.getConfig(start).getTotpUsersTable()
                         + "    WHERE app_id = ?"
-                        + "  )"
+                        + "  "
                         + ") AS all_users";
 
         return execute(start, QUERY, pst -> {

@@ -301,10 +301,6 @@ public class MySQLConfig {
         return addPrefixToTableName("totp_used_codes");
     }
 
-    public String getMfaUserFactorsTable() {
-        return addPrefixToTableName("mfa_user_factors");
-    }
-
     private String addPrefixToTableName(String tableName) {
         return mysql_table_names_prefix + tableName;
     }

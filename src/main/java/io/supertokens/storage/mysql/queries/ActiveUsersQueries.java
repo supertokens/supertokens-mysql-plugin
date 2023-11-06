@@ -93,38 +93,6 @@ public class ActiveUsersQueries {
         });
     }
 
-    public static int countUsersEnabledMfa(Start start, AppIdentifier appIdentifier) throws SQLException, StorageQueryException {
-        String QUERY = "SELECT COUNT(DISTINCT user_id) as total FROM " + Config.getConfig(start).getMfaUserFactorsTable() + " WHERE app_id = ?";
-
-        return execute(start, QUERY, pst -> {
-            pst.setString(1, appIdentifier.getAppId());
-        }, result -> {
-            if (result.next()) {
-                return result.getInt("total");
-            }
-            return 0;
-        });
-    }
-
-    public static int countUsersEnabledMfaAndActiveSince(Start start, AppIdentifier appIdentifier, long sinceTime) throws SQLException, StorageQueryException {
-        // Find unique users from mfa_user_factors table and join with user_last_active table
-        String QUERY = "SELECT COUNT(*) as total FROM (SELECT DISTINCT user_id FROM " + Config.getConfig(start).getMfaUserFactorsTable() + ") AS mfa_users "
-                + "INNER JOIN " + Config.getConfig(start).getUserLastActiveTable() + " AS user_last_active "
-                + "ON mfa_users.user_id = user_last_active.user_id "
-                + "WHERE user_last_active.app_id = ?"
-                + "AND user_last_active.last_active_time >= ?";
-
-        return execute(start, QUERY, pst -> {
-            pst.setString(1, appIdentifier.getAppId());
-            pst.setLong(2, sinceTime);
-        }, result -> {
-            if (result.next()) {
-                return result.getInt("total");
-            }
-            return 0;
-        });
-    }
-
     public static int updateUserLastActive(Start start, AppIdentifier appIdentifier, String userId) throws SQLException, StorageQueryException {
         String QUERY = "INSERT INTO " + Config.getConfig(start).getUserLastActiveTable()
                 + "(app_id, user_id, last_active_time) VALUES(?, ?, ?) ON DUPLICATE KEY UPDATE last_active_time = ?";
@@ -174,8 +142,8 @@ public class ActiveUsersQueries {
             throws SQLException, StorageQueryException {
         // TODO: Active users are present only on public tenant and MFA users may be present on different storages
         String QUERY =
-                "SELECT COUNT (DISTINCT user_id) as c FROM ("
-                        + "  (" // users with more than one login method
+                "SELECT COUNT(user_id) as c FROM ("
+                        + "  " // users with more than one login method
                         + "    SELECT primary_or_recipe_user_id AS user_id FROM ("
                         + "      SELECT COUNT(user_id) as num_login_methods, app_id, primary_or_recipe_user_id"
                         + "      FROM " + Config.getConfig(start).getAppIdToUserIdTable()
@@ -183,16 +151,16 @@ public class ActiveUsersQueries {
                         + "        SELECT user_id FROM " + Config.getConfig(start).getUserLastActiveTable()
                         + "        WHERE app_id = ? AND last_active_time >= ?"
                         + "      )"
-                        + "      GROUP BY (app_id, primary_or_recipe_user_id)"
+                        + "      GROUP BY app_id, primary_or_recipe_user_id"
                         + "    ) AS nloginmethods"
                         + "    WHERE num_login_methods > 1"
-                        + "  ) UNION (" // TOTP users
+                        + "  UNION" // TOTP users
                         + "    SELECT user_id FROM " + Config.getConfig(start).getTotpUsersTable()
                         + "    WHERE app_id = ? AND user_id IN ("
                         + "      SELECT user_id FROM " + Config.getConfig(start).getUserLastActiveTable()
                         + "      WHERE app_id = ? AND last_active_time >= ?"
                         + "    )"
-                        + "  )"
+                        + "  "
                         + ") AS all_users";
 
         return execute(start, QUERY, pst -> {
