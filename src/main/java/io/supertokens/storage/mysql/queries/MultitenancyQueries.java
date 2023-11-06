@@ -144,12 +144,12 @@ public class MultitenancyQueries {
     }
 
     public static String getQueryToCreateOrderIndexForDefaultRequiredFactorIdsTable(Start start) {
-        return "CREATE INDEX IF NOT EXISTS tenant_default_required_factor_ids_tenant_id_index ON "
+        return "CREATE INDEX tenant_default_required_factor_ids_order_idx_index ON "
                 + getConfig(start).getTenantDefaultRequiredFactorIdsTable() + " (order_idx ASC);";
     }
 
     private static void executeCreateTenantQueries(Start start, Connection sqlCon, TenantConfig tenantConfig)
-            throws SQLException, StorageTransactionLogicException {
+            throws SQLException, StorageTransactionLogicException, StorageQueryException {
 
         try {
             TenantConfigSQLHelper.create(start, sqlCon, tenantConfig);
@@ -184,6 +184,9 @@ public class MultitenancyQueries {
                 }
             }
         }
+
+        MfaSqlHelper.createFirstFactors(start, sqlCon, tenantConfig.tenantIdentifier, tenantConfig.firstFactors);
+        MfaSqlHelper.createDefaultRequiredFactorIds(start, sqlCon, tenantConfig.tenantIdentifier, tenantConfig.defaultRequiredFactorIds);
     }
 
     public static void createTenantConfig(Start start, TenantConfig tenantConfig) throws StorageQueryException, StorageTransactionLogicException {
