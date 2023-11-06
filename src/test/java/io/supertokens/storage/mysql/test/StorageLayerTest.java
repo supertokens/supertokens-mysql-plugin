@@ -82,7 +82,7 @@ public class StorageLayerTest {
         long now = System.currentTimeMillis();
         long nextDay = now + 1000 * 60 * 60 * 24; // 1 day from now
 
-        TOTPDevice d1 = new TOTPDevice("user", "d1", "secret", 30, 1, false);
+        TOTPDevice d1 = new TOTPDevice("user", "d1", "secret", 30, 1, false, System.currentTimeMillis());
         storage.createDevice(TenantIdentifier.BASE_TENANT.toAppIdentifier(), d1);
 
         // Try code with length > 8

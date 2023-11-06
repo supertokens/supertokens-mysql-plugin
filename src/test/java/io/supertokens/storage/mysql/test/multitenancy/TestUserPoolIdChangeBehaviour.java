@@ -82,6 +82,7 @@ public class TestUserPoolIdChangeBehaviour {
                 new EmailPasswordConfig(true),
                 new ThirdPartyConfig(true, null),
                 new PasswordlessConfig(true),
+                new TotpConfig(false), null, null,
                 coreConfig
         ), false);
 
@@ -99,6 +100,7 @@ public class TestUserPoolIdChangeBehaviour {
                 new EmailPasswordConfig(true),
                 new ThirdPartyConfig(true, null),
                 new PasswordlessConfig(true),
+                new TotpConfig(false), null, null,
                 coreConfig
         ), false);
 
@@ -124,6 +126,7 @@ public class TestUserPoolIdChangeBehaviour {
                 new EmailPasswordConfig(true),
                 new ThirdPartyConfig(true, null),
                 new PasswordlessConfig(true),
+                new TotpConfig(false), null, null,
                 coreConfig
         ), false);
 
@@ -141,6 +144,7 @@ public class TestUserPoolIdChangeBehaviour {
                 new EmailPasswordConfig(true),
                 new ThirdPartyConfig(true, null),
                 new PasswordlessConfig(true),
+                new TotpConfig(false), null, null,
                 coreConfig
         ), false);
 

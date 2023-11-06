@@ -39,6 +39,7 @@ public class TOTPQueries {
                 + "period INTEGER NOT NULL," 
 				+ "skew INTEGER NOT NULL," 
 				+ "verified BOOLEAN NOT NULL,"
+                + "created_at BIGINT UNSIGNED NOT NULL,"
                 + "PRIMARY KEY (app_id, user_id, device_name),"
                 + "FOREIGN KEY (app_id, user_id)"
                 + " REFERENCES " + Config.getConfig(start).getTotpUsersTable() + "(app_id, user_id) ON DELETE CASCADE"
@@ -88,7 +89,7 @@ public class TOTPQueries {
     private static int insertDevice_Transaction(Start start, Connection con, AppIdentifier appIdentifier, TOTPDevice device)
             throws SQLException, StorageQueryException {
         String QUERY = "INSERT INTO " + Config.getConfig(start).getTotpUserDevicesTable()
-                + " (app_id, user_id, device_name, secret_key, period, skew, verified) VALUES (?, ?, ?, ?, ?, ?, ?)";
+                + " (app_id, user_id, device_name, secret_key, period, skew, verified, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
         return update(con, QUERY, pst -> {
             pst.setString(1, appIdentifier.getAppId());
@@ -98,6 +99,7 @@ public class TOTPQueries {
             pst.setInt(5, device.period);
             pst.setInt(6, device.skew);
             pst.setBoolean(7, device.verified);
+            pst.setLong(8, device.createdAt);
         });
     }
 
@@ -293,7 +295,8 @@ public class TOTPQueries {
                     result.getString("secret_key"),
                     result.getInt("period"),
                     result.getInt("skew"),
-                    result.getBoolean("verified"));
+                    result.getBoolean("verified"),
+                    result.getLong("created_at"));
         }
     }
 

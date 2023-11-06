@@ -27,6 +27,7 @@ import io.supertokens.pluginInterface.multitenancy.exceptions.DuplicateThirdPart
 import io.supertokens.pluginInterface.multitenancy.exceptions.TenantOrAppNotFoundException;
 import io.supertokens.storage.mysql.Start;
 import io.supertokens.storage.mysql.config.Config;
+import io.supertokens.storage.mysql.queries.multitenancy.MfaSqlHelper;
 import io.supertokens.storage.mysql.queries.multitenancy.TenantConfigSQLHelper;
 import io.supertokens.storage.mysql.queries.multitenancy.ThirdPartyProviderClientSQLHelper;
 import io.supertokens.storage.mysql.queries.multitenancy.ThirdPartyProviderSQLHelper;
@@ -51,6 +52,9 @@ public class MultitenancyQueries {
                 + "email_password_enabled BOOLEAN,"
                 + "passwordless_enabled BOOLEAN,"
                 + "third_party_enabled BOOLEAN,"
+                + "totp_enabled BOOLEAN,"
+                + "has_first_factors BOOLEAN DEFAULT FALSE,"
+                + "has_default_required_factor_ids BOOLEAN DEFAULT FALSE,"
                 + "PRIMARY KEY (connection_uri_domain, app_id, tenant_id)"
                 + ");";
         // @formatter:on
@@ -105,6 +109,43 @@ public class MultitenancyQueries {
                 + "FOREIGN KEY(connection_uri_domain, app_id, tenant_id, third_party_id)"
                 + " REFERENCES " + Config.getConfig(start).getTenantThirdPartyProvidersTable() + " (connection_uri_domain, app_id, tenant_id, third_party_id) ON DELETE CASCADE"
                 + ");";
+    }
+
+    public static String getQueryToCreateFirstFactorsTable(Start start) {
+        String tableName = Config.getConfig(start).getTenantFirstFactorsTable();
+        // @formatter:off
+        return "CREATE TABLE IF NOT EXISTS " + tableName + " ("
+                + "connection_uri_domain VARCHAR(256) DEFAULT '',"
+                + "app_id VARCHAR(64) DEFAULT 'public',"
+                + "tenant_id VARCHAR(64) DEFAULT 'public',"
+                + "factor_id VARCHAR(128),"
+                + "PRIMARY KEY (connection_uri_domain, app_id, tenant_id, factor_id),"
+                + "FOREIGN KEY (connection_uri_domain, app_id, tenant_id)"
+                + " REFERENCES " + Config.getConfig(start).getTenantConfigsTable() +  " (connection_uri_domain, app_id, tenant_id) ON DELETE CASCADE"
+                + ");";
+        // @formatter:on
+    }
+
+    public static String getQueryToCreateDefaultRequiredFactorIdsTable(Start start) {
+        String tableName = Config.getConfig(start).getTenantDefaultRequiredFactorIdsTable();
+        // @formatter:off
+        return "CREATE TABLE IF NOT EXISTS " + tableName + " ("
+                + "connection_uri_domain VARCHAR(256) DEFAULT '',"
+                + "app_id VARCHAR(64) DEFAULT 'public',"
+                + "tenant_id VARCHAR(64) DEFAULT 'public',"
+                + "factor_id VARCHAR(128),"
+                + "order_idx INTEGER NOT NULL,"
+                + "PRIMARY KEY (connection_uri_domain, app_id, tenant_id, factor_id),"
+                + "FOREIGN KEY (connection_uri_domain, app_id, tenant_id)"
+                + " REFERENCES " + Config.getConfig(start).getTenantConfigsTable() +  " (connection_uri_domain, app_id, tenant_id) ON DELETE CASCADE,"
+                + " UNIQUE (connection_uri_domain, app_id, tenant_id, order_idx)"
+                + ");";
+        // @formatter:on
+    }
+
+    public static String getQueryToCreateOrderIndexForDefaultRequiredFactorIdsTable(Start start) {
+        return "CREATE INDEX IF NOT EXISTS tenant_default_required_factor_ids_tenant_id_index ON "
+                + getConfig(start).getTenantDefaultRequiredFactorIdsTable() + " (order_idx ASC);";
     }
 
     private static void executeCreateTenantQueries(Start start, Connection sqlCon, TenantConfig tenantConfig)
@@ -221,7 +262,13 @@ public class MultitenancyQueries {
             // Map (tenantIdentifier) -> thirdPartyId -> provider
             HashMap<TenantIdentifier, HashMap<String, ThirdPartyConfig.Provider>> providerMap = ThirdPartyProviderSQLHelper.selectAll(start, providerClientsMap);
 
-            return TenantConfigSQLHelper.selectAll(start, providerMap);
+            // Map (tenantIdentifier) -> firstFactors
+            HashMap<TenantIdentifier, String[]> firstFactorsMap = MfaSqlHelper.selectAllFirstFactors(start);
+
+            // Map (tenantIdentifier) -> defaultRequiredFactorIds
+            HashMap<TenantIdentifier, String[]> defaultRequiredFactorIdsMap = MfaSqlHelper.selectAllDefaultRequiredFactorIds(start);
+
+            return TenantConfigSQLHelper.selectAll(start, providerMap, firstFactorsMap, defaultRequiredFactorIdsMap);
         } catch (SQLException throwables) {
             throw new StorageQueryException(throwables);
         }
