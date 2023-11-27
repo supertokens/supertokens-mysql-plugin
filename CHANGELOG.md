@@ -10,6 +10,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [5.0.4] - 2023-11-10
 
 - Adds index on `app_id_to_user_id` table to improve performance of get user by id queries
+- Fixes call to `getPrimaryUserInfoForUserIds_Transaction` in `listPrimaryUsersByThirdPartyInfo_Transaction`
 
 ### Migration
 
