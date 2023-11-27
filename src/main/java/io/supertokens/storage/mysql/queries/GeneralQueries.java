@@ -1328,11 +1328,11 @@ public class GeneralQueries {
         }
 
         List<LoginMethod> loginMethods = new ArrayList<>();
-//        loginMethods.addAll(
-//                EmailPasswordQueries.getUsersInfoUsingIdList_Transaction(start, sqlCon, recipeUserIdsToFetch, appIdentifier));
+        loginMethods.addAll(
+                EmailPasswordQueries.getUsersInfoUsingIdList_Transaction(start, sqlCon, recipeUserIdsToFetch, appIdentifier));
         loginMethods.addAll(ThirdPartyQueries.getUsersInfoUsingIdList_Transaction(start, sqlCon, recipeUserIdsToFetch, appIdentifier));
-//        loginMethods.addAll(
-//                PasswordlessQueries.getUsersInfoUsingIdList_Transaction(start, sqlCon, recipeUserIdsToFetch, appIdentifier));
+        loginMethods.addAll(
+                PasswordlessQueries.getUsersInfoUsingIdList_Transaction(start, sqlCon, recipeUserIdsToFetch, appIdentifier));
 
         Map<String, LoginMethod> recipeUserIdToLoginMethodMap = new HashMap<>();
         for (LoginMethod loginMethod : loginMethods) {
