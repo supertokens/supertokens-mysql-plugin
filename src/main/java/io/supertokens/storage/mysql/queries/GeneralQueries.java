@@ -1193,14 +1193,16 @@ public class GeneralQueries {
         // which is linked to a primary user ID in which case it won't be in the primary_or_recipe_user_id column,
         // or the input may have a primary user ID whose recipe user ID was removed, so it won't be in the user_id
         // column
-        String QUERY1 = "SELECT primary_or_recipe_user_id FROM " +
+        String QUERY = "SELECT au.user_id, au.primary_or_recipe_user_id, au.is_linked_or_is_a_primary_user, au.recipe_id, aaru.tenant_id, aaru.time_joined FROM " + Config.getConfig(start).getAppIdToUserIdTable() + " as au " +
+                "LEFT JOIN " + Config.getConfig(start).getUsersTable() + " as aaru ON au.app_id = aaru.app_id AND au.user_id = aaru.user_id" +
+                " WHERE au.primary_or_recipe_user_id IN (SELECT primary_or_recipe_user_id FROM " +
                 Config.getConfig(start).getAppIdToUserIdTable() + " WHERE (user_id IN ("
                 + Utils.generateCommaSeperatedQuestionMarks(userIds.size()) +
                 ") OR primary_or_recipe_user_id IN (" +
                 Utils.generateCommaSeperatedQuestionMarks(userIds.size()) +
-                ")) AND app_id = ?";
+                ")) AND app_id = ?) AND au.app_id = ?";
 
-        List<String> filteredUserIds = execute(start, QUERY1, pst -> {
+        List<AllAuthRecipeUsersResultHolder> allAuthUsersResult = execute(start, QUERY, pst -> {
             // IN user_id
             int index = 1;
             for (int i = 0; i < userIds.size(); i++, index++) {
@@ -1212,27 +1214,7 @@ public class GeneralQueries {
             }
             // for app_id
             pst.setString(index, appIdentifier.getAppId());
-        }, result -> {
-            List<String> parsedResult = new ArrayList<>();
-            while (result.next()) {
-                parsedResult.add(result.getString("primary_or_recipe_user_id"));
-            }
-            return parsedResult;
-        });
-
-        String QUERY = "SELECT au.user_id, au.primary_or_recipe_user_id, au.is_linked_or_is_a_primary_user, au.recipe_id, aaru.tenant_id, aaru.time_joined FROM " + Config.getConfig(start).getAppIdToUserIdTable() + " as au " +
-                "LEFT JOIN " + Config.getConfig(start).getUsersTable() + " as aaru ON au.app_id = aaru.app_id AND au.user_id = aaru.user_id" +
-                " WHERE au.primary_or_recipe_user_id IN (" +
-                Utils.generateCommaSeperatedQuestionMarks(filteredUserIds.size()) + ") AND au.app_id = ?";
-
-        List<AllAuthRecipeUsersResultHolder> allAuthUsersResult = execute(start, QUERY, pst -> {
-            // IN user_id
-            int index = 1;
-            for (int i = 0; i < filteredUserIds.size(); i++, index++) {
-                pst.setString(index, filteredUserIds.get(i));
-            }
-            // for app_id
-            pst.setString(index, appIdentifier.getAppId());
+            pst.setString(index + 1, appIdentifier.getAppId());
         }, result -> {
             List<AllAuthRecipeUsersResultHolder> parsedResult = new ArrayList<>();
             while (result.next()) {
@@ -1303,14 +1285,16 @@ public class GeneralQueries {
         // which is linked to a primary user ID in which case it won't be in the primary_or_recipe_user_id column,
         // or the input may have a primary user ID whose recipe user ID was removed, so it won't be in the user_id
         // column
-        String QUERY1 = "SELECT primary_or_recipe_user_id FROM " +
+        String QUERY = "SELECT au.user_id, au.primary_or_recipe_user_id, au.is_linked_or_is_a_primary_user, au.recipe_id, aaru.tenant_id, aaru.time_joined FROM " + Config.getConfig(start).getAppIdToUserIdTable() + " as au" +
+                " LEFT JOIN " + Config.getConfig(start).getUsersTable() + " as aaru ON au.app_id = aaru.app_id AND au.user_id = aaru.user_id" +
+                " WHERE au.primary_or_recipe_user_id IN (SELECT primary_or_recipe_user_id FROM " +
                 Config.getConfig(start).getAppIdToUserIdTable() + " WHERE (user_id IN ("
                 + Utils.generateCommaSeperatedQuestionMarks(userIds.size()) +
                 ") OR primary_or_recipe_user_id IN (" +
                 Utils.generateCommaSeperatedQuestionMarks(userIds.size()) +
-                ")) AND app_id = ?";
+                ")) AND app_id = ?) AND au.app_id = ?";
 
-        List<String> filteredUserIds = execute(sqlCon, QUERY1, pst -> {
+        List<AllAuthRecipeUsersResultHolder> allAuthUsersResult = execute(sqlCon, QUERY, pst -> {
             // IN user_id
             int index = 1;
             for (int i = 0; i < userIds.size(); i++, index++) {
@@ -1322,27 +1306,7 @@ public class GeneralQueries {
             }
             // for app_id
             pst.setString(index, appIdentifier.getAppId());
-        }, result -> {
-            List<String> parsedResult = new ArrayList<>();
-            while (result.next()) {
-                parsedResult.add(result.getString("primary_or_recipe_user_id"));
-            }
-            return parsedResult;
-        });
-
-        String QUERY = "SELECT au.user_id, au.primary_or_recipe_user_id, au.is_linked_or_is_a_primary_user, au.recipe_id, aaru.tenant_id, aaru.time_joined FROM " + Config.getConfig(start).getAppIdToUserIdTable() + " as au " +
-                "LEFT JOIN " + Config.getConfig(start).getUsersTable() + " as aaru ON au.app_id = aaru.app_id AND au.user_id = aaru.user_id" +
-                " WHERE au.primary_or_recipe_user_id IN (" +
-                Utils.generateCommaSeperatedQuestionMarks(filteredUserIds.size()) + ") AND au.app_id = ?";
-
-        List<AllAuthRecipeUsersResultHolder> allAuthUsersResult = execute(sqlCon, QUERY, pst -> {
-            // IN user_id
-            int index = 1;
-            for (int i = 0; i < filteredUserIds.size(); i++, index++) {
-                pst.setString(index, filteredUserIds.get(i));
-            }
-            // for app_id
-            pst.setString(index, appIdentifier.getAppId());
+            pst.setString(index + 1, appIdentifier.getAppId());
         }, result -> {
             List<AllAuthRecipeUsersResultHolder> parsedResult = new ArrayList<>();
             while (result.next()) {
