@@ -192,21 +192,13 @@ public class GeneralQueries {
     }
 
     static String getQueryToCreatePrimaryUserIdIndexForAppIdToUserIdTable(Start start) {
-        /*
-         * Used in:
-         * - does user exist
-         * */
-        return "CREATE INDEX all_auth_recipe_users_primary_user_id_index3 ON " +
+        return "CREATE INDEX app_id_to_user_id_primary_user_id_index ON " +
                 Config.getConfig(start).getAppIdToUserIdTable()
                 + "(primary_or_recipe_user_id);";
     }
 
     static String getQueryToCreateUserIdIndexForAppIdToUserIdTable(Start start) {
-        /*
-         * Used in:
-         * - does user exist
-         * */
-        return "CREATE INDEX all_auth_recipe_users_primary_user_id_index2 ON " +
+        return "CREATE INDEX app_id_to_user_id_user_id_index ON " +
                 Config.getConfig(start).getAppIdToUserIdTable()
                 + "(user_id);";
     }
