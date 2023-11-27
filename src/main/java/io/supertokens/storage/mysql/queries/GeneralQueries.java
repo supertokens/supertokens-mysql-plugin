@@ -191,6 +191,26 @@ public class GeneralQueries {
         // @formatter:on
     }
 
+    static String getQueryToCreatePrimaryUserIdIndexForAppIdToUserIdTable(Start start) {
+        /*
+         * Used in:
+         * - does user exist
+         * */
+        return "CREATE INDEX all_auth_recipe_users_primary_user_id_index3 ON " +
+                Config.getConfig(start).getAppIdToUserIdTable()
+                + "(primary_or_recipe_user_id);";
+    }
+
+    static String getQueryToCreateUserIdIndexForAppIdToUserIdTable(Start start) {
+        /*
+         * Used in:
+         * - does user exist
+         * */
+        return "CREATE INDEX all_auth_recipe_users_primary_user_id_index2 ON " +
+                Config.getConfig(start).getAppIdToUserIdTable()
+                + "(user_id);";
+    }
+
     public static void createTablesIfNotExists(Start start) throws SQLException, StorageQueryException {
         if (!doesTableExists(start, Config.getConfig(start).getAppsTable())) {
             getInstance(start).addState(CREATING_NEW_TABLE, null);
@@ -210,6 +230,9 @@ public class GeneralQueries {
         if (!doesTableExists(start, Config.getConfig(start).getAppIdToUserIdTable())) {
             getInstance(start).addState(CREATING_NEW_TABLE, null);
             update(start, getQueryToCreateAppIdToUserIdTable(start), NO_OP_SETTER);
+
+            update(start, getQueryToCreatePrimaryUserIdIndexForAppIdToUserIdTable(start), NO_OP_SETTER);
+            update(start, getQueryToCreateUserIdIndexForAppIdToUserIdTable(start), NO_OP_SETTER);
         }
 
         if (!doesTableExists(start, Config.getConfig(start).getUsersTable())) {
