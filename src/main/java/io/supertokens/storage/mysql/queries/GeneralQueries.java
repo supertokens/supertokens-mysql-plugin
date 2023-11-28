@@ -191,6 +191,18 @@ public class GeneralQueries {
         // @formatter:on
     }
 
+    static String getQueryToCreatePrimaryUserIdIndexForAppIdToUserIdTable(Start start) {
+        return "CREATE INDEX app_id_to_user_id_primary_user_id_index ON " +
+                Config.getConfig(start).getAppIdToUserIdTable()
+                + "(primary_or_recipe_user_id);";
+    }
+
+    static String getQueryToCreateUserIdIndexForAppIdToUserIdTable(Start start) {
+        return "CREATE INDEX app_id_to_user_id_user_id_index ON " +
+                Config.getConfig(start).getAppIdToUserIdTable()
+                + "(user_id);";
+    }
+
     public static void createTablesIfNotExists(Start start) throws SQLException, StorageQueryException {
         if (!doesTableExists(start, Config.getConfig(start).getAppsTable())) {
             getInstance(start).addState(CREATING_NEW_TABLE, null);
@@ -210,6 +222,9 @@ public class GeneralQueries {
         if (!doesTableExists(start, Config.getConfig(start).getAppIdToUserIdTable())) {
             getInstance(start).addState(CREATING_NEW_TABLE, null);
             update(start, getQueryToCreateAppIdToUserIdTable(start), NO_OP_SETTER);
+
+            update(start, getQueryToCreatePrimaryUserIdIndexForAppIdToUserIdTable(start), NO_OP_SETTER);
+            update(start, getQueryToCreateUserIdIndexForAppIdToUserIdTable(start), NO_OP_SETTER);
         }
 
         if (!doesTableExists(start, Config.getConfig(start).getUsersTable())) {
@@ -1057,7 +1072,7 @@ public class GeneralQueries {
         Set<String> userIdsSet = new HashSet<>(userIds);
         userIds = new ArrayList<>(userIdsSet);
 
-        List<AuthRecipeUserInfo> result = getPrimaryUserInfoForUserIds(start, appIdentifier,
+        List<AuthRecipeUserInfo> result = getPrimaryUserInfoForUserIds_Transaction(start, sqlCon, appIdentifier,
                 userIds);
 
         // this is going to order them based on oldest that joined to newest that joined.
