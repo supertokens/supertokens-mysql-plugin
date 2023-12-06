@@ -685,7 +685,7 @@ public class Start
     }
 
     @Override
-    public boolean canBeUsed(JsonObject configJson) {
+    public boolean canBeUsed(JsonObject configJson) throws InvalidConfigException {
         return Config.canBeUsed(configJson);
     }
 

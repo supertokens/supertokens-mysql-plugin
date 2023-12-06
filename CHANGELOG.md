@@ -7,6 +7,11 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [5.0.5] - 2023-12-06
+
+- Validates db config types in `canBeUsed` function
+
+
 ## [5.0.4] - 2023-11-10
 
 - Adds index on `app_id_to_user_id` table to improve performance of get user by id queries

@@ -26,6 +26,7 @@ import io.supertokens.pluginInterface.multitenancy.TenantIdentifier;
 import io.supertokens.storage.mysql.ResourceDistributor;
 import io.supertokens.storage.mysql.Start;
 import io.supertokens.storage.mysql.output.Logging;
+import io.supertokens.storage.mysql.utils.ConfigMapper;
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -103,11 +104,12 @@ public class Config extends ResourceDistributor.SingletonResource {
         return config;
     }
 
-    public static boolean canBeUsed(JsonObject configJson) {
+    public static boolean canBeUsed(JsonObject configJson) throws InvalidConfigException {
         try {
-            final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
-            MySQLConfig config = mapper.readValue(configJson.toString(), MySQLConfig.class);
+            MySQLConfig config = ConfigMapper.mapConfig(configJson, MySQLConfig.class);
             return config.getUser() != null || config.getPassword() != null || config.getConnectionURI() != null;
+        } catch (InvalidConfigException e) {
+            throw e;
         } catch (Exception e) {
             return false;
         }
