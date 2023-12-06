@@ -18,16 +18,15 @@
 package io.supertokens.storage.mysql.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.gson.JsonObject;
 import io.supertokens.pluginInterface.LOG_LEVEL;
 import io.supertokens.pluginInterface.exceptions.InvalidConfigException;
 import io.supertokens.pluginInterface.multitenancy.TenantIdentifier;
-import io.supertokens.pluginInterface.utils.ConfigMapper;
 import io.supertokens.storage.mysql.ResourceDistributor;
 import io.supertokens.storage.mysql.Start;
 import io.supertokens.storage.mysql.output.Logging;
+import io.supertokens.storage.mysql.utils.ConfigMapper;
 
 import java.io.IOException;
 import java.util.HashSet;
