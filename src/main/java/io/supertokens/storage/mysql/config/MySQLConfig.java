@@ -180,8 +180,8 @@ public class MySQLConfig {
         return addPrefixToTableName("tenant_first_factors");
     }
 
-    public String getTenantDefaultRequiredFactorIdsTable() {
-        return addPrefixToTableName("tenant_default_required_factor_ids");
+    public String getTenantRequiredSecondaryFactorsTable() {
+        return addPrefixToTableName("tenant_required_secondary_factors");
     }
 
     public String getTenantThirdPartyProvidersTable() {
