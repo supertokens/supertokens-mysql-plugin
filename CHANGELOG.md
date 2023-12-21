@@ -7,6 +7,29 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [5.0.5] - 2023-12-06
+
+- Validates db config types in `canBeUsed` function
+
+
+## [5.0.4] - 2023-11-10
+
+- Adds index on `app_id_to_user_id` table to improve performance of get user by id queries
+- Fixes call to `getPrimaryUserInfoForUserIds_Transaction` in `listPrimaryUsersByThirdPartyInfo_Transaction`
+
+### Migration
+
+Run the following SQL script:
+
+```sql
+CREATE INDEX app_id_to_user_id_primary_user_id_index ON app_id_to_user_id (primary_or_recipe_user_id);
+CREATE INDEX app_id_to_user_id_user_id_index ON app_id_to_user_id (user_id);
+```
+
+## [5.0.3] - 2023-11-10
+
+- Fixes issue with email verification with user id mapping
+
 ## [5.0.2] - 2023-11-01
 
 - Fixes `verified` in `loginMethods` for users with userId mapping

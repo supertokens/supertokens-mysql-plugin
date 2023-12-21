@@ -685,7 +685,7 @@ public class Start
     }
 
     @Override
-    public boolean canBeUsed(JsonObject configJson) {
+    public boolean canBeUsed(JsonObject configJson) throws InvalidConfigException {
         return Config.canBeUsed(configJson);
     }
 
@@ -1143,6 +1143,11 @@ public class Start
         } catch (SQLException e) {
             throw new StorageQueryException(e);
         }
+    }
+
+    @Override
+    public void updateIsEmailVerifiedToExternalUserId(AppIdentifier appIdentifier, String supertokensUserId, String externalUserId) throws StorageQueryException {
+        EmailVerificationQueries.updateIsEmailVerifiedToExternalUserId(this, appIdentifier, supertokensUserId, externalUserId);
     }
 
     @Override
