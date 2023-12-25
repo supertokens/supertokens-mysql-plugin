@@ -268,14 +268,9 @@ public class GeneralQueries {
             update(start, MultitenancyQueries.getQueryToCreateFirstFactorsTable(start), NO_OP_SETTER);
         }
 
-        if (!doesTableExists(start, Config.getConfig(start).getTenantDefaultRequiredFactorIdsTable())) {
+        if (!doesTableExists(start, Config.getConfig(start).getTenantRequiredSecondaryFactorsTable())) {
             getInstance(start).addState(CREATING_NEW_TABLE, null);
-            update(start, MultitenancyQueries.getQueryToCreateDefaultRequiredFactorIdsTable(start), NO_OP_SETTER);
-
-            // index
-            update(start,
-                    MultitenancyQueries.getQueryToCreateOrderIndexForDefaultRequiredFactorIdsTable(start),
-                    NO_OP_SETTER);
+            update(start, MultitenancyQueries.getQueryToCreateRequiredSecondaryFactorsTable(start), NO_OP_SETTER);
         }
 
         if (!doesTableExists(start, Config.getConfig(start).getTenantThirdPartyProvidersTable())) {
