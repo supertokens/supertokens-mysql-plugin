@@ -509,10 +509,11 @@ public class MySQLConfig {
         StringBuilder connectionPoolId = new StringBuilder();
         for (Field field : MySQLConfig.class.getDeclaredFields()) {
             if (field.isAnnotationPresent(ConnectionPoolProperty.class)) {
-                connectionPoolId.append("|");
                 try {
-                    if (field.get(this) != null) {
-                        connectionPoolId.append(field.get(this).toString());
+                    String fieldName = field.getName();
+                    String fieldValue = field.get(this) != null ? field.get(this).toString() : null;
+                    if (!fieldName.equals("mysql_password") && fieldValue != null) {
+                        connectionPoolId.append("|" + fieldValue);
                     }
                 } catch (IllegalAccessException e) {
                     throw new RuntimeException(e);
