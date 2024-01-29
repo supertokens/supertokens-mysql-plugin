@@ -7,6 +7,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+- Adds a new `useStaticKey` param to `updateSessionInfo_Transaction`
+  - This enables smooth switching between `useDynamicAccessTokenSigningKey` settings by allowing refresh calls to
+    change the signing key type of a session
+
 ## [5.0.5] - 2023-12-06
 
 - Validates db config types in `canBeUsed` function
