@@ -30,6 +30,7 @@ import io.supertokens.featureflag.FeatureFlagTestContent;
 import io.supertokens.multitenancy.Multitenancy;
 import io.supertokens.pluginInterface.multitenancy.*;
 import io.supertokens.storage.mysql.Start;
+import io.supertokens.storage.mysql.config.MySQLConfig;
 import io.supertokens.storage.mysql.output.Logging;
 import io.supertokens.storageLayer.StorageLayer;
 import org.apache.tomcat.util.http.fileupload.FileUtils;
@@ -312,7 +313,6 @@ public class LoggingTest {
 
     @Test
     public void testDBPasswordMaskingOnDBConnectionFailUsingConnectionUri() throws Exception {
-        StorageLayer.close();
         String[] args = { "../" };
 
         String dbUser = "db_user";
@@ -323,177 +323,266 @@ public class LoggingTest {
         Utils.setValueInConfig("mysql_connection_uri", dbConnectionUri);
         Utils.commentConfigValue("mysql_user");
         Utils.commentConfigValue("mysql_password");
+        Utils.setValueInConfig("error_log_path", "null");
 
-        TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
+        ByteArrayOutputStream errorOutput = new ByteArrayOutputStream();
+        System.setErr(new PrintStream(errorOutput));
 
-        process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.INIT_FAILURE);
+        TestingProcessManager.TestingProcess process = TestingProcessManager.start(args, false);
+        try {
+            process.startProcess();
+            process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.INIT_FAILURE);
 
-        File errorLog = new File(Config.getConfig(process.getProcess()).getErrorLogPath(process.getProcess()));
+            assertTrue(fileContainsString(errorOutput, dbUser));
+            assertTrue(fileContainsString(errorOutput, dbName));
+            assertTrue(fileContainsString(errorOutput, "********"));
+            assertFalse(fileContainsString(errorOutput, dbPassword));
 
-        boolean dbPasswordMaskedInErrorLog = false;
-
-        try (Scanner errorScanner = new Scanner(errorLog, StandardCharsets.UTF_8)) {
-            while (errorScanner.hasNextLine()) {
-                String line = errorScanner.nextLine();
-                if(line.contains(dbName) && line.contains(dbUser) && !line.contains(dbPassword) && line.contains("********")){
-                    dbPasswordMaskedInErrorLog = true;
-                    break;
-                }
-            }
+        } finally {
+            process.kill();
+            assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
+            System.setErr(new PrintStream(new FileOutputStream(FileDescriptor.err)));
         }
-
-        assertTrue(dbPasswordMaskedInErrorLog);
-        process.kill();
-
-        assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
     }
 
     @Test
     public void testDBPasswordMaskingOnDBConnectionFailUsingCredentials() throws Exception {
-        StorageLayer.close();
         String[] args = { "../" };
 
         String dbUser = "db_user";
         String dbPassword = "db_password";
         String dbName = "db_does_not_exist";
 
+        Utils.commentConfigValue("mysql_connection_uri");
         Utils.setValueInConfig("mysql_user", dbUser);
         Utils.setValueInConfig("mysql_password", dbPassword);
         Utils.setValueInConfig("mysql_database_name", dbName);
+        Utils.setValueInConfig("error_log_path", "null");
 
-        TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
-
-        process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.INIT_FAILURE);
-
-        File errorLog = new File(Config.getConfig(process.getProcess()).getErrorLogPath(process.getProcess()));
-
-        boolean dbPasswordMaskedInErrorLog = false;
-
-        try (Scanner errorScanner = new Scanner(errorLog, StandardCharsets.UTF_8)) {
-            while (errorScanner.hasNextLine()) {
-                String line = errorScanner.nextLine();
-                if(line.contains(dbName) && line.contains(dbUser) && !line.contains(dbPassword) && line.contains("********")){
-                    dbPasswordMaskedInErrorLog = true;
-                    break;
-                }
-            }
-        }
-
-        assertTrue(dbPasswordMaskedInErrorLog);
-        process.kill();
-
-        assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
-    }
-
-    @Test
-    public void testDBPasswordMaskingOnDBConnectionFailWhenCreatingTenant() throws Exception {
-        StorageLayer.close();
-        String[] args = { "../" };
-
-        String dbUser = "db_user";
-        String dbPassword = "db_password";
-        String dbName = "db_does_not_exist";
-        String dbConnectionUri = "mysql://" + dbUser + ":" + dbPassword + "@localhost:3306/" + dbName;
+        ByteArrayOutputStream errorOutput = new ByteArrayOutputStream();
+        System.setErr(new PrintStream(errorOutput));
 
         TestingProcessManager.TestingProcess process = TestingProcessManager.start(args, false);
-        Main main = process.getProcess();
-
-        FeatureFlagTestContent.getInstance(main)
-        .setKeyValue(FeatureFlagTestContent.ENABLED_FEATURES, new EE_FEATURES[]{
-                EE_FEATURES.ACCOUNT_LINKING, EE_FEATURES.MULTI_TENANCY});
-
-        process.startProcess();
-
-        assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
-
-        JsonObject config = new JsonObject();
-        TenantIdentifier tenantIdentifier = new TenantIdentifier(null, "a1", null);
-
-        config.addProperty("mysql_connection_uri", dbConnectionUri);
-        StorageLayer.getStorage(new TenantIdentifier(null, null, null), main)
-                .modifyConfigToAddANewUserPoolForTesting(config, 1);
-
         try {
-            Multitenancy.addNewOrUpdateAppOrTenant(
-                    main,
-                    new TenantIdentifier(null, null, null),
-                    new TenantConfig(
-                            tenantIdentifier,
-                            new EmailPasswordConfig(true),
-                            new ThirdPartyConfig(true, null),
-                            new PasswordlessConfig(true),
-                            config
-                    )
-            );
-            
-        } catch (Exception e) {
-            
+            process.startProcess();
+            process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.INIT_FAILURE);
+
+            assertTrue(fileContainsString(errorOutput, dbUser));
+            assertTrue(fileContainsString(errorOutput, dbName));
+            assertTrue(fileContainsString(errorOutput, "********"));
+            assertFalse(fileContainsString(errorOutput, dbPassword));
+
+        } finally {
+            process.kill();
+            assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
+            System.setErr(new PrintStream(new FileOutputStream(FileDescriptor.err)));
         }
-
-        File errorLog = new File(Config.getConfig(main).getErrorLogPath(main));
-
-        boolean dbPasswordMaskedInErrorLog = false;
-
-        try (Scanner errorScanner = new Scanner(errorLog, StandardCharsets.UTF_8)) {
-            while (errorScanner.hasNextLine()) {
-                String line = errorScanner.nextLine();
-                System.out.println("line: " + line);
-                if(line.contains(dbName) && line.contains(dbUser) && !line.contains(dbPassword) && line.contains("********")){
-                    dbPasswordMaskedInErrorLog = true;
-                    break;
-                }
-            }
-        }
-
-        assertTrue(dbPasswordMaskedInErrorLog);
-        process.kill();
-
-        assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
     }
-    
+
     @Test
     public void testDBPasswordMasking() throws Exception {
-        StorageLayer.close();
         String[] args = { "../" };
-        TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
 
-        assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
+        ByteArrayOutputStream stdOutput = new ByteArrayOutputStream();
+        ByteArrayOutputStream errorOutput = new ByteArrayOutputStream();
 
-        File infoLog = new File(Config.getConfig(process.getProcess()).getInfoLogPath(process.getProcess()));
-        File errorLog = new File(Config.getConfig(process.getProcess()).getErrorLogPath(process.getProcess()));
+        Utils.setValueInConfig("info_log_path", "null");
+        Utils.setValueInConfig("error_log_path", "null");
 
-        Logging.error((Start) StorageLayer.getStorage(process.getProcess()), "ERROR LOG: |db_pass|password|db_pass|", false);
-        Logging.info((Start) StorageLayer.getStorage(process.getProcess()), "INFO LOG: |db_pass|password|db_pass|", true);
+        System.setOut(new PrintStream(stdOutput));
+        System.setErr(new PrintStream(errorOutput));
 
-        boolean dbPasswordMaskedInInfoLog = false;
-        boolean dbPasswordMaskedInErrorLog = false;
+        TestingProcessManager.TestingProcess process = TestingProcessManager.start(args, false);
 
-        try (Scanner scanner = new Scanner(infoLog, StandardCharsets.UTF_8)) {
-            while (scanner.hasNextLine()) {
-                String line = scanner.nextLine();
-                if(line.contains("INFO LOG") && line.contains("INFO LOG: |********|")) {
-                    dbPasswordMaskedInInfoLog = true;
-                    break;
-                }
-            }
+        try {
+            process.startProcess();
+            assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
+
+            Logging.info((Start) StorageLayer.getStorage(process.getProcess()), "INFO LOG: |db_pass|password|db_pass|",
+                    false);
+            Logging.error((Start) StorageLayer.getStorage(process.getProcess()),
+                    "ERROR LOG: |db_pass|password|db_pass|", false);
+
+            assertTrue(fileContainsString(stdOutput, "INFO LOG: |********|"));
+            assertTrue(fileContainsString(errorOutput, "ERROR LOG: |********|"));
+
+        } finally {
+            process.kill();
+            assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
+            System.setOut(new PrintStream(new FileOutputStream(FileDescriptor.out)));
+            System.setErr(new PrintStream(new FileOutputStream(FileDescriptor.err)));
         }
-
-        try (Scanner errorScanner = new Scanner(errorLog, StandardCharsets.UTF_8)) {
-            while (errorScanner.hasNextLine()) {
-                String line = errorScanner.nextLine();
-                if(line.contains("ERROR LOG") && line.contains("ERROR LOG: |********|")) {
-                    dbPasswordMaskedInErrorLog = true;
-                    break;
-                }
-            }
-        }
-
-        assertTrue(dbPasswordMaskedInInfoLog && dbPasswordMaskedInErrorLog);
-        process.kill();
-
-        assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
     }
-    
+
+    @Test
+    public void testDBPasswordIsNotLoggedWhenProcessStartsEnds() throws Exception {
+        String[] args = { "../" };
+
+        Utils.setValueInConfig("error_log_path", "null");
+        Utils.setValueInConfig("info_log_path", "null");
+
+        ByteArrayOutputStream stdOutput = new ByteArrayOutputStream();
+        ByteArrayOutputStream errorOutput = new ByteArrayOutputStream();
+
+        System.setOut(new PrintStream(stdOutput));
+        System.setErr(new PrintStream(errorOutput));
+
+        try {
+            // Case 1: DB Password shouldn't be logged after starting/stopping the process with correct credentials
+            {
+                TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
+
+                process.startProcess();
+                assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
+
+                Start start = (Start) StorageLayer.getStorage(process.getProcess());
+                MySQLConfig userConfig = io.supertokens.storage.mysql.config.Config.getConfig(start);
+                String dbPasswordFromConfig = userConfig.getPassword();
+
+                process.kill();
+                assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
+
+                assertFalse(fileContainsString(stdOutput, dbPasswordFromConfig));
+                assertFalse(fileContainsString(errorOutput, dbPasswordFromConfig));
+            }
+
+            // Case 2: DB Password shouldn't be logged after starting/stopping the process with incorrect credentials
+            {
+                String dbUser = "db_user";
+                String dbPassword = "db_password";
+                String dbName = "db_does_not_exist";
+                String dbConnectionUri = "mysql://" + dbUser + ":" + dbPassword + "@localhost:3306/" + dbName;
+
+                Utils.setValueInConfig("mysql_connection_uri", dbConnectionUri);
+
+                TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
+
+                process.startProcess();
+                assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.INIT_FAILURE));
+
+                Start start = (Start) StorageLayer.getStorage(process.getProcess());
+                MySQLConfig userConfig = io.supertokens.storage.mysql.config.Config.getConfig(start);
+                String dbPasswordFromConfig = userConfig.getPassword();
+
+                process.kill();
+                assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
+
+                assertFalse(fileContainsString(stdOutput, dbPasswordFromConfig));
+                assertFalse(fileContainsString(errorOutput, dbPasswordFromConfig));
+            }
+
+        } finally {
+            System.setOut(new PrintStream(new FileOutputStream(FileDescriptor.out)));
+            System.setErr(new PrintStream(new FileOutputStream(FileDescriptor.err)));
+        }
+    }
+
+    @Test
+    public void testDBPasswordIsNotLoggedWhenTenantIsCreated() throws Exception {
+        String[] args = { "../" };
+
+        Utils.setValueInConfig("error_log_path", "null");
+        Utils.setValueInConfig("info_log_path", "null");
+
+        ByteArrayOutputStream stdOutput = new ByteArrayOutputStream();
+        ByteArrayOutputStream errorOutput = new ByteArrayOutputStream();
+
+        System.setOut(new PrintStream(stdOutput));
+        System.setErr(new PrintStream(errorOutput));
+
+        try {
+            // Case 1: DB Password shouldn't be logged when tenant is created with valid credentials
+            {
+                TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
+
+                process.startProcess();
+                assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
+
+                Start start = (Start) StorageLayer.getStorage(process.getProcess());
+                MySQLConfig userConfig = io.supertokens.storage.mysql.config.Config.getConfig(start);;
+                String dbPasswordFromConfig = userConfig.getPassword();
+
+                Main main = process.getProcess();
+
+                FeatureFlagTestContent.getInstance(main)
+                        .setKeyValue(FeatureFlagTestContent.ENABLED_FEATURES, new EE_FEATURES[] {
+                                EE_FEATURES.ACCOUNT_LINKING, EE_FEATURES.MULTI_TENANCY });
+
+                JsonObject config = new JsonObject();
+                TenantIdentifier tenantIdentifier = new TenantIdentifier(null, "a1", null);
+                StorageLayer.getBaseStorage(process.getProcess()).modifyConfigToAddANewUserPoolForTesting(config, 1);
+                Multitenancy.addNewOrUpdateAppOrTenant(
+                        main,
+                        new TenantIdentifier(null, null, null),
+                        new TenantConfig(
+                                tenantIdentifier,
+                                new EmailPasswordConfig(true),
+                                new ThirdPartyConfig(true, null),
+                                new PasswordlessConfig(true),
+                                config
+                               ));
+
+                process.kill();
+                assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
+
+                assertFalse(fileContainsString(stdOutput, dbPasswordFromConfig));
+                assertFalse(fileContainsString(errorOutput, dbPasswordFromConfig));
+            }
+
+            // Case 2: DB Password shouldn't be logged when tenant is created with invalid credentials
+            {
+                String dbUser = "db_user";
+                String dbPassword = "db_password";
+                String dbName = "db_does_not_exist";
+                String dbConnectionUri = "mysql://" + dbUser + ":" + dbPassword + "@localhost:3306/" + dbName;
+
+                TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
+
+                process.startProcess();
+                assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
+
+                Start start = (Start) StorageLayer.getStorage(process.getProcess());
+                MySQLConfig userConfig = io.supertokens.storage.mysql.config.Config.getConfig(start);
+                String dbPasswordFromConfig = userConfig.getPassword();
+
+                Main main = process.getProcess();
+
+                FeatureFlagTestContent.getInstance(main)
+                        .setKeyValue(FeatureFlagTestContent.ENABLED_FEATURES, new EE_FEATURES[] {
+                                EE_FEATURES.ACCOUNT_LINKING, EE_FEATURES.MULTI_TENANCY });
+
+                TenantIdentifier tenantIdentifier = new TenantIdentifier(null, "a1", null);
+                JsonObject config = new JsonObject();
+                config.addProperty("mysql_connection_uri", dbConnectionUri);
+                StorageLayer.getBaseStorage(process.getProcess()).modifyConfigToAddANewUserPoolForTesting(config, 1);
+                try {
+                    Multitenancy.addNewOrUpdateAppOrTenant(
+                            main,
+                            new TenantIdentifier(null, null, null),
+                            new TenantConfig(
+                                    tenantIdentifier,
+                                    new EmailPasswordConfig(true),
+                                    new ThirdPartyConfig(true, null),
+                                    new PasswordlessConfig(true),
+                                    new JsonObject()));
+
+                } catch (Exception e) {
+
+                }
+
+                process.kill();
+                assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
+
+                assertFalse(fileContainsString(stdOutput, dbPasswordFromConfig));
+                assertFalse(fileContainsString(errorOutput, dbPasswordFromConfig));
+            }
+
+        } finally {
+            System.setOut(new PrintStream(new FileOutputStream(FileDescriptor.out)));
+            System.setErr(new PrintStream(new FileOutputStream(FileDescriptor.err)));
+        }
+    }
+
     private static int countAppenders(ch.qos.logback.classic.Logger logger) {
         int count = 0;
         Iterator<Appender<ILoggingEvent>> appenderIter = logger.iteratorForAppenders();
