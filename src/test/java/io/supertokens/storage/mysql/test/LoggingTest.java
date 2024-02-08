@@ -451,9 +451,10 @@ public class LoggingTest {
                 String dbUser = "db_user";
                 String dbPassword = "db_password";
                 String dbName = "db_does_not_exist";
-                String dbConnectionUri = "mysql://" + dbUser + ":" + dbPassword + "@localhost:3306/" + dbName;
 
-                Utils.setValueInConfig("mysql_connection_uri", dbConnectionUri);
+                Utils.setValueInConfig("mysql_user", dbUser);
+                Utils.setValueInConfig("mysql_password", dbPassword);
+                Utils.setValueInConfig("mysql_database_name", dbName);
 
                 TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
 
