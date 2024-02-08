@@ -231,6 +231,6 @@ public class DbConnectionPoolTest {
             return;
         }
 
-        fail(); // tried 3 times
+        fail(); // tried 5 times
     }
 }
