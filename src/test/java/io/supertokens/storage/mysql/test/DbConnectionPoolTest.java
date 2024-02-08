@@ -114,7 +114,7 @@ public class DbConnectionPoolTest {
     public void testDownTimeWhenChangingConnectionPoolSize() throws Exception {
         String[] args = {"../"};
 
-        for (int t = 0; t < 3; t++) {
+        for (int t = 0; t < 5; t++) {
             TestingProcessManager.TestingProcess process = TestingProcessManager.start(args, false);
             FeatureFlagTestContent.getInstance(process.getProcess())
                     .setKeyValue(FeatureFlagTestContent.ENABLED_FEATURES, new EE_FEATURES[]{EE_FEATURES.MULTI_TENANCY});
@@ -216,7 +216,6 @@ public class DbConnectionPoolTest {
 
             System.out.println(successAfterErrorTime.get() - firstErrorTime.get() + "ms");
             assertTrue(successAfterErrorTime.get() - firstErrorTime.get() < 250);
-            assertTrue(successAfterErrorTime.get() - firstErrorTime.get() > 0);
 
             if (successAfterErrorTime.get() - firstErrorTime.get() == 0) {
                 process.kill();
@@ -224,6 +223,8 @@ public class DbConnectionPoolTest {
 
                 continue; // retry
             }
+
+            assertTrue(successAfterErrorTime.get() - firstErrorTime.get() > 0);
 
             process.kill();
             assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
