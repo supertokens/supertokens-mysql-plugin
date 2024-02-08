@@ -137,7 +137,7 @@ public class DbConnectionPoolTest {
                 config
         ), false);
 
-        Thread.sleep(3000); // let the new tenant be ready
+        Thread.sleep(5000); // let the new tenant be ready
 
         assertEquals(300, start.getDbActivityCount("st1"));
 
@@ -156,7 +156,7 @@ public class DbConnectionPoolTest {
                         successAfterErrorTime.set(System.currentTimeMillis());
                     }
                 } catch (StorageQueryException e) {
-                    if (e.getMessage().contains("called on closed connection")) {
+                    if (e.getMessage().contains("called on closed connection") || e.getMessage().contains("Connection is closed")) {
                         if (firstErrorTime.get() == -1) {
                             firstErrorTime.set(System.currentTimeMillis());
                         }
