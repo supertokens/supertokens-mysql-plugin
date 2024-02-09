@@ -108,6 +108,14 @@ public class MySQLConfig {
     @ConnectionPoolProperty
     private String mysql_connection_scheme = "mysql";
 
+    @JsonProperty
+    @ConnectionPoolProperty
+    private long mysql_idle_connection_timeout = 60000;
+
+    @JsonProperty
+    @ConnectionPoolProperty
+    private int mysql_minimum_idle_connections = 1;
+
     @IgnoreForAnnotationCheck
     boolean isValidAndNormalised = false;
 
@@ -228,6 +236,14 @@ public class MySQLConfig {
         return mysql_thirdparty_users_table_name;
     }
 
+    public long getIdleConnectionTimeout() {
+        return mysql_idle_connection_timeout;
+    }
+
+    public int getMinimumIdleConnections() {
+        return mysql_minimum_idle_connections;
+    }
+
     public String getThirdPartyUserToTenantTable() {
         return addPrefixToTableName("thirdparty_user_to_tenant");
     }
@@ -321,6 +337,17 @@ public class MySQLConfig {
         if (mysql_connection_pool_size <= 0) {
             throw new InvalidConfigException(
                     "'mysql_connection_pool_size' in the config.yaml file must be > 0");
+        }
+
+        if (mysql_minimum_idle_connections <= 0) {
+            throw new InvalidConfigException(
+                    "'postgresql_minimum_idle_connections' must be a positive value");
+        }
+
+        if (mysql_minimum_idle_connections > mysql_connection_pool_size) {
+            throw new InvalidConfigException(
+                    "'postgresql_minimum_idle_connections' must be less than or equal to "
+                            + "'postgresql_connection_pool_size'");
         }
 
         // Normalisation
