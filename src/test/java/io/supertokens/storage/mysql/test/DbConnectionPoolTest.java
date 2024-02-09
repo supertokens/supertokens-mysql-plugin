@@ -118,7 +118,6 @@ public class DbConnectionPoolTest {
             TestingProcessManager.TestingProcess process = TestingProcessManager.start(args, false);
             FeatureFlagTestContent.getInstance(process.getProcess())
                     .setKeyValue(FeatureFlagTestContent.ENABLED_FEATURES, new EE_FEATURES[]{EE_FEATURES.MULTI_TENANCY});
-            Utils.setValueInConfig("mysql_minimum_idle_connections", "10");
             process.startProcess();
             assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
 
