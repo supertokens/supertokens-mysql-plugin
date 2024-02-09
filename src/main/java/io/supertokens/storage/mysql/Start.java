@@ -115,7 +115,7 @@ public class Start
     // SaaS. If the core is not running in SuperTokens SaaS, this array has no effect.
     private static final String[] PROTECTED_DB_CONFIG = new String[]{"mysql_connection_pool_size",
             "mysql_connection_uri", "mysql_host", "mysql_port", "mysql_user", "mysql_password",
-            "mysql_database_name"};
+            "mysql_database_name", "mysql_idle_connection_timeout", "mysql_minimum_idle_connections"};
 
     private static final Object appenderLock = new Object();
     public static boolean silent = false;
