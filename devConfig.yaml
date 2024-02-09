@@ -79,5 +79,5 @@ mysql_password: "root"
 # mysql_idle_connection_timeout:
 
 # (DIFFERENT_ACROSS_TENANTS | OPTIONAL | Default: 1) integer value. Minimum number of idle connections to be kept
-# active.
+# active. If not set, minimum idle connections will be same as the connection pool size.
 # mysql_minimum_idle_connections:
