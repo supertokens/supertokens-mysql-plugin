@@ -114,7 +114,7 @@ public class MySQLConfig {
 
     @JsonProperty
     @ConnectionPoolProperty
-    private int mysql_minimum_idle_connections = 1;
+    private Integer mysql_minimum_idle_connections = null;
 
     @IgnoreForAnnotationCheck
     boolean isValidAndNormalised = false;
@@ -240,7 +240,7 @@ public class MySQLConfig {
         return mysql_idle_connection_timeout;
     }
 
-    public int getMinimumIdleConnections() {
+    public Integer getMinimumIdleConnections() {
         return mysql_minimum_idle_connections;
     }
 
@@ -339,16 +339,20 @@ public class MySQLConfig {
                     "'mysql_connection_pool_size' in the config.yaml file must be > 0");
         }
 
-        if (mysql_minimum_idle_connections <= 0) {
-            throw new InvalidConfigException(
-                    "'postgresql_minimum_idle_connections' must be a positive value");
+        if (mysql_minimum_idle_connections != null) {
+            if (mysql_minimum_idle_connections < 0) {
+                throw new InvalidConfigException(
+                        "'postgresql_minimum_idle_connections' must be >= 0");
+            }
+
+            if (mysql_minimum_idle_connections > mysql_connection_pool_size) {
+                throw new InvalidConfigException(
+                        "'postgresql_minimum_idle_connections' must be less than or equal to "
+                                + "'postgresql_connection_pool_size'");
+            }
         }
 
-        if (mysql_minimum_idle_connections > mysql_connection_pool_size) {
-            throw new InvalidConfigException(
-                    "'postgresql_minimum_idle_connections' must be less than or equal to "
-                            + "'postgresql_connection_pool_size'");
-        }
+
 
         // Normalisation
         if (mysql_connection_uri != null) {

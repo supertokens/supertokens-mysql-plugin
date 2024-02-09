@@ -16,23 +16,7 @@
 
 package io.supertokens.storage.mysql.test;
 
-import com.google.gson.JsonObject;
-import io.supertokens.ProcessState;
-import io.supertokens.featureflag.EE_FEATURES;
-import io.supertokens.featureflag.FeatureFlagTestContent;
-import io.supertokens.multitenancy.Multitenancy;
-import io.supertokens.multitenancy.exception.BadPermissionException;
-import io.supertokens.pluginInterface.exceptions.StorageQueryException;
-import io.supertokens.pluginInterface.multitenancy.*;
-import io.supertokens.pluginInterface.multitenancy.exceptions.TenantOrAppNotFoundException;
-import io.supertokens.storage.mysql.Start;
-import io.supertokens.storageLayer.StorageLayer;
-import io.supertokens.thirdparty.ThirdParty;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TestRule;
+import static org.junit.Assert.*;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -40,7 +24,25 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static org.junit.Assert.*;
+import io.supertokens.pluginInterface.multitenancy.*;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TestRule;
+
+import com.google.gson.JsonObject;
+
+import io.supertokens.ProcessState;
+import io.supertokens.featureflag.EE_FEATURES;
+import io.supertokens.featureflag.FeatureFlagTestContent;
+import io.supertokens.multitenancy.Multitenancy;
+import io.supertokens.multitenancy.exception.BadPermissionException;
+import io.supertokens.pluginInterface.exceptions.StorageQueryException;
+import io.supertokens.pluginInterface.multitenancy.exceptions.TenantOrAppNotFoundException;
+import io.supertokens.storage.mysql.Start;
+import io.supertokens.storageLayer.StorageLayer;
+import io.supertokens.thirdparty.ThirdParty;
 
 public class DbConnectionPoolTest {
     @Rule
@@ -63,7 +65,6 @@ public class DbConnectionPoolTest {
         TestingProcessManager.TestingProcess process = TestingProcessManager.start(args, false);
         FeatureFlagTestContent.getInstance(process.getProcess())
                 .setKeyValue(FeatureFlagTestContent.ENABLED_FEATURES, new EE_FEATURES[]{EE_FEATURES.MULTI_TENANCY});
-        Utils.setValueInConfig("mysql_minimum_idle_connections", "10");
         process.startProcess();
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
 
@@ -87,7 +88,6 @@ public class DbConnectionPoolTest {
 
         // change connection pool size
         config.addProperty("mysql_connection_pool_size", 20);
-        config.addProperty("mysql_minimum_idle_connections", 20);
 
         Multitenancy.addNewOrUpdateAppOrTenant(process.getProcess(), new TenantConfig(
                 new TenantIdentifier(null, null, "t1"),
@@ -119,7 +119,6 @@ public class DbConnectionPoolTest {
             TestingProcessManager.TestingProcess process = TestingProcessManager.start(args, false);
             FeatureFlagTestContent.getInstance(process.getProcess())
                     .setKeyValue(FeatureFlagTestContent.ENABLED_FEATURES, new EE_FEATURES[]{EE_FEATURES.MULTI_TENANCY});
-            Utils.setValueInConfig("mysql_minimum_idle_connections", "10");
             process.startProcess();
             assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
 
@@ -129,7 +128,6 @@ public class DbConnectionPoolTest {
             JsonObject config = new JsonObject();
             start.modifyConfigToAddANewUserPoolForTesting(config, 1);
             config.addProperty("mysql_connection_pool_size", 300);
-            config.addProperty("mysql_minimum_idle_connections", 300);
             AtomicLong firstErrorTime = new AtomicLong(-1);
             AtomicLong successAfterErrorTime = new AtomicLong(-1);
             AtomicInteger errorCount = new AtomicInteger(0);
@@ -146,7 +144,7 @@ public class DbConnectionPoolTest {
 
             assertEquals(300, start.getDbActivityCount("st1"));
 
-            ExecutorService es = Executors.newFixedThreadPool(300);
+            ExecutorService es = Executors.newFixedThreadPool(100);
 
             for (int i = 0; i < 10000; i++) {
                 int finalI = i;
@@ -161,7 +159,7 @@ public class DbConnectionPoolTest {
                             successAfterErrorTime.set(System.currentTimeMillis());
                         }
                     } catch (StorageQueryException e) {
-                        if (e.getMessage().contains("called on closed connection") || e.getMessage().contains("Connection is closed")) {
+                        if (e.getMessage().contains("Connection is closed") || e.getMessage().contains("has been closed")) {
                             if (firstErrorTime.get() == -1) {
                                 firstErrorTime.set(System.currentTimeMillis());
                             }
@@ -190,7 +188,6 @@ public class DbConnectionPoolTest {
 
             // change connection pool size
             config.addProperty("mysql_connection_pool_size", 200);
-            config.addProperty("mysql_minimum_idle_connections", 200);
 
             Multitenancy.addNewOrUpdateAppOrTenant(process.getProcess(), new TenantConfig(
                     new TenantIdentifier(null, null, "t1"),
@@ -221,14 +218,13 @@ public class DbConnectionPoolTest {
             if (successAfterErrorTime.get() - firstErrorTime.get() == 0) {
                 process.kill();
                 assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
-
                 continue; // retry
             }
 
             assertTrue(successAfterErrorTime.get() - firstErrorTime.get() > 0);
-
             process.kill();
             assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
+
             return;
         }
 
@@ -266,7 +262,6 @@ public class DbConnectionPoolTest {
         TestingProcessManager.TestingProcess process = TestingProcessManager.start(args, false);
         FeatureFlagTestContent.getInstance(process.getProcess())
                 .setKeyValue(FeatureFlagTestContent.ENABLED_FEATURES, new EE_FEATURES[]{EE_FEATURES.MULTI_TENANCY});
-        Utils.setValueInConfig("mysql_minimum_idle_connections", "10");
         process.startProcess();
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
 
@@ -321,7 +316,6 @@ public class DbConnectionPoolTest {
         TestingProcessManager.TestingProcess process = TestingProcessManager.start(args, false);
         FeatureFlagTestContent.getInstance(process.getProcess())
                 .setKeyValue(FeatureFlagTestContent.ENABLED_FEATURES, new EE_FEATURES[]{EE_FEATURES.MULTI_TENANCY});
-        Utils.setValueInConfig("mysql_minimum_idle_connections", "10");
         process.startProcess();
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
 
