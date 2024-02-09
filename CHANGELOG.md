@@ -11,6 +11,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - Fixes the issue where passwords were inadvertently logged in the logs.
 - Adds tests to check connection pool behaviour.
+- Adds `mysql_idle_connection_timeout` and `mysql_minimum_idle_connections` configs to control active connections to the database.
 
 ## [5.0.5] - 2023-12-06
 
