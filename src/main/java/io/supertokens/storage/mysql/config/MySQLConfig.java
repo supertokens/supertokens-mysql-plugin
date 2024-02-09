@@ -342,13 +342,13 @@ public class MySQLConfig {
         if (mysql_minimum_idle_connections != null) {
             if (mysql_minimum_idle_connections < 0) {
                 throw new InvalidConfigException(
-                        "'postgresql_minimum_idle_connections' must be a >= 0");
+                        "'mysql_minimum_idle_connections' must be a >= 0");
             }
     
             if (mysql_minimum_idle_connections > mysql_connection_pool_size) {
                 throw new InvalidConfigException(
-                        "'postgresql_minimum_idle_connections' must be less than or equal to "
-                                + "'postgresql_connection_pool_size'");
+                        "'mysql_minimum_idle_connections' must be less than or equal to "
+                                + "'mysql_connection_pool_size'");
             }
         }
 
