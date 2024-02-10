@@ -21,6 +21,7 @@ import ch.qos.logback.classic.Logger;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import com.zaxxer.hikari.pool.HikariPool;
+
 import io.supertokens.pluginInterface.*;
 import io.supertokens.pluginInterface.authRecipe.AuthRecipeUserInfo;
 import io.supertokens.pluginInterface.dashboard.DashboardSearchTags;
@@ -99,6 +100,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
+import static io.supertokens.storage.mysql.QueryExecutorTemplate.execute;
+
 public class Start
         implements SessionSQLStorage, EmailPasswordSQLStorage, EmailVerificationSQLStorage, ThirdPartySQLStorage,
         JWTRecipeSQLStorage, PasswordlessSQLStorage, UserMetadataSQLStorage, UserRolesSQLStorage, UserIdMappingStorage,
@@ -108,7 +111,7 @@ public class Start
     // SaaS. If the core is not running in SuperTokens SaaS, this array has no effect.
     private static final String[] PROTECTED_DB_CONFIG = new String[]{"mysql_connection_pool_size",
             "mysql_connection_uri", "mysql_host", "mysql_port", "mysql_user", "mysql_password",
-            "mysql_database_name"};
+            "mysql_database_name", "mysql_idle_connection_timeout", "mysql_minimum_idle_connections"};
 
     private static final Object appenderLock = new Object();
     public static boolean silent = false;
@@ -2765,5 +2768,18 @@ public class Start
     public static void setEnableForDeadlockTesting(boolean value) {
         assert(isTesting);
         enableForDeadlockTesting = value;
+    }
+
+    @TestOnly
+    public int getDbActivityCount(String dbname) throws SQLException, StorageQueryException {
+        String QUERY = "SELECT COUNT(*) as c FROM information_schema.processlist WHERE DB = ?;";
+        return execute(this, QUERY, pst -> {
+            pst.setString(1, dbname);
+        }, result -> {
+            if (result.next()) {
+                return result.getInt("c");
+            }
+            return -1;
+        });
     }
 }
