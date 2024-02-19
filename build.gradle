@@ -35,7 +35,7 @@ dependencies {
     compileOnly group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version: '2.14.0'
 
     // https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-core
-    compileOnly group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.14.0'
+    compileOnly group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.16.1'
 
     testImplementation 'junit:junit:4.12'
 
@@ -57,7 +57,7 @@ dependencies {
     testImplementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version: '2.14.0'
 
     // https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-core
-    testImplementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.14.0'
+    testImplementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.16.1'
 }
 
 jar {
