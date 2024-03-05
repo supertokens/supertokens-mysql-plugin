@@ -103,6 +103,7 @@ import java.util.List;
 import java.util.Set;
 
 import static io.supertokens.storage.mysql.QueryExecutorTemplate.execute;
+import static io.supertokens.storage.mysql.QueryExecutorTemplate.update;
 
 
 public class Start
@@ -1872,7 +1873,7 @@ public class Start
 
     @Override
     public void addRoleToUser(TenantIdentifier tenantIdentifier, String userId, String role)
-            throws StorageQueryException, UnknownRoleException, DuplicateUserRoleMappingException,
+            throws StorageQueryException, DuplicateUserRoleMappingException,
             TenantOrAppNotFoundException {
         try {
             UserRolesQueries.addRoleToUser(this, tenantIdentifier, userId, role);
@@ -1881,9 +1882,6 @@ public class Start
                 MySQLConfig config = Config.getConfig(this);
                 String serverErrorMessage = e.getMessage();
 
-                if (isForeignKeyConstraintError(serverErrorMessage, config.getUserRolesTable(), "role")) {
-                    throw new UnknownRoleException();
-                }
                 if (isPrimaryKeyError(serverErrorMessage, config.getUserRolesTable())) {
                     throw new DuplicateUserRoleMappingException();
                 }
@@ -1949,6 +1947,16 @@ public class Start
     public boolean deleteRole(AppIdentifier appIdentifier, String role) throws StorageQueryException {
         try {
             return UserRolesQueries.deleteRole(this, appIdentifier, role);
+        } catch (SQLException e) {
+            throw new StorageQueryException(e);
+        }
+    }
+
+    @Override
+    public boolean deleteAllUserRoleAssociationsForRole(AppIdentifier appIdentifier, String role)
+            throws StorageQueryException {
+        try {
+            return UserRolesQueries.deleteAllUserRoleAssociationsForRole(this, appIdentifier, role);
         } catch (SQLException e) {
             throw new StorageQueryException(e);
         }
@@ -2946,5 +2954,15 @@ public class Start
             }
             return -1;
         });
+    }
+
+    public static boolean deleteAllUserRoleAssociationsForRole(Start start, AppIdentifier appIdentifier, String role)
+            throws SQLException, StorageQueryException {
+        String QUERY = "DELETE FROM " + Config.getConfig(start).getUserRolesTable()
+                + " WHERE app_id = ? AND role = ? ;";
+        return update(start, QUERY, pst -> {
+            pst.setString(1, appIdentifier.getAppId());
+            pst.setString(2, role);
+        }) >= 1;
     }
 }
