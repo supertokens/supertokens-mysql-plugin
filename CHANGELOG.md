@@ -7,6 +7,21 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [6.0.0] - 2024-03-05
+
+- Implements `deleteAllUserRoleAssociationsForRole`
+- Drops `(app_id, role)` foreign key constraint on `user_roles` table
+
+### Migration
+
+```sql
+ALTER TABLE user_roles DROP FOREIGN KEY user_roles_ibfk_1;
+ALTER TABLE user_roles DROP FOREIGN KEY user_roles_ibfk_2;
+ALTER TABLE user_roles
+  ADD FOREIGN KEY (app_id, tenant_id)
+    REFERENCES tenants (app_id, tenant_id) ON DELETE CASCADE;
+```
+
 ## [5.0.7] - 2024-02-19
 
 - Fixes vulnerabilities in dependencies
