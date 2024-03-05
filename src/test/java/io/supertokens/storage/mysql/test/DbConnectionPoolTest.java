@@ -23,6 +23,7 @@ import io.supertokens.featureflag.EE_FEATURES;
 import io.supertokens.featureflag.FeatureFlagTestContent;
 import io.supertokens.multitenancy.Multitenancy;
 import io.supertokens.multitenancy.exception.BadPermissionException;
+import io.supertokens.pluginInterface.Storage;
 import io.supertokens.pluginInterface.exceptions.StorageQueryException;
 import io.supertokens.pluginInterface.multitenancy.*;
 import io.supertokens.pluginInterface.multitenancy.exceptions.TenantOrAppNotFoundException;
@@ -150,8 +151,8 @@ public class DbConnectionPoolTest {
                 es.execute(() -> {
                     try {
                         TenantIdentifier t1 = new TenantIdentifier(null, null, "t1");
-                        TenantIdentifierWithStorage t1WithStorage = t1.withStorage(StorageLayer.getStorage(t1, process.getProcess()));
-                        ThirdParty.signInUp(t1WithStorage, process.getProcess(), "google", "googleid"+ finalI, "user" +
+                        Storage t1Storage = (StorageLayer.getStorage(t1, process.getProcess()));
+                        ThirdParty.signInUp(t1, t1Storage, process.getProcess(), "google", "googleid"+ finalI, "user" +
                                 finalI + "@example.com");
 
                         if (firstErrorTime.get() != -1 && successAfterErrorTime.get() == -1) {
@@ -352,8 +353,8 @@ public class DbConnectionPoolTest {
             es.execute(() -> {
                 try {
                     TenantIdentifier t1 = new TenantIdentifier(null, null, "t1");
-                    TenantIdentifierWithStorage t1WithStorage = t1.withStorage(StorageLayer.getStorage(t1, process.getProcess()));
-                    ThirdParty.signInUp(t1WithStorage, process.getProcess(), "google", "googleid"+ finalI, "user" +
+                    Storage t1Storage = (StorageLayer.getStorage(t1, process.getProcess()));
+                    ThirdParty.signInUp(t1, t1Storage, process.getProcess(), "google", "googleid"+ finalI, "user" +
                             finalI + "@example.com");
 
                 } catch (StorageQueryException e) {
