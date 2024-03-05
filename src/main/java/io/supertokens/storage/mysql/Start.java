@@ -2955,14 +2955,4 @@ public class Start
             return -1;
         });
     }
-
-    public static boolean deleteAllUserRoleAssociationsForRole(Start start, AppIdentifier appIdentifier, String role)
-            throws SQLException, StorageQueryException {
-        String QUERY = "DELETE FROM " + Config.getConfig(start).getUserRolesTable()
-                + " WHERE app_id = ? AND role = ? ;";
-        return update(start, QUERY, pst -> {
-            pst.setString(1, appIdentifier.getAppId());
-            pst.setString(2, role);
-        }) >= 1;
-    }
 }
