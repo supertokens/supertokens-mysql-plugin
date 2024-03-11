@@ -81,6 +81,10 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
         }
         config.setMaximumPoolSize(userConfig.getConnectionPoolSize());
         config.setConnectionTimeout(5000);
+        if (userConfig.getMinimumIdleConnections() != null) {
+            config.setMinimumIdle(userConfig.getMinimumIdleConnections());
+            config.setIdleTimeout(userConfig.getIdleConnectionTimeout());
+        }
         config.addDataSourceProperty("cachePrepStmts", "true");
         config.addDataSourceProperty("prepStmtCacheSize", "250");
         config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
@@ -129,7 +133,7 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
     }
 
     static void initPool(Start start, boolean shouldWait) throws DbInitException, SQLException {
-		if (isAlreadyInitialised(start)) {
+        if (isAlreadyInitialised(start)) {
             return;
         }
         Logging.info(start, "Setting up MySQL connection pool.", true);

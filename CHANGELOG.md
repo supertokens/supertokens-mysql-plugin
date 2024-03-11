@@ -11,6 +11,31 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - This enables smooth switching between `useDynamicAccessTokenSigningKey` settings by allowing refresh calls to
     change the signing key type of a session
 
+## [6.0.0] - 2024-03-05
+
+- Implements `deleteAllUserRoleAssociationsForRole`
+- Drops `(app_id, role)` foreign key constraint on `user_roles` table
+
+### Migration
+
+```sql
+ALTER TABLE user_roles DROP FOREIGN KEY user_roles_ibfk_1;
+ALTER TABLE user_roles DROP FOREIGN KEY user_roles_ibfk_2;
+ALTER TABLE user_roles
+  ADD FOREIGN KEY (app_id, tenant_id)
+    REFERENCES tenants (app_id, tenant_id) ON DELETE CASCADE;
+```
+
+## [5.0.7] - 2024-02-19
+
+- Fixes vulnerabilities in dependencies
+
+## [5.0.6] - 2024-01-25
+
+- Fixes the issue where passwords were inadvertently logged in the logs.
+- Adds tests to check connection pool behaviour.
+- Adds `mysql_idle_connection_timeout` and `mysql_minimum_idle_connections` configs to control active connections to the database.
+
 ## [5.0.5] - 2023-12-06
 
 - Validates db config types in `canBeUsed` function
