@@ -37,10 +37,10 @@ public class Logging extends ResourceDistributor.SingletonResource {
 
     private Logging(Start start, String infoLogPath, String errorLogPath) {
         this.infoLogger = infoLogPath.equals("null")
-                ? createLoggerForConsole(start, "io.supertokens.storage.mysql.Info")
+                ? createLoggerForConsole(start, "io.supertokens.storage.mysql.Info", LOG_LEVEL.INFO)
                 : createLoggerForFile(start, infoLogPath, "io.supertokens.storage.mysql.Info");
         this.errorLogger = errorLogPath.equals("null")
-                ? createLoggerForConsole(start, "io.supertokens.storage.mysql.Error")
+                ? createLoggerForConsole(start, "io.supertokens.storage.mysql.Error", LOG_LEVEL.ERROR)
                 : createLoggerForFile(start, errorLogPath, "io.supertokens.storage.mysql.Error");
     }
 
@@ -154,12 +154,12 @@ public class Logging extends ResourceDistributor.SingletonResource {
 
     private static void systemOut(String msg) {
         if (!Start.silent) {
-            System.out.println(msg);
+            System.out.println(Utils.maskDBPassword(msg));
         }
     }
 
     private static void systemErr(String err) {
-        System.err.println(err);
+        System.err.println(Utils.maskDBPassword(err));
     }
 
     public static void stopLogging(Start start) {
@@ -198,7 +198,7 @@ public class Logging extends ResourceDistributor.SingletonResource {
         return logger;
     }
 
-    private Logger createLoggerForConsole(Start start, String name) {
+    private Logger createLoggerForConsole(Start start, String name, LOG_LEVEL logLevel) {
         Logger logger = (Logger) LoggerFactory.getLogger(name);
 
         // We don't need to add appender if it is already added
@@ -211,6 +211,7 @@ public class Logging extends ResourceDistributor.SingletonResource {
         ple.setContext(lc);
         ple.start();
         ConsoleAppender<ILoggingEvent> logConsoleAppender = new ConsoleAppender<>();
+        logConsoleAppender.setTarget(logLevel == LOG_LEVEL.ERROR ? "System.err" : "System.out");
         logConsoleAppender.setEncoder(ple);
         logConsoleAppender.setContext(lc);
         logConsoleAppender.start();

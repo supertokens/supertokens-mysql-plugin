@@ -102,6 +102,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
+import static io.supertokens.storage.mysql.QueryExecutorTemplate.execute;
+import static io.supertokens.storage.mysql.QueryExecutorTemplate.update;
+
+
 public class Start
         implements SessionSQLStorage, EmailPasswordSQLStorage, EmailVerificationSQLStorage, ThirdPartySQLStorage,
         JWTRecipeSQLStorage, PasswordlessSQLStorage, UserMetadataSQLStorage, UserRolesSQLStorage, UserIdMappingStorage,
@@ -112,7 +116,7 @@ public class Start
     // SaaS. If the core is not running in SuperTokens SaaS, this array has no effect.
     private static final String[] PROTECTED_DB_CONFIG = new String[]{"mysql_connection_pool_size",
             "mysql_connection_uri", "mysql_host", "mysql_port", "mysql_user", "mysql_password",
-            "mysql_database_name"};
+            "mysql_database_name", "mysql_idle_connection_timeout", "mysql_minimum_idle_connections"};
 
     private static final Object appenderLock = new Object();
     public static boolean silent = false;
@@ -1851,7 +1855,7 @@ public class Start
 
     @Override
     public void addRoleToUser(TenantIdentifier tenantIdentifier, String userId, String role)
-            throws StorageQueryException, UnknownRoleException, DuplicateUserRoleMappingException,
+            throws StorageQueryException, DuplicateUserRoleMappingException,
             TenantOrAppNotFoundException {
         try {
             UserRolesQueries.addRoleToUser(this, tenantIdentifier, userId, role);
@@ -1860,9 +1864,6 @@ public class Start
                 MySQLConfig config = Config.getConfig(this);
                 String serverErrorMessage = e.getMessage();
 
-                if (isForeignKeyConstraintError(serverErrorMessage, config.getUserRolesTable(), "role")) {
-                    throw new UnknownRoleException();
-                }
                 if (isPrimaryKeyError(serverErrorMessage, config.getUserRolesTable())) {
                     throw new DuplicateUserRoleMappingException();
                 }
@@ -1928,6 +1929,16 @@ public class Start
     public boolean deleteRole(AppIdentifier appIdentifier, String role) throws StorageQueryException {
         try {
             return UserRolesQueries.deleteRole(this, appIdentifier, role);
+        } catch (SQLException e) {
+            throw new StorageQueryException(e);
+        }
+    }
+
+    @Override
+    public boolean deleteAllUserRoleAssociationsForRole(AppIdentifier appIdentifier, String role)
+            throws StorageQueryException {
+        try {
+            return UserRolesQueries.deleteAllUserRoleAssociationsForRole(this, appIdentifier, role);
         } catch (SQLException e) {
             throw new StorageQueryException(e);
         }
@@ -2965,5 +2976,18 @@ public class Start
     public static void setEnableForDeadlockTesting(boolean value) {
         assert(isTesting);
         enableForDeadlockTesting = value;
+    }
+
+    @TestOnly
+    public int getDbActivityCount(String dbname) throws SQLException, StorageQueryException {
+        String QUERY = "SELECT COUNT(*) as c FROM information_schema.processlist WHERE DB = ?;";
+        return execute(this, QUERY, pst -> {
+            pst.setString(1, dbname);
+        }, result -> {
+            if (result.next()) {
+                return result.getInt("c");
+            }
+            return -1;
+        });
     }
 }

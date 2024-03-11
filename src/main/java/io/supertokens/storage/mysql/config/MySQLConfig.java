@@ -108,6 +108,14 @@ public class MySQLConfig {
     @ConnectionPoolProperty
     private String mysql_connection_scheme = "mysql";
 
+    @JsonProperty
+    @ConnectionPoolProperty
+    private long mysql_idle_connection_timeout = 60000;
+
+    @JsonProperty
+    @ConnectionPoolProperty
+    private Integer mysql_minimum_idle_connections = null;
+
     @IgnoreForAnnotationCheck
     boolean isValidAndNormalised = false;
 
@@ -236,6 +244,14 @@ public class MySQLConfig {
         return mysql_thirdparty_users_table_name;
     }
 
+    public long getIdleConnectionTimeout() {
+        return mysql_idle_connection_timeout;
+    }
+
+    public Integer getMinimumIdleConnections() {
+        return mysql_minimum_idle_connections;
+    }
+
     public String getThirdPartyUserToTenantTable() {
         return addPrefixToTableName("thirdparty_user_to_tenant");
     }
@@ -329,6 +345,19 @@ public class MySQLConfig {
         if (mysql_connection_pool_size <= 0) {
             throw new InvalidConfigException(
                     "'mysql_connection_pool_size' in the config.yaml file must be > 0");
+        }
+
+        if (mysql_minimum_idle_connections != null) {
+            if (mysql_minimum_idle_connections < 0) {
+                throw new InvalidConfigException(
+                        "'mysql_minimum_idle_connections' must be a >= 0");
+            }
+    
+            if (mysql_minimum_idle_connections > mysql_connection_pool_size) {
+                throw new InvalidConfigException(
+                        "'mysql_minimum_idle_connections' must be less than or equal to "
+                                + "'mysql_connection_pool_size'");
+            }
         }
 
         // Normalisation
@@ -517,10 +546,18 @@ public class MySQLConfig {
         StringBuilder connectionPoolId = new StringBuilder();
         for (Field field : MySQLConfig.class.getDeclaredFields()) {
             if (field.isAnnotationPresent(ConnectionPoolProperty.class)) {
-                connectionPoolId.append("|");
                 try {
-                    if (field.get(this) != null) {
-                        connectionPoolId.append(field.get(this).toString());
+                    String fieldName = field.getName();
+                    String fieldValue = field.get(this) != null ? field.get(this).toString() : null;
+                    if(fieldValue == null) {
+                        continue;
+                    }
+                    // To ensure a unique connectionPoolId we include the database password and use the "|db_pass|" identifier.
+                    // This facilitates easy removal of the password from logs when necessary.
+                    if (fieldName.equals("mysql_password")) {
+                        connectionPoolId.append("|db_pass|" + fieldValue + "|db_pass");
+                    } else {
+                        connectionPoolId.append("|" + fieldValue);
                     }
                 } catch (IllegalAccessException e) {
                     throw new RuntimeException(e);
