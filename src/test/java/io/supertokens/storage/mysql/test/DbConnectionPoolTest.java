@@ -79,7 +79,7 @@ public class DbConnectionPoolTest {
                 new EmailPasswordConfig(true),
                 new ThirdPartyConfig(true, null),
                 new PasswordlessConfig(true),
-                config
+                null, null, config
         ), false);
 
         Thread.sleep(1000); // let the new tenant be ready
@@ -94,7 +94,7 @@ public class DbConnectionPoolTest {
                 new EmailPasswordConfig(true),
                 new ThirdPartyConfig(true, null),
                 new PasswordlessConfig(true),
-                config
+                null, null, config
         ), false);
 
         Thread.sleep(2000); // let the new tenant be ready
@@ -137,7 +137,7 @@ public class DbConnectionPoolTest {
                     new EmailPasswordConfig(true),
                     new ThirdPartyConfig(true, null),
                     new PasswordlessConfig(true),
-                    config
+                    null, null, config
             ), false);
 
             Thread.sleep(5000); // let the new tenant be ready
@@ -197,7 +197,7 @@ public class DbConnectionPoolTest {
                     new EmailPasswordConfig(true),
                     new ThirdPartyConfig(true, null),
                     new PasswordlessConfig(true),
-                    config
+                    null, null, config
             ), false);
 
             Thread.sleep(3000); // let the new tenant be ready
@@ -280,7 +280,7 @@ public class DbConnectionPoolTest {
                 new EmailPasswordConfig(true),
                 new ThirdPartyConfig(true, null),
                 new PasswordlessConfig(true),
-                config
+                null, null, config
         ), false);
 
         Thread.sleep(1000); // let the new tenant be ready
@@ -296,7 +296,7 @@ public class DbConnectionPoolTest {
                 new EmailPasswordConfig(true),
                 new ThirdPartyConfig(true, null),
                 new PasswordlessConfig(true),
-                config
+                null, null, config
         ), false);
 
         Thread.sleep(2000); // let the new tenant be ready
@@ -339,7 +339,7 @@ public class DbConnectionPoolTest {
                 new EmailPasswordConfig(true),
                 new ThirdPartyConfig(true, null),
                 new PasswordlessConfig(true),
-                config
+                null, null, config
         ), false);
 
         Thread.sleep(3000); // let the new tenant be ready
