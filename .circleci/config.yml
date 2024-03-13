@@ -136,7 +136,13 @@ jobs:
           name: running tests
           command: (cd .circleci/ && ./doOneMillionUsersTests.sh)
       - slack/status
-
+  mark-passed:
+    docker:
+      - image: rishabhpoddar/supertokens_mysql_plugin_test
+    steps:
+      - checkout
+      - run: (cd .circleci && ./markPassed.sh)
+      - slack/status
 workflows:
   version: 2
   tagged-build:
