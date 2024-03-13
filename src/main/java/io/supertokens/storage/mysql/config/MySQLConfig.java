@@ -184,6 +184,14 @@ public class MySQLConfig {
         return addPrefixToTableName("tenant_configs");
     }
 
+    public String getTenantFirstFactorsTable() {
+        return addPrefixToTableName("tenant_first_factors");
+    }
+
+    public String getTenantRequiredSecondaryFactorsTable() {
+        return addPrefixToTableName("tenant_required_secondary_factors");
+    }
+
     public String getTenantThirdPartyProvidersTable() {
         return addPrefixToTableName("tenant_thirdparty_providers");
     }

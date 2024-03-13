@@ -112,6 +112,7 @@ public class StorageLayerTest {
                 new TenantConfig(new TenantIdentifier("abc", null, null), new EmailPasswordConfig(false),
                         new ThirdPartyConfig(false, new ThirdPartyConfig.Provider[0]),
                         new PasswordlessConfig(false),
+                        null, null,
                         tenantConfig)};
 
         Config.loadAllTenantConfig(process.getProcess(), tenants);
@@ -156,6 +157,7 @@ public class StorageLayerTest {
                 new TenantConfig(new TenantIdentifier(null, "abc", null), new EmailPasswordConfig(false),
                         new ThirdPartyConfig(false, new ThirdPartyConfig.Provider[0]),
                         new PasswordlessConfig(false),
+                        null, null,
                         tenantConfig)};
 
         Config.loadAllTenantConfig(process.getProcess(), tenants);
@@ -203,14 +205,17 @@ public class StorageLayerTest {
                 new TenantConfig(new TenantIdentifier(null, "abc", null), new EmailPasswordConfig(false),
                         new ThirdPartyConfig(false, new ThirdPartyConfig.Provider[0]),
                         new PasswordlessConfig(false),
+                        null, null,
                         tenantConfig),
                 new TenantConfig(new TenantIdentifier(null, "abc", "t1"), new EmailPasswordConfig(false),
                         new ThirdPartyConfig(false, new ThirdPartyConfig.Provider[0]),
                         new PasswordlessConfig(false),
+                        null, null,
                         tenantConfig1),
                 new TenantConfig(new TenantIdentifier(null, null, "t2"), new EmailPasswordConfig(false),
                         new ThirdPartyConfig(false, new ThirdPartyConfig.Provider[0]),
                         new PasswordlessConfig(false),
+                        null, null,
                         tenantConfig1)};
 
         Config.loadAllTenantConfig(process.getProcess(), tenants);
@@ -275,6 +280,7 @@ public class StorageLayerTest {
                     new TenantConfig(new TenantIdentifier("abc", null, null), new EmailPasswordConfig(false),
                             new ThirdPartyConfig(false, new ThirdPartyConfig.Provider[0]),
                             new PasswordlessConfig(false),
+                            null, null,
                             tenantConfig)};
             Config.loadAllTenantConfig(process.getProcess(), tenants);
 
@@ -308,6 +314,7 @@ public class StorageLayerTest {
                     new TenantConfig(new TenantIdentifier(null, "abc", null), new EmailPasswordConfig(false),
                             new ThirdPartyConfig(false, new ThirdPartyConfig.Provider[0]),
                             new PasswordlessConfig(false),
+                            null, null,
                             tenantConfig)};
             Config.loadAllTenantConfig(process.getProcess(), tenants);
 
@@ -342,6 +349,7 @@ public class StorageLayerTest {
                     new TenantConfig(new TenantIdentifier(null, "abc", null), new EmailPasswordConfig(false),
                             new ThirdPartyConfig(false, new ThirdPartyConfig.Provider[0]),
                             new PasswordlessConfig(false),
+                            null, null,
                             tenantConfig)};
             Config.loadAllTenantConfig(process.getProcess(), tenants);
 
@@ -377,6 +385,7 @@ public class StorageLayerTest {
                 new TenantConfig(new TenantIdentifier("abc", null, null), new EmailPasswordConfig(false),
                         new ThirdPartyConfig(false, new ThirdPartyConfig.Provider[0]),
                         new PasswordlessConfig(false),
+                        null, null,
                         tenantConfig)};
         Config.loadAllTenantConfig(process.getProcess(), tenants);
 
@@ -421,6 +430,7 @@ public class StorageLayerTest {
                 new TenantConfig(new TenantIdentifier(null, "abc", null), new EmailPasswordConfig(false),
                         new ThirdPartyConfig(false, new ThirdPartyConfig.Provider[0]),
                         new PasswordlessConfig(false),
+                        null, null,
                         tenantConfig)};
 
         Config.loadAllTenantConfig(process.getProcess(), tenants);
@@ -468,6 +478,7 @@ public class StorageLayerTest {
             tenants[0] = new TenantConfig(new TenantIdentifier("c1", null, null), new EmailPasswordConfig(false),
                     new ThirdPartyConfig(false, new ThirdPartyConfig.Provider[0]),
                     new PasswordlessConfig(false),
+                    null, null,
                     tenantConfig);
         }
 
@@ -479,6 +490,7 @@ public class StorageLayerTest {
             tenants[1] = new TenantConfig(new TenantIdentifier("c1", null, "t1"), new EmailPasswordConfig(false),
                     new ThirdPartyConfig(false, new ThirdPartyConfig.Provider[0]),
                     new PasswordlessConfig(false),
+                    null, null,
                     tenantConfig);
         }
 
@@ -488,6 +500,7 @@ public class StorageLayerTest {
             tenants[2] = new TenantConfig(new TenantIdentifier(null, null, "t2"), new EmailPasswordConfig(false),
                     new ThirdPartyConfig(false, new ThirdPartyConfig.Provider[0]),
                     new PasswordlessConfig(false),
+                    null, null,
                     tenantConfig);
         }
 
@@ -497,6 +510,7 @@ public class StorageLayerTest {
             tenants[3] = new TenantConfig(new TenantIdentifier(null, null, "t1"), new EmailPasswordConfig(false),
                     new ThirdPartyConfig(false, new ThirdPartyConfig.Provider[0]),
                     new PasswordlessConfig(false),
+                    null, null,
                     tenantConfig);
         }
 
@@ -558,6 +572,7 @@ public class StorageLayerTest {
                 new TenantConfig(new TenantIdentifier(null, "abc", null), new EmailPasswordConfig(false),
                         new ThirdPartyConfig(false, new ThirdPartyConfig.Provider[0]),
                         new PasswordlessConfig(false),
+                        null, null,
                         tenantConfig)};
         Config.loadAllTenantConfig(process.getProcess(), tenants);
 
@@ -593,6 +608,7 @@ public class StorageLayerTest {
                 new TenantConfig(new TenantIdentifier(null, "abc", null), new EmailPasswordConfig(false),
                         new ThirdPartyConfig(false, new ThirdPartyConfig.Provider[0]),
                         new PasswordlessConfig(false),
+                        null, null,
                         tenantConfig)};
         Config.loadAllTenantConfig(process.getProcess(), tenants);
 
@@ -632,6 +648,7 @@ public class StorageLayerTest {
                         new EmailPasswordConfig(false),
                         new ThirdPartyConfig(false, new ThirdPartyConfig.Provider[0]),
                         new PasswordlessConfig(false),
+                        null, null,
                         config);
                 try {
                     Multitenancy.addNewOrUpdateAppOrTenant(process.getProcess(), new TenantIdentifier(null, null, null),
@@ -685,6 +702,7 @@ public class StorageLayerTest {
                 new EmailPasswordConfig(false),
                 new ThirdPartyConfig(false, new ThirdPartyConfig.Provider[0]),
                 new PasswordlessConfig(false),
+                null, null,
                 tenantConfigJson);
 
         try {
@@ -723,6 +741,7 @@ public class StorageLayerTest {
                     new EmailPasswordConfig(true),
                     new ThirdPartyConfig(false, new ThirdPartyConfig.Provider[0]),
                     new PasswordlessConfig(false),
+                    null, null,
                     tenantConfigJson);
 
             StorageLayer.getMultitenancyStorage(process.getProcess()).createTenant(tenantConfig);
@@ -794,6 +813,7 @@ public class StorageLayerTest {
                 new EmailPasswordConfig(false),
                 new ThirdPartyConfig(false, new ThirdPartyConfig.Provider[0]),
                 new PasswordlessConfig(false),
+                null, null,
                 tenantConfigJson);
 
         try {

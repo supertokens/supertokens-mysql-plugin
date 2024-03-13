@@ -105,7 +105,7 @@ public class SuperTokensSaaSSecretTest {
                 Multitenancy.addNewOrUpdateAppOrTenant(process.main, new TenantConfig(new TenantIdentifier(null, null, "t1"), new EmailPasswordConfig(false),
                         new ThirdPartyConfig(false, new ThirdPartyConfig.Provider[0]),
                         new PasswordlessConfig(false),
-                        j), true);
+                        null, null, j), true);
                 fail();
             } catch (BadPermissionException e) {
                 assertEquals(e.getMessage(), "Not allowed to modify DB related configs.");
@@ -191,7 +191,7 @@ public class SuperTokensSaaSSecretTest {
                     new TenantConfig(new TenantIdentifier(null, null, "t" + i), new EmailPasswordConfig(false),
                             new ThirdPartyConfig(false, new ThirdPartyConfig.Provider[0]),
                             new PasswordlessConfig(false),
-                            j));
+                            null, null, j));
 
             {
                 JsonObject response = HttpRequestForTesting.sendJsonRequest(process.getProcess(), "",

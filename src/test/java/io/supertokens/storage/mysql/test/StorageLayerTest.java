@@ -16,7 +16,7 @@ import io.supertokens.pluginInterface.multitenancy.TenantIdentifier;
 import io.supertokens.pluginInterface.multitenancy.exceptions.TenantOrAppNotFoundException;
 import io.supertokens.pluginInterface.totp.TOTPDevice;
 import io.supertokens.pluginInterface.totp.TOTPUsedCode;
-import io.supertokens.pluginInterface.totp.exception.TotpNotEnabledException;
+import io.supertokens.pluginInterface.totp.exception.UnknownTotpUserIdException;
 import io.supertokens.pluginInterface.totp.exception.UsedCodeAlreadyExistsException;
 import io.supertokens.pluginInterface.totp.sqlStorage.TOTPSQLStorage;
 import io.supertokens.storageLayer.StorageLayer;
@@ -54,13 +54,13 @@ public class StorageLayerTest {
                     storage.insertUsedCode_Transaction(con, TenantIdentifier.BASE_TENANT, usedCode);
                     storage.commitTransaction(con);
                     return null;
-                } catch (TotpNotEnabledException | UsedCodeAlreadyExistsException | TenantOrAppNotFoundException e) {
+                } catch (UnknownTotpUserIdException | UsedCodeAlreadyExistsException | TenantOrAppNotFoundException e) {
                     throw new StorageTransactionLogicException(e);
                 }
             });
         } catch (StorageTransactionLogicException e) {
             Exception actual = e.actualException;
-            if (actual instanceof TotpNotEnabledException || actual instanceof UsedCodeAlreadyExistsException) {
+            if (actual instanceof UnknownTotpUserIdException || actual instanceof UsedCodeAlreadyExistsException) {
                 throw actual;
             } else {
                 throw e;
@@ -82,7 +82,7 @@ public class StorageLayerTest {
         long now = System.currentTimeMillis();
         long nextDay = now + 1000 * 60 * 60 * 24; // 1 day from now
 
-        TOTPDevice d1 = new TOTPDevice("user", "d1", "secret", 30, 1, false);
+        TOTPDevice d1 = new TOTPDevice("user", "d1", "secret", 30, 1, false, System.currentTimeMillis());
         storage.createDevice(TenantIdentifier.BASE_TENANT.toAppIdentifier(), d1);
 
         // Try code with length > 8

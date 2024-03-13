@@ -37,13 +37,17 @@ import static io.supertokens.storage.mysql.config.Config.getConfig;
 public class TenantConfigSQLHelper {
     public static class TenantConfigRowMapper implements RowMapper<TenantConfig, ResultSet> {
         ThirdPartyConfig.Provider[] providers;
+        String[] firstFactors;
+        String[] requiredSecondaryFactors;
 
-        private TenantConfigRowMapper(ThirdPartyConfig.Provider[] providers) {
+        private TenantConfigRowMapper(ThirdPartyConfig.Provider[] providers, String[] firstFactors, String[] requiredSecondaryFactors) {
             this.providers = providers;
+            this.firstFactors = firstFactors;
+            this.requiredSecondaryFactors = requiredSecondaryFactors;
         }
 
-        public static TenantConfigRowMapper getInstance(ThirdPartyConfig.Provider[] providers) {
-            return new TenantConfigRowMapper(providers);
+        public static TenantConfigRowMapper getInstance(ThirdPartyConfig.Provider[] providers, String[] firstFactors, String[] requiredSecondaryFactors) {
+            return new TenantConfigRowMapper(providers, firstFactors, requiredSecondaryFactors);
         }
 
         @Override
@@ -54,6 +58,8 @@ public class TenantConfigSQLHelper {
                         new EmailPasswordConfig(result.getBoolean("email_password_enabled")),
                         new ThirdPartyConfig(result.getBoolean("third_party_enabled"), this.providers),
                         new PasswordlessConfig(result.getBoolean("passwordless_enabled")),
+                        firstFactors.length == 0 ? null : firstFactors,
+                        requiredSecondaryFactors.length == 0 ? null : requiredSecondaryFactors,
                         JsonUtils.stringToJsonObject(result.getString("core_config"))
                 );
             } catch (Exception e) {
@@ -62,9 +68,10 @@ public class TenantConfigSQLHelper {
         }
     }
 
-    public static TenantConfig[] selectAll(Start start, HashMap<TenantIdentifier, HashMap<String, ThirdPartyConfig.Provider>> providerMap)
+    public static TenantConfig[] selectAll(Start start, HashMap<TenantIdentifier, HashMap<String, ThirdPartyConfig.Provider>> providerMap, HashMap<TenantIdentifier, String[]> firstFactorsMap, HashMap<TenantIdentifier, String[]> requiredSecondaryFactorsMap)
             throws SQLException, StorageQueryException {
-        String QUERY = "SELECT connection_uri_domain, app_id, tenant_id, core_config, email_password_enabled, passwordless_enabled, third_party_enabled FROM "
+        String QUERY = "SELECT connection_uri_domain, app_id, tenant_id, core_config,"
+                + " email_password_enabled, passwordless_enabled, third_party_enabled FROM "
                 + getConfig(start).getTenantConfigsTable() + ";";
 
         TenantConfig[] tenantConfigs = execute(start, QUERY, pst -> {}, result -> {
@@ -75,7 +82,11 @@ public class TenantConfigSQLHelper {
                 if (providerMap.containsKey(tenantIdentifier)) {
                     providers = providerMap.get(tenantIdentifier).values().toArray(new ThirdPartyConfig.Provider[0]);
                 }
-                temp.add(TenantConfigRowMapper.getInstance(providers).mapOrThrow(result));
+                String[] firstFactors = firstFactorsMap.containsKey(tenantIdentifier) ? firstFactorsMap.get(tenantIdentifier) : new String[0];
+
+                String[] requiredSecondaryFactors = requiredSecondaryFactorsMap.containsKey(tenantIdentifier) ? requiredSecondaryFactorsMap.get(tenantIdentifier) : new String[0];
+
+                temp.add(TenantConfigSQLHelper.TenantConfigRowMapper.getInstance(providers, firstFactors, requiredSecondaryFactors).mapOrThrow(result));
             }
             TenantConfig[] finalResult = new TenantConfig[temp.size()];
             for (int i = 0; i < temp.size(); i++) {
@@ -89,7 +100,9 @@ public class TenantConfigSQLHelper {
     public static void create(Start start, Connection sqlCon, TenantConfig tenantConfig)
             throws SQLException, StorageTransactionLogicException {
         String QUERY = "INSERT INTO " + getConfig(start).getTenantConfigsTable()
-                + "(connection_uri_domain, app_id, tenant_id, core_config, email_password_enabled, passwordless_enabled, third_party_enabled)" + " VALUES(?, ?, ?, ?, ?, ?, ?)";
+                + "(connection_uri_domain, app_id, tenant_id, core_config,"
+                + " email_password_enabled, passwordless_enabled, third_party_enabled)"
+                + " VALUES(?, ?, ?, ?, ?, ?, ?)";
 
         try {
             update(sqlCon, QUERY, pst -> {

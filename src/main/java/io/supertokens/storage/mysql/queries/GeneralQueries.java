@@ -263,6 +263,16 @@ public class GeneralQueries {
             update(start, MultitenancyQueries.getQueryToCreateTenantConfigsTable(start), NO_OP_SETTER);
         }
 
+        if (!doesTableExists(start, Config.getConfig(start).getTenantFirstFactorsTable())) {
+            getInstance(start).addState(CREATING_NEW_TABLE, null);
+            update(start, MultitenancyQueries.getQueryToCreateFirstFactorsTable(start), NO_OP_SETTER);
+        }
+
+        if (!doesTableExists(start, Config.getConfig(start).getTenantRequiredSecondaryFactorsTable())) {
+            getInstance(start).addState(CREATING_NEW_TABLE, null);
+            update(start, MultitenancyQueries.getQueryToCreateRequiredSecondaryFactorsTable(start), NO_OP_SETTER);
+        }
+
         if (!doesTableExists(start, Config.getConfig(start).getTenantThirdPartyProvidersTable())) {
             getInstance(start).addState(CREATING_NEW_TABLE, null);
             update(start, MultitenancyQueries.getQueryToCreateTenantThirdPartyProvidersTable(start),
@@ -1556,6 +1566,32 @@ public class GeneralQueries {
 
         return execute(start, QUERY, pst -> {
             pst.setString(1, appIdentifier.getAppId());
+        }, result -> {
+            return result.next() ? result.getInt("c") : 0;
+        });
+    }
+
+    public static int getUsersCountWithMoreThanOneLoginMethodOrTOTPEnabled(Start start, AppIdentifier appIdentifier)
+            throws SQLException, StorageQueryException {
+        String QUERY =
+                "SELECT COUNT(user_id) as c FROM ("
+                        + "  " // Users with number of login methods > 1
+                        + "    SELECT primary_or_recipe_user_id AS user_id FROM ("
+                        + "      SELECT COUNT(user_id) as num_login_methods, app_id, primary_or_recipe_user_id"
+                        + "      FROM " + Config.getConfig(start).getAppIdToUserIdTable()
+                        + "      WHERE app_id = ? "
+                        + "      GROUP BY app_id, primary_or_recipe_user_id"
+                        + "    ) AS nloginmethods"
+                        + "    WHERE num_login_methods > 1"
+                        + "  UNION" // TOTP users
+                        + "    SELECT user_id FROM " + Config.getConfig(start).getTotpUsersTable()
+                        + "    WHERE app_id = ?"
+                        + "  "
+                        + ") AS all_users";
+
+        return execute(start, QUERY, pst -> {
+            pst.setString(1, appIdentifier.getAppId());
+            pst.setString(2, appIdentifier.getAppId());
         }, result -> {
             return result.next() ? result.getInt("c") : 0;
         });
