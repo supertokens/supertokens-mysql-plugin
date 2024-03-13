@@ -521,8 +521,7 @@ public class LoggingTest {
                                 new EmailPasswordConfig(true),
                                 new ThirdPartyConfig(true, null),
                                 new PasswordlessConfig(true),
-                                config
-                               ));
+                                null, null, config));
 
                 process.kill();
                 assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
@@ -566,7 +565,7 @@ public class LoggingTest {
                                     new EmailPasswordConfig(true),
                                     new ThirdPartyConfig(true, null),
                                     new PasswordlessConfig(true),
-                                    new JsonObject()));
+                                    null, null, new JsonObject()));
 
                 } catch (Exception e) {
 
