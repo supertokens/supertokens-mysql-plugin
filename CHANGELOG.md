@@ -21,26 +21,6 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Make sure the core is already upgraded to version 8.0.0 before migrating
 
 ```sql
-CREATE TABLE IF NOT EXISTS tenant_first_factors (
-  connection_uri_domain VARCHAR(256) DEFAULT '',
-  app_id VARCHAR(64) DEFAULT 'public',
-  tenant_id VARCHAR(64) DEFAULT 'public',
-  factor_id VARCHAR(128),
-  PRIMARY KEY (connection_uri_domain, app_id, tenant_id, factor_id),
-  FOREIGN KEY (connection_uri_domain, app_id, tenant_id)
-    REFERENCES tenant_configs (connection_uri_domain, app_id, tenant_id) ON DELETE CASCADE
-);
-
-CREATE TABLE IF NOT EXISTS tenant_required_secondary_factors (
-  connection_uri_domain VARCHAR(256) DEFAULT '',
-  app_id VARCHAR(64) DEFAULT 'public',
-  tenant_id VARCHAR(64) DEFAULT 'public',
-  factor_id VARCHAR(128),
-  PRIMARY KEY (connection_uri_domain, app_id, tenant_id, factor_id),
-  FOREIGN KEY (connection_uri_domain, app_id, tenant_id)
-    REFERENCES tenant_configs (connection_uri_domain, app_id, tenant_id) ON DELETE CASCADE
-);
-
 ALTER TABLE totp_user_devices ADD COLUMN created_at BIGINT UNSIGNED default 0;
 ALTER TABLE totp_user_devices 
   ALTER COLUMN created_at DROP DEFAULT;
