@@ -396,7 +396,7 @@ public class OneMillionUsersTest {
         TestingProcessManager.TestingProcess process = TestingProcessManager.start(args, false);
         Utils.setValueInConfig("firebase_password_hashing_signer_key",
                 "gRhC3eDeQOdyEn4bMd9c6kxguWVmcIVq/SKa0JDPFeM6TcEevkaW56sIWfx88OHbJKnCXdWscZx0l2WbCJ1wbg==");
-        Utils.setValueInConfig("postgresql_connection_pool_size", "500");
+        Utils.setValueInConfig("mysql_connection_pool_size", "500");
 
         FeatureFlagTestContent.getInstance(process.getProcess())
                 .setKeyValue(FeatureFlagTestContent.ENABLED_FEATURES, new EE_FEATURES[]{
@@ -462,7 +462,7 @@ public class OneMillionUsersTest {
         process = TestingProcessManager.start(args, false);
         Utils.setValueInConfig("firebase_password_hashing_signer_key",
                 "gRhC3eDeQOdyEn4bMd9c6kxguWVmcIVq/SKa0JDPFeM6TcEevkaW56sIWfx88OHbJKnCXdWscZx0l2WbCJ1wbg==");
-        Utils.setValueInConfig("postgresql_connection_pool_size", "500");
+        Utils.setValueInConfig("mysql_connection_pool_size", "500");
 
         FeatureFlagTestContent.getInstance(process.getProcess())
                 .setKeyValue(FeatureFlagTestContent.ENABLED_FEATURES, new EE_FEATURES[]{
