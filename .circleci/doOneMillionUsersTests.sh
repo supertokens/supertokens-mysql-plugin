@@ -111,7 +111,7 @@ do
     echo $SUPERTOKENS_API_KEY > apiPassword
     export ONE_MILLION_USERS_TEST=1
     ./utils/setupTestEnv --cicd
-    ./gradlew :supertokens-postgresql-plugin:test --tests io.supertokens.storage.mysql.test.OneMillionUsersTest
+    ./gradlew :supertokens-mysql-plugin:test --tests io.supertokens.storage.mysql.test.OneMillionUsersTest
 
     if [[ $? -ne 0 ]]
     then
