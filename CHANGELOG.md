@@ -7,9 +7,24 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [7.0.0] - 2024-03-13
+
+- Replace `TotpNotEnabledError` with `UnknownUserIdTotpError`.
+- Support for MFA recipe
+- Adds `firstFactors` and `requiredSecondaryFactors` for tenant config.
 - Adds a new `useStaticKey` param to `updateSessionInfo_Transaction`
   - This enables smooth switching between `useDynamicAccessTokenSigningKey` settings by allowing refresh calls to
     change the signing key type of a session
+
+### Migration
+
+Make sure the core is already upgraded to version 8.0.0 before migrating
+
+```sql
+ALTER TABLE totp_user_devices ADD COLUMN created_at BIGINT UNSIGNED default 0;
+ALTER TABLE totp_user_devices 
+  ALTER COLUMN created_at DROP DEFAULT;
+```
 
 ## [6.0.0] - 2024-03-05
 
