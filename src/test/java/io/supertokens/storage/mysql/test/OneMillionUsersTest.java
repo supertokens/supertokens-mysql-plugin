@@ -361,6 +361,7 @@ public class OneMillionUsersTest {
         System.out.println("Creating sessions...");
 
         ExecutorService es = Executors.newFixedThreadPool(NUM_THREADS);
+        AtomicLong usersUpdated = new AtomicLong(0);
 
         for (String userId : allUserIds) {
             String finalUserId = userId;
@@ -374,6 +375,11 @@ public class OneMillionUsersTest {
                             accessToken = session.accessToken.token;
                             sessionUserId = userIdMappings.get(primaryUserIdMappings.get(finalUserId));
                         }
+                    }
+
+                    long count = usersUpdated.incrementAndGet();
+                    if (count % 10000 == 9999) {
+                        System.out.println("Created " + (count) + " sessions");
                     }
 
                 } catch (Exception e) {
@@ -845,16 +851,14 @@ public class OneMillionUsersTest {
                     long count = 0;
                     UserPaginationContainer users = AuthRecipe.getUsers(main, 500, "ASC", null, null, null);
                     while (true) {
-                        for (AuthRecipeUserInfo user : users.users) {
-                            count += user.loginMethods.length;
-                        }
+                        count += users.users.length;
                         if (users.nextPaginationToken == null) {
                             break;
                         }
-                        users = AuthRecipe.getUsers(main, 500, "ASC", users.nextPaginationToken, null, null);
-                        if (count >= 500) {
+                        if (count >= 2000) {
                             break;
                         }
+                        users = AuthRecipe.getUsers(main, 500, "ASC", users.nextPaginationToken, null, null);
                     }
                 } catch (Exception e) {
                     errorCount.incrementAndGet();
@@ -863,7 +867,7 @@ public class OneMillionUsersTest {
                 return null;
             });
             System.out.println("User pagination " + time);
-            assert time < 2000;
+            assert time < 8000;
         }
         { // Measure update user metadata
             long time = measureTime(() -> {
