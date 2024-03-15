@@ -98,19 +98,13 @@ public class GeneralQueries {
                 + "(app_id, tenant_id, primary_or_recipe_user_time_joined DESC, primary_or_recipe_user_id DESC);";
     }
 
-    static String getQueryToCreateUserPaginationIndex2(Start start) {
-        return "CREATE INDEX all_auth_recipe_users_pagination_index2 ON " + Config.getConfig(start).getUsersTable()
-                + "(app_id, tenant_id, primary_or_recipe_user_time_joined ASC, primary_or_recipe_user_id DESC);";
-    }
+    // We have deliberately removed index2 and index4 because mysql 5.7 does not support index in such a way that one
+    // column is ASC and another column is DESC in the same index. Instead, we have updated the user pagination query to
+    // work with sorting in same ordering for both columns.
 
     static String getQueryToCreateUserPaginationIndex3(Start start) {
         return "CREATE INDEX all_auth_recipe_users_pagination_index3 ON " + Config.getConfig(start).getUsersTable()
                 + "(recipe_id, app_id, tenant_id, primary_or_recipe_user_time_joined DESC, primary_or_recipe_user_id DESC);";
-    }
-
-    static String getQueryToCreateUserPaginationIndex4(Start start) {
-        return "CREATE INDEX all_auth_recipe_users_pagination_index4 ON " + Config.getConfig(start).getUsersTable()
-                + "(recipe_id, app_id, tenant_id, primary_or_recipe_user_time_joined ASC, primary_or_recipe_user_id DESC);";
     }
 
     static String getQueryToCreatePrimaryUserId(Start start) {
@@ -233,9 +227,7 @@ public class GeneralQueries {
 
             // index
             update(start, getQueryToCreateUserPaginationIndex1(start), NO_OP_SETTER);
-            update(start, getQueryToCreateUserPaginationIndex2(start), NO_OP_SETTER);
             update(start, getQueryToCreateUserPaginationIndex3(start), NO_OP_SETTER);
-            update(start, getQueryToCreateUserPaginationIndex4(start), NO_OP_SETTER);
             update(start, getQueryToCreatePrimaryUserId(start), NO_OP_SETTER);
             update(start, getQueryToCreateRecipeIdIndex(start), NO_OP_SETTER);
         }
@@ -796,7 +788,7 @@ public class GeneralQueries {
                 } else {
 
                     String finalQuery = "SELECT DISTINCT primary_or_recipe_user_id, primary_or_recipe_user_time_joined  FROM ( " + USER_SEARCH_TAG_CONDITION.toString() + " )"
-                            + " AS finalResultTable ORDER BY primary_or_recipe_user_time_joined " + timeJoinedOrder + ", primary_or_recipe_user_id DESC ";
+                            + " AS finalResultTable ORDER BY primary_or_recipe_user_time_joined " + timeJoinedOrder + ", primary_or_recipe_user_id " + timeJoinedOrder;
                     usersFromQuery = execute(start, finalQuery, pst -> {
                         for (int i = 1; i <= queryList.size(); i++) {
                             pst.setString(i, queryList.get(i - 1));
@@ -832,11 +824,17 @@ public class GeneralQueries {
                     recipeIdCondition = recipeIdCondition + " AND";
                 }
                 String timeJoinedOrderSymbol = timeJoinedOrder.equals("ASC") ? ">" : "<";
-                String QUERY = "SELECT DISTINCT primary_or_recipe_user_id, primary_or_recipe_user_time_joined FROM " + Config.getConfig(start).getUsersTable() + " WHERE "
+
+                // This query is slightly different from one in postgres because we want to use same ordering for
+                // primary_or_recipe_user_time_joined and primary_or_recipe_user_id because mysql 5.7 does not support
+                // different ordering for different columns using an index
+                String QUERY = "SELECT DISTINCT primary_or_recipe_user_id, primary_or_recipe_user_time_joined FROM "
+                        + Config.getConfig(start).getUsersTable() + " WHERE "
                         + recipeIdCondition + " (primary_or_recipe_user_time_joined " + timeJoinedOrderSymbol
-                        + " ? OR (primary_or_recipe_user_time_joined = ? AND primary_or_recipe_user_id <= ?)) AND app_id = ? AND tenant_id = ?"
+                        + " ? OR (primary_or_recipe_user_time_joined = ? AND primary_or_recipe_user_id "
+                        + (timeJoinedOrderSymbol + "=") + " ?)) AND app_id = ? AND tenant_id = ?"
                         + " ORDER BY primary_or_recipe_user_time_joined " + timeJoinedOrder
-                        + ", primary_or_recipe_user_id DESC LIMIT ?";
+                        + ", primary_or_recipe_user_id " + timeJoinedOrder + " LIMIT ?";
                 usersFromQuery = execute(start, QUERY, pst -> {
                     if (includeRecipeIds != null) {
                         for (int i = 0; i < includeRecipeIds.length; i++) {
@@ -860,12 +858,16 @@ public class GeneralQueries {
                 });
             } else {
                 String recipeIdCondition = RECIPE_ID_CONDITION.toString();
-                String QUERY = "SELECT DISTINCT primary_or_recipe_user_id, primary_or_recipe_user_time_joined FROM " + Config.getConfig(start).getUsersTable() + " WHERE ";
+                // This query is slightly different from one in postgres because we want to use same ordering for
+                // primary_or_recipe_user_time_joined and primary_or_recipe_user_id because mysql 5.7 does not support
+                // different ordering for different columns using an index
+                String QUERY = "SELECT DISTINCT primary_or_recipe_user_id, primary_or_recipe_user_time_joined FROM "
+                        + Config.getConfig(start).getUsersTable() + " WHERE ";
                 if (!recipeIdCondition.equals("")) {
                     QUERY += recipeIdCondition + " AND";
                 }
                 QUERY += " app_id = ? AND tenant_id = ? ORDER BY primary_or_recipe_user_time_joined " + timeJoinedOrder
-                        + ", primary_or_recipe_user_id DESC LIMIT ?";
+                        + ", primary_or_recipe_user_id " + timeJoinedOrder + " LIMIT ?";
                 usersFromQuery = execute(start, QUERY, pst -> {
                     if (includeRecipeIds != null) {
                         for (int i = 0; i < includeRecipeIds.length; i++) {
