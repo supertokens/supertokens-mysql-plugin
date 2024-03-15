@@ -24,6 +24,8 @@ Make sure the core is already upgraded to version 8.0.0 before migrating
 ALTER TABLE totp_user_devices ADD COLUMN created_at BIGINT UNSIGNED default 0;
 ALTER TABLE totp_user_devices 
   ALTER COLUMN created_at DROP DEFAULT;
+DROP INDEX all_auth_recipe_users_pagination_index2 ON all_auth_recipe_users;
+DROP INDEX all_auth_recipe_users_pagination_index4 ON all_auth_recipe_users;
 ```
 
 ## [6.0.0] - 2024-03-05
