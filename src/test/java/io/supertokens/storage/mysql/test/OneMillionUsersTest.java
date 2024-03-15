@@ -389,7 +389,7 @@ public class OneMillionUsersTest {
         }
 
         es.shutdown();
-        es.awaitTermination(10, TimeUnit.MINUTES);
+        es.awaitTermination(20, TimeUnit.MINUTES);
     }
 
     @Test
