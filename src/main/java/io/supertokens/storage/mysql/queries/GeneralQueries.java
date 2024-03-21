@@ -785,6 +785,9 @@ public class GeneralQueries {
                     usersFromQuery = new ArrayList<>();
                 } else {
 
+                    // This query is slightly different from one in postgres because we want to use same ordering for
+                    // primary_or_recipe_user_time_joined and primary_or_recipe_user_id because mysql 5.7 does not support
+                    // different ordering for different columns using an index
                     String finalQuery = "SELECT DISTINCT primary_or_recipe_user_id, primary_or_recipe_user_time_joined  FROM ( " + USER_SEARCH_TAG_CONDITION.toString() + " )"
                             + " AS finalResultTable ORDER BY primary_or_recipe_user_time_joined " + timeJoinedOrder + ", primary_or_recipe_user_id " + timeJoinedOrder;
                     usersFromQuery = execute(start, finalQuery, pst -> {
