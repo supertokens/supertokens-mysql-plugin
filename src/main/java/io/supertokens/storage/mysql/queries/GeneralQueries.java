@@ -749,7 +749,7 @@ public class GeneralQueries {
                         + recipeIdCondition + " (time_joined " + timeJoinedOrderSymbol
                         + " ? OR (time_joined = ? AND user_id " + timeJoinedOrderSymbol +"= ?)) AND app_id = ? AND tenant_id = ?"
                         + " ORDER BY time_joined " + timeJoinedOrder
-                        + ", user_id " + timeJoinedOrderSymbol + " LIMIT ?";
+                        + ", user_id " + timeJoinedOrder + " LIMIT ?";
                 usersFromQuery = execute(start, QUERY, pst -> {
                     if (includeRecipeIds != null) {
                         for (int i = 0; i < includeRecipeIds.length; i++) {
