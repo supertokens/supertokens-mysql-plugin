@@ -125,7 +125,7 @@ public class UserIdMappingQueries {
 
         // No need to filter based on tenantId because the id list is already filtered for a tenant
         StringBuilder QUERY = new StringBuilder(
-                "SELECT * FROM " + Config.getConfig(start).getUserIdMappingTable() + " WHERE supertokens_user_id IN (");
+                "SELECT * FROM " + Config.getConfig(start).getUserIdMappingTable() + " WHERE app_id = ? AND supertokens_user_id IN (");
         for (int i = 0; i < userIds.size(); i++) {
             QUERY.append("?");
             if (i != userIds.size() - 1) {
