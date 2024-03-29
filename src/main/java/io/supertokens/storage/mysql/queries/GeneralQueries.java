@@ -699,8 +699,12 @@ public class GeneralQueries {
                     usersFromQuery = new ArrayList<>();
                 } else {
 
+                    // This query is slightly different from one in postgres because we want to use same ordering for
+                    // primary_or_recipe_user_time_joined and primary_or_recipe_user_id because mysql 5.7 does not support
+                    // different ordering for different columns using an index
                     String finalQuery = "SELECT * FROM ( " + USER_SEARCH_TAG_CONDITION.toString() + " )"
-                            + " AS finalResultTable ORDER BY time_joined " + timeJoinedOrder + ", user_id DESC ";
+                            + " AS finalResultTable ORDER BY time_joined " + timeJoinedOrder
+                            + ", user_id " + timeJoinedOrder;
                     usersFromQuery = execute(start, finalQuery, pst -> {
                         for (int i = 1; i <= queryList.size(); i++) {
                             pst.setString(i, queryList.get(i - 1));
@@ -738,11 +742,14 @@ public class GeneralQueries {
                     recipeIdCondition = recipeIdCondition + " AND";
                 }
                 String timeJoinedOrderSymbol = timeJoinedOrder.equals("ASC") ? ">" : "<";
+                // This query is slightly different from one in postgres because we want to use same ordering for
+                // primary_or_recipe_user_time_joined and primary_or_recipe_user_id because mysql 5.7 does not support
+                // different ordering for different columns using an index
                 String QUERY = "SELECT user_id, recipe_id FROM " + Config.getConfig(start).getUsersTable() + " WHERE "
                         + recipeIdCondition + " (time_joined " + timeJoinedOrderSymbol
-                        + " ? OR (time_joined = ? AND user_id <= ?)) AND app_id = ? AND tenant_id = ?"
+                        + " ? OR (time_joined = ? AND user_id " + timeJoinedOrderSymbol +"= ?)) AND app_id = ? AND tenant_id = ?"
                         + " ORDER BY time_joined " + timeJoinedOrder
-                        + ", user_id DESC LIMIT ?";
+                        + ", user_id " + timeJoinedOrder + " LIMIT ?";
                 usersFromQuery = execute(start, QUERY, pst -> {
                     if (includeRecipeIds != null) {
                         for (int i = 0; i < includeRecipeIds.length; i++) {
@@ -767,12 +774,15 @@ public class GeneralQueries {
                 });
             } else {
                 String recipeIdCondition = RECIPE_ID_CONDITION.toString();
+                // This query is slightly different from one in postgres because we want to use same ordering for
+                // primary_or_recipe_user_time_joined and primary_or_recipe_user_id because mysql 5.7 does not support
+                // different ordering for different columns using an index
                 String QUERY = "SELECT user_id, recipe_id FROM " + Config.getConfig(start).getUsersTable() + " WHERE ";
                 if (!recipeIdCondition.equals("")) {
                     QUERY += recipeIdCondition + " AND";
                 }
                 QUERY += " app_id = ? AND tenant_id = ? ORDER BY time_joined " + timeJoinedOrder
-                        + ", user_id DESC LIMIT ?";
+                        + ", user_id " + timeJoinedOrder + " LIMIT ?";
                 usersFromQuery = execute(start, QUERY, pst -> {
                     if (includeRecipeIds != null) {
                         for (int i = 0; i < includeRecipeIds.length; i++) {
