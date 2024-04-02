@@ -7,9 +7,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-## [3.0.1] - 2024-02-20
+## [3.0.1] - 2024-04-02
 
 - Fixes vulnerabilities in dependencies
+- Fixes user pagination queries
 
 ## [3.0.0] - 2023-04-05
 
