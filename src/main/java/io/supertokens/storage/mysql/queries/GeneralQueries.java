@@ -486,9 +486,11 @@ public class GeneralQueries {
                 if (USER_SEARCH_TAG_CONDITION.toString().length() == 0) {
                     usersFromQuery = new ArrayList<>();
                 } else {
-
+                    // This query is slightly different from one in postgres because we want to use same ordering for
+                    // primary_or_recipe_user_time_joined and primary_or_recipe_user_id because mysql 5.7 does not support
+                    // different ordering for different columns using an index
                     String finalQuery = "SELECT * FROM ( " + USER_SEARCH_TAG_CONDITION.toString() + " ) AS finalResultTable"
-                            + " ORDER BY time_joined " + timeJoinedOrder + ", user_id DESC ";
+                            + " ORDER BY time_joined " + timeJoinedOrder + ", user_id " + timeJoinedOrder;
                     usersFromQuery = execute(start, finalQuery, pst -> {
                         for (int i = 1; i <= queryList.size(); i++) {
                             pst.setString(i, queryList.get(i - 1));
@@ -524,11 +526,15 @@ public class GeneralQueries {
                 if (!recipeIdCondition.equals("")) {
                     recipeIdCondition = recipeIdCondition + " AND";
                 }
+
+                // This query is slightly different from one in postgres because we want to use same ordering for
+                // primary_or_recipe_user_time_joined and primary_or_recipe_user_id because mysql 5.7 does not support
+                // different ordering for different columns using an index
                 String timeJoinedOrderSymbol = timeJoinedOrder.equals("ASC") ? ">" : "<";
                 String QUERY = "SELECT user_id, recipe_id FROM " + Config.getConfig(start).getUsersTable() + " WHERE "
                         + recipeIdCondition + " (time_joined " + timeJoinedOrderSymbol
-                        + " ? OR (time_joined = ? AND user_id <= ?)) ORDER BY time_joined " + timeJoinedOrder
-                        + ", user_id DESC LIMIT ?";
+                        + " ? OR (time_joined = ? AND user_id " + timeJoinedOrderSymbol + "= ?)) ORDER BY time_joined " + timeJoinedOrder
+                        + ", user_id " + timeJoinedOrder + "  LIMIT ?";
                 usersFromQuery = execute(start, QUERY, pst -> {
                     pst.setLong(1, timeJoined);
                     pst.setLong(2, timeJoined);
@@ -548,8 +554,12 @@ public class GeneralQueries {
                 if (!recipeIdCondition.equals("")) {
                     recipeIdCondition = " WHERE " + recipeIdCondition;
                 }
+                // This query is slightly different from one in postgres because we want to use same ordering for
+                // primary_or_recipe_user_time_joined and primary_or_recipe_user_id because mysql 5.7 does not support
+                // different ordering for different columns using an index
                 String QUERY = "SELECT user_id, recipe_id FROM " + Config.getConfig(start).getUsersTable()
-                        + recipeIdCondition + " ORDER BY time_joined " + timeJoinedOrder + ", user_id DESC LIMIT ?";
+                        + recipeIdCondition + " ORDER BY time_joined " + timeJoinedOrder + ", user_id "
+                        + timeJoinedOrder + " LIMIT ?";
                 usersFromQuery = execute(start, QUERY, pst -> pst.setInt(1, limit), result -> {
                     List<UserInfoPaginationResultHolder> temp = new ArrayList<>();
                     while (result.next()) {
