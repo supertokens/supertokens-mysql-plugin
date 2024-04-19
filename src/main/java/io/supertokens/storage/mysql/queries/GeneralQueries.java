@@ -61,13 +61,17 @@ import static io.supertokens.storage.mysql.queries.UserMetadataQueries.getQueryT
 
 public class GeneralQueries {
 
-    private static boolean doesTableExists(Start start, String tableName) {
+    private static boolean doesTableExists(Start start, Connection con, String tableName)
+            throws SQLException, StorageQueryException {
         try {
             String QUERY = "SELECT 1 FROM " + tableName + " LIMIT 1";
-            execute(start, QUERY, NO_OP_SETTER, result -> null);
+            execute(con, QUERY, NO_OP_SETTER, result -> null);
             return true;
         } catch (SQLException | StorageQueryException e) {
-            return false;
+            if (e.getMessage().contains(tableName) && e.getMessage().contains("doesn't exist")) {
+                return false;
+            }
+            throw e;
         }
     }
 
@@ -197,217 +201,217 @@ public class GeneralQueries {
                 + "(user_id);";
     }
 
-    public static void createTablesIfNotExists(Start start) throws SQLException, StorageQueryException {
-        if (!doesTableExists(start, Config.getConfig(start).getAppsTable())) {
+    public static void createTablesIfNotExists(Start start, Connection con) throws SQLException, StorageQueryException {
+        if (!doesTableExists(start, con, Config.getConfig(start).getAppsTable())) {
             getInstance(start).addState(CREATING_NEW_TABLE, null);
-            update(start, getQueryToCreateAppsTable(start), NO_OP_SETTER);
+            update(con, getQueryToCreateAppsTable(start), NO_OP_SETTER);
         }
 
-        if (!doesTableExists(start, Config.getConfig(start).getTenantsTable())) {
+        if (!doesTableExists(start, con, Config.getConfig(start).getTenantsTable())) {
             getInstance(start).addState(CREATING_NEW_TABLE, null);
-            update(start, getQueryToCreateTenantsTable(start), NO_OP_SETTER);
+            update(con, getQueryToCreateTenantsTable(start), NO_OP_SETTER);
         }
 
-        if (!doesTableExists(start, Config.getConfig(start).getKeyValueTable())) {
+        if (!doesTableExists(start, con, Config.getConfig(start).getKeyValueTable())) {
             getInstance(start).addState(CREATING_NEW_TABLE, null);
-            update(start, getQueryToCreateKeyValueTable(start), NO_OP_SETTER);
+            update(con, getQueryToCreateKeyValueTable(start), NO_OP_SETTER);
         }
 
-        if (!doesTableExists(start, Config.getConfig(start).getAppIdToUserIdTable())) {
+        if (!doesTableExists(start, con, Config.getConfig(start).getAppIdToUserIdTable())) {
             getInstance(start).addState(CREATING_NEW_TABLE, null);
-            update(start, getQueryToCreateAppIdToUserIdTable(start), NO_OP_SETTER);
+            update(con, getQueryToCreateAppIdToUserIdTable(start), NO_OP_SETTER);
 
-            update(start, getQueryToCreatePrimaryUserIdIndexForAppIdToUserIdTable(start), NO_OP_SETTER);
-            update(start, getQueryToCreateUserIdIndexForAppIdToUserIdTable(start), NO_OP_SETTER);
+            update(con, getQueryToCreatePrimaryUserIdIndexForAppIdToUserIdTable(start), NO_OP_SETTER);
+            update(con, getQueryToCreateUserIdIndexForAppIdToUserIdTable(start), NO_OP_SETTER);
         }
 
-        if (!doesTableExists(start, Config.getConfig(start).getUsersTable())) {
+        if (!doesTableExists(start, con, Config.getConfig(start).getUsersTable())) {
             getInstance(start).addState(CREATING_NEW_TABLE, null);
-            update(start, getQueryToCreateUsersTable(start), NO_OP_SETTER);
+            update(con, getQueryToCreateUsersTable(start), NO_OP_SETTER);
 
             // index
-            update(start, getQueryToCreateUserPaginationIndex1(start), NO_OP_SETTER);
-            update(start, getQueryToCreateUserPaginationIndex3(start), NO_OP_SETTER);
-            update(start, getQueryToCreatePrimaryUserId(start), NO_OP_SETTER);
-            update(start, getQueryToCreateRecipeIdIndex(start), NO_OP_SETTER);
+            update(con, getQueryToCreateUserPaginationIndex1(start), NO_OP_SETTER);
+            update(con, getQueryToCreateUserPaginationIndex3(start), NO_OP_SETTER);
+            update(con, getQueryToCreatePrimaryUserId(start), NO_OP_SETTER);
+            update(con, getQueryToCreateRecipeIdIndex(start), NO_OP_SETTER);
         }
 
-        if (!doesTableExists(start, Config.getConfig(start).getUserLastActiveTable())) {
+        if (!doesTableExists(start, con, Config.getConfig(start).getUserLastActiveTable())) {
             getInstance(start).addState(CREATING_NEW_TABLE, null);
-            update(start, ActiveUsersQueries.getQueryToCreateUserLastActiveTable(start), NO_OP_SETTER);
+            update(con, ActiveUsersQueries.getQueryToCreateUserLastActiveTable(start), NO_OP_SETTER);
         }
 
-        if (!doesTableExists(start, Config.getConfig(start).getAccessTokenSigningKeysTable())) {
+        if (!doesTableExists(start, con, Config.getConfig(start).getAccessTokenSigningKeysTable())) {
             getInstance(start).addState(CREATING_NEW_TABLE, null);
-            update(start, getQueryToCreateAccessTokenSigningKeysTable(start), NO_OP_SETTER);
+            update(con, getQueryToCreateAccessTokenSigningKeysTable(start), NO_OP_SETTER);
         }
 
-        if (!doesTableExists(start, Config.getConfig(start).getSessionInfoTable())) {
+        if (!doesTableExists(start, con, Config.getConfig(start).getSessionInfoTable())) {
             getInstance(start).addState(CREATING_NEW_TABLE, null);
-            update(start, getQueryToCreateSessionInfoTable(start), NO_OP_SETTER);
+            update(con, getQueryToCreateSessionInfoTable(start), NO_OP_SETTER);
 
             // index
-            update(start, getQueryToCreateSessionExpiryIndex(start), NO_OP_SETTER);
+            update(con, getQueryToCreateSessionExpiryIndex(start), NO_OP_SETTER);
         }
 
-        if (!doesTableExists(start, Config.getConfig(start).getTenantConfigsTable())) {
+        if (!doesTableExists(start, con, Config.getConfig(start).getTenantConfigsTable())) {
             getInstance(start).addState(CREATING_NEW_TABLE, null);
-            update(start, MultitenancyQueries.getQueryToCreateTenantConfigsTable(start), NO_OP_SETTER);
+            update(con, MultitenancyQueries.getQueryToCreateTenantConfigsTable(start), NO_OP_SETTER);
         }
 
-        if (!doesTableExists(start, Config.getConfig(start).getTenantFirstFactorsTable())) {
+        if (!doesTableExists(start, con, Config.getConfig(start).getTenantFirstFactorsTable())) {
             getInstance(start).addState(CREATING_NEW_TABLE, null);
-            update(start, MultitenancyQueries.getQueryToCreateFirstFactorsTable(start), NO_OP_SETTER);
+            update(con, MultitenancyQueries.getQueryToCreateFirstFactorsTable(start), NO_OP_SETTER);
         }
 
-        if (!doesTableExists(start, Config.getConfig(start).getTenantRequiredSecondaryFactorsTable())) {
+        if (!doesTableExists(start, con, Config.getConfig(start).getTenantRequiredSecondaryFactorsTable())) {
             getInstance(start).addState(CREATING_NEW_TABLE, null);
-            update(start, MultitenancyQueries.getQueryToCreateRequiredSecondaryFactorsTable(start), NO_OP_SETTER);
+            update(con, MultitenancyQueries.getQueryToCreateRequiredSecondaryFactorsTable(start), NO_OP_SETTER);
         }
 
-        if (!doesTableExists(start, Config.getConfig(start).getTenantThirdPartyProvidersTable())) {
+        if (!doesTableExists(start, con, Config.getConfig(start).getTenantThirdPartyProvidersTable())) {
             getInstance(start).addState(CREATING_NEW_TABLE, null);
-            update(start, MultitenancyQueries.getQueryToCreateTenantThirdPartyProvidersTable(start),
+            update(con, MultitenancyQueries.getQueryToCreateTenantThirdPartyProvidersTable(start),
                     NO_OP_SETTER);
         }
 
-        if (!doesTableExists(start, Config.getConfig(start).getTenantThirdPartyProviderClientsTable())) {
+        if (!doesTableExists(start, con, Config.getConfig(start).getTenantThirdPartyProviderClientsTable())) {
             getInstance(start).addState(CREATING_NEW_TABLE, null);
-            update(start, MultitenancyQueries.getQueryToCreateTenantThirdPartyProviderClientsTable(start),
+            update(con, MultitenancyQueries.getQueryToCreateTenantThirdPartyProviderClientsTable(start),
                     NO_OP_SETTER);
         }
 
-        if (!doesTableExists(start, Config.getConfig(start).getEmailPasswordUsersTable())) {
+        if (!doesTableExists(start, con, Config.getConfig(start).getEmailPasswordUsersTable())) {
             getInstance(start).addState(CREATING_NEW_TABLE, null);
-            update(start, EmailPasswordQueries.getQueryToCreateUsersTable(start), NO_OP_SETTER);
+            update(con, EmailPasswordQueries.getQueryToCreateUsersTable(start), NO_OP_SETTER);
         }
 
-        if (!doesTableExists(start, Config.getConfig(start).getEmailPasswordUserToTenantTable())) {
+        if (!doesTableExists(start, con, Config.getConfig(start).getEmailPasswordUserToTenantTable())) {
             getInstance(start).addState(CREATING_NEW_TABLE, null);
-            update(start, EmailPasswordQueries.getQueryToCreateEmailPasswordUserToTenantTable(start),
+            update(con, EmailPasswordQueries.getQueryToCreateEmailPasswordUserToTenantTable(start),
                     NO_OP_SETTER);
         }
 
-        if (!doesTableExists(start, Config.getConfig(start).getPasswordResetTokensTable())) {
+        if (!doesTableExists(start, con, Config.getConfig(start).getPasswordResetTokensTable())) {
             getInstance(start).addState(CREATING_NEW_TABLE, null);
-            update(start, getQueryToCreatePasswordResetTokensTable(start), NO_OP_SETTER);
+            update(con, getQueryToCreatePasswordResetTokensTable(start), NO_OP_SETTER);
             // index
-            update(start, getQueryToCreatePasswordResetTokenExpiryIndex(start), NO_OP_SETTER);
+            update(con, getQueryToCreatePasswordResetTokenExpiryIndex(start), NO_OP_SETTER);
         }
 
-        if (!doesTableExists(start, Config.getConfig(start).getEmailVerificationTable())) {
+        if (!doesTableExists(start, con, Config.getConfig(start).getEmailVerificationTable())) {
             getInstance(start).addState(CREATING_NEW_TABLE, null);
-            update(start, getQueryToCreateEmailVerificationTable(start), NO_OP_SETTER);
+            update(con, getQueryToCreateEmailVerificationTable(start), NO_OP_SETTER);
         }
 
-        if (!doesTableExists(start, Config.getConfig(start).getEmailVerificationTokensTable())) {
+        if (!doesTableExists(start, con, Config.getConfig(start).getEmailVerificationTokensTable())) {
             getInstance(start).addState(CREATING_NEW_TABLE, null);
-            update(start, getQueryToCreateEmailVerificationTokensTable(start), NO_OP_SETTER);
+            update(con, getQueryToCreateEmailVerificationTokensTable(start), NO_OP_SETTER);
             // index
-            update(start, getQueryToCreateEmailVerificationTokenExpiryIndex(start), NO_OP_SETTER);
+            update(con, getQueryToCreateEmailVerificationTokenExpiryIndex(start), NO_OP_SETTER);
         }
 
-        if (!doesTableExists(start, Config.getConfig(start).getThirdPartyUsersTable())) {
+        if (!doesTableExists(start, con, Config.getConfig(start).getThirdPartyUsersTable())) {
             getInstance(start).addState(CREATING_NEW_TABLE, null);
-            update(start, ThirdPartyQueries.getQueryToCreateUsersTable(start), NO_OP_SETTER);
+            update(con, ThirdPartyQueries.getQueryToCreateUsersTable(start), NO_OP_SETTER);
             // index
-            update(start, ThirdPartyQueries.getQueryToThirdPartyUserEmailIndex(start), NO_OP_SETTER);
-            update(start, ThirdPartyQueries.getQueryToThirdPartyUserIdIndex(start), NO_OP_SETTER);
+            update(con, ThirdPartyQueries.getQueryToThirdPartyUserEmailIndex(start), NO_OP_SETTER);
+            update(con, ThirdPartyQueries.getQueryToThirdPartyUserIdIndex(start), NO_OP_SETTER);
         }
 
-        if (!doesTableExists(start, Config.getConfig(start).getThirdPartyUserToTenantTable())) {
+        if (!doesTableExists(start, con, Config.getConfig(start).getThirdPartyUserToTenantTable())) {
             getInstance(start).addState(CREATING_NEW_TABLE, null);
-            update(start, ThirdPartyQueries.getQueryToCreateThirdPartyUserToTenantTable(start), NO_OP_SETTER);
+            update(con, ThirdPartyQueries.getQueryToCreateThirdPartyUserToTenantTable(start), NO_OP_SETTER);
         }
 
-        if (!doesTableExists(start, Config.getConfig(start).getJWTSigningKeysTable())) {
+        if (!doesTableExists(start, con, Config.getConfig(start).getJWTSigningKeysTable())) {
             getInstance(start).addState(CREATING_NEW_TABLE, null);
-            update(start, getQueryToCreateJWTSigningTable(start), NO_OP_SETTER);
+            update(con, getQueryToCreateJWTSigningTable(start), NO_OP_SETTER);
         }
 
-        if (!doesTableExists(start, Config.getConfig(start).getPasswordlessUsersTable())) {
+        if (!doesTableExists(start, con, Config.getConfig(start).getPasswordlessUsersTable())) {
             getInstance(start).addState(CREATING_NEW_TABLE, null);
-            update(start, PasswordlessQueries.getQueryToCreateUsersTable(start), NO_OP_SETTER);
+            update(con, PasswordlessQueries.getQueryToCreateUsersTable(start), NO_OP_SETTER);
         }
 
-        if (!doesTableExists(start, Config.getConfig(start).getPasswordlessUserToTenantTable())) {
+        if (!doesTableExists(start, con, Config.getConfig(start).getPasswordlessUserToTenantTable())) {
             getInstance(start).addState(CREATING_NEW_TABLE, null);
-            update(start, PasswordlessQueries.getQueryToCreatePasswordlessUserToTenantTable(start),
+            update(con, PasswordlessQueries.getQueryToCreatePasswordlessUserToTenantTable(start),
                     NO_OP_SETTER);
         }
 
-        if (!doesTableExists(start, Config.getConfig(start).getPasswordlessDevicesTable())) {
+        if (!doesTableExists(start, con, Config.getConfig(start).getPasswordlessDevicesTable())) {
             getInstance(start).addState(CREATING_NEW_TABLE, null);
-            update(start, getQueryToCreateDevicesTable(start), NO_OP_SETTER);
+            update(con, getQueryToCreateDevicesTable(start), NO_OP_SETTER);
             // index
-            update(start, getQueryToCreateDeviceEmailIndex(start), NO_OP_SETTER);
-            update(start, getQueryToCreateDevicePhoneNumberIndex(start), NO_OP_SETTER);
+            update(con, getQueryToCreateDeviceEmailIndex(start), NO_OP_SETTER);
+            update(con, getQueryToCreateDevicePhoneNumberIndex(start), NO_OP_SETTER);
         }
 
-        if (!doesTableExists(start, Config.getConfig(start).getPasswordlessCodesTable())) {
+        if (!doesTableExists(start, con, Config.getConfig(start).getPasswordlessCodesTable())) {
             getInstance(start).addState(CREATING_NEW_TABLE, null);
-            update(start, getQueryToCreateCodesTable(start), NO_OP_SETTER);
+            update(con, getQueryToCreateCodesTable(start), NO_OP_SETTER);
             // index
-            update(start, getQueryToCreateCodeCreatedAtIndex(start), NO_OP_SETTER);
+            update(con, getQueryToCreateCodeCreatedAtIndex(start), NO_OP_SETTER);
         }
 
-        if (!doesTableExists(start, Config.getConfig(start).getUserMetadataTable())) {
+        if (!doesTableExists(start, con, Config.getConfig(start).getUserMetadataTable())) {
             getInstance(start).addState(CREATING_NEW_TABLE, null);
-            update(start, getQueryToCreateUserMetadataTable(start), NO_OP_SETTER);
+            update(con, getQueryToCreateUserMetadataTable(start), NO_OP_SETTER);
         }
 
-        if (!doesTableExists(start, Config.getConfig(start).getRolesTable())) {
+        if (!doesTableExists(start, con, Config.getConfig(start).getRolesTable())) {
             getInstance(start).addState(CREATING_NEW_TABLE, null);
-            update(start, UserRolesQueries.getQueryToCreateRolesTable(start), NO_OP_SETTER);
+            update(con, UserRolesQueries.getQueryToCreateRolesTable(start), NO_OP_SETTER);
         }
 
-        if (!doesTableExists(start, Config.getConfig(start).getUserRolesPermissionsTable())) {
+        if (!doesTableExists(start, con, Config.getConfig(start).getUserRolesPermissionsTable())) {
             getInstance(start).addState(CREATING_NEW_TABLE, null);
-            update(start, UserRolesQueries.getQueryToCreateRolePermissionsTable(start), NO_OP_SETTER);
+            update(con, UserRolesQueries.getQueryToCreateRolePermissionsTable(start), NO_OP_SETTER);
             // index
-            update(start, UserRolesQueries.getQueryToCreateRolePermissionsPermissionIndex(start), NO_OP_SETTER);
+            update(con, UserRolesQueries.getQueryToCreateRolePermissionsPermissionIndex(start), NO_OP_SETTER);
         }
 
-        if (!doesTableExists(start, Config.getConfig(start).getUserRolesTable())) {
+        if (!doesTableExists(start, con, Config.getConfig(start).getUserRolesTable())) {
             getInstance(start).addState(CREATING_NEW_TABLE, null);
-            update(start, UserRolesQueries.getQueryToCreateUserRolesTable(start), NO_OP_SETTER);
+            update(con, UserRolesQueries.getQueryToCreateUserRolesTable(start), NO_OP_SETTER);
             // index
-            update(start, UserRolesQueries.getQueryToCreateUserRolesRoleIndex(start), NO_OP_SETTER);
+            update(con, UserRolesQueries.getQueryToCreateUserRolesRoleIndex(start), NO_OP_SETTER);
         }
 
-        if (!doesTableExists(start, Config.getConfig(start).getUserIdMappingTable())) {
+        if (!doesTableExists(start, con, Config.getConfig(start).getUserIdMappingTable())) {
             getInstance(start).addState(CREATING_NEW_TABLE, null);
-            update(start, UserIdMappingQueries.getQueryToCreateUserIdMappingTable(start), NO_OP_SETTER);
+            update(con, UserIdMappingQueries.getQueryToCreateUserIdMappingTable(start), NO_OP_SETTER);
         }
 
-        if (!doesTableExists(start, Config.getConfig(start).getDashboardUsersTable())) {
+        if (!doesTableExists(start, con, Config.getConfig(start).getDashboardUsersTable())) {
             getInstance(start).addState(CREATING_NEW_TABLE, null);
-            update(start, DashboardQueries.getQueryToCreateDashboardUsersTable(start), NO_OP_SETTER);
+            update(con, DashboardQueries.getQueryToCreateDashboardUsersTable(start), NO_OP_SETTER);
         }
 
-        if (!doesTableExists(start, Config.getConfig(start).getDashboardSessionsTable())) {
+        if (!doesTableExists(start, con, Config.getConfig(start).getDashboardSessionsTable())) {
             getInstance(start).addState(CREATING_NEW_TABLE, null);
-            update(start, DashboardQueries.getQueryToCreateDashboardUserSessionsTable(start), NO_OP_SETTER);
+            update(con, DashboardQueries.getQueryToCreateDashboardUserSessionsTable(start), NO_OP_SETTER);
             // index
-            update(start, DashboardQueries.getQueryToCreateDashboardUserSessionsExpiryIndex(start),
+            update(con, DashboardQueries.getQueryToCreateDashboardUserSessionsExpiryIndex(start),
                     NO_OP_SETTER);
         }
 
-        if (!doesTableExists(start, Config.getConfig(start).getTotpUsersTable())) {
+        if (!doesTableExists(start, con, Config.getConfig(start).getTotpUsersTable())) {
             getInstance(start).addState(CREATING_NEW_TABLE, null);
-            update(start, TOTPQueries.getQueryToCreateUsersTable(start), NO_OP_SETTER);
+            update(con, TOTPQueries.getQueryToCreateUsersTable(start), NO_OP_SETTER);
         }
 
-        if (!doesTableExists(start, Config.getConfig(start).getTotpUserDevicesTable())) {
+        if (!doesTableExists(start, con, Config.getConfig(start).getTotpUserDevicesTable())) {
             getInstance(start).addState(CREATING_NEW_TABLE, null);
-            update(start, TOTPQueries.getQueryToCreateUserDevicesTable(start), NO_OP_SETTER);
+            update(con, TOTPQueries.getQueryToCreateUserDevicesTable(start), NO_OP_SETTER);
         }
 
-        if (!doesTableExists(start, Config.getConfig(start).getTotpUsedCodesTable())) {
+        if (!doesTableExists(start, con, Config.getConfig(start).getTotpUsedCodesTable())) {
             getInstance(start).addState(CREATING_NEW_TABLE, null);
-            update(start, TOTPQueries.getQueryToCreateUsedCodesTable(start), NO_OP_SETTER);
+            update(con, TOTPQueries.getQueryToCreateUsedCodesTable(start), NO_OP_SETTER);
             // index:
-            update(start, TOTPQueries.getQueryToCreateUsedCodesExpiryTimeIndex(start), NO_OP_SETTER);
+            update(con, TOTPQueries.getQueryToCreateUsedCodesExpiryTimeIndex(start), NO_OP_SETTER);
         }
     }
 
@@ -1514,7 +1518,7 @@ public class GeneralQueries {
     }
 
     @TestOnly
-    public static String[] getAllTablesInTheDatabase(Start start) throws SQLException {
+    public static String[] getAllTablesInTheDatabase(Start start) throws SQLException, StorageQueryException {
         if (!Start.isTesting) {
             throw new UnsupportedOperationException();
         }

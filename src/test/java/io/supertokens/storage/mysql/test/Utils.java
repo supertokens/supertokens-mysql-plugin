@@ -20,6 +20,7 @@ package io.supertokens.storage.mysql.test;
 import io.supertokens.Main;
 import io.supertokens.pluginInterface.PluginInterfaceTesting;
 import io.supertokens.storage.mysql.Start;
+import io.supertokens.storage.mysql.queries.MultitenancyQueries;
 import io.supertokens.storageLayer.StorageLayer;
 import org.apache.tomcat.util.http.fileupload.FileUtils;
 import org.junit.rules.TestRule;
@@ -76,6 +77,7 @@ public abstract class Utils extends Mockito {
         Start.isTesting = true;
         Start.setEnableForDeadlockTesting(false);
         Main.makeConsolePrintSilent = true;
+        MultitenancyQueries.simulateErrorInAddingTenantIdInTargetStorage_forTesting = false;
         String installDir = "../";
         try {
             // if the default config is not the same as the current config, we must reset the storage layer
