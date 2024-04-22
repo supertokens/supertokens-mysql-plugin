@@ -20,6 +20,7 @@ package io.supertokens.storage.mysql;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import io.supertokens.pluginInterface.exceptions.DbInitException;
+import io.supertokens.pluginInterface.exceptions.StorageQueryException;
 import io.supertokens.storage.mysql.config.Config;
 import io.supertokens.storage.mysql.config.MySQLConfig;
 import io.supertokens.storage.mysql.output.Logging;
@@ -36,12 +37,14 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
     private HikariDataSource hikariDataSource = null;
 
     private final Start start;
+    private PostConnectCallback postConnectCallback;
 
-    private ConnectionPool(Start start) {
+    private ConnectionPool(Start start, PostConnectCallback postConnectCallback) {
         this.start = start;
+        this.postConnectCallback = postConnectCallback;
     }
 
-    private synchronized void initialiseHikariDataSource() throws SQLException {
+    private synchronized void initialiseHikariDataSource() throws SQLException, StorageQueryException {
         if (this.hikariDataSource != null) {
             return;
         }
@@ -98,6 +101,19 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
         } catch (Exception e) {
             throw new SQLException(e);
         }
+
+        try {
+            try (Connection con = hikariDataSource.getConnection()) {
+                this.postConnectCallback.apply(con);
+            }
+        } catch (StorageQueryException e) {
+            // if an exception happens here, we want to set the hikariDataSource to null once again so that
+            // whenever the getConnection is called again, we want to re-attempt creation of tables and tenant
+            // entries for this storage
+            hikariDataSource.close();
+            hikariDataSource = null;
+            throw e;
+        }
     }
 
     private static int getTimeToWaitToInit(Start start) {
@@ -132,7 +148,8 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
         return getInstance(start) != null && getInstance(start).hikariDataSource != null;
     }
 
-    static void initPool(Start start, boolean shouldWait) throws DbInitException, SQLException {
+    static void initPool(Start start, boolean shouldWait, PostConnectCallback postConnectCallback)
+            throws DbInitException, SQLException, StorageQueryException {
         if (isAlreadyInitialised(start)) {
             return;
         }
@@ -143,7 +160,7 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
                 + "you have"
                 + " specified the correct values for ('mysql_host' and 'mysql_port') or for 'mysql_connection_uri'";
         try {
-            ConnectionPool con = new ConnectionPool(start);
+            ConnectionPool con = new ConnectionPool(start, postConnectCallback);
             start.getResourceDistributor().setResource(RESOURCE_KEY, con);
             while (true) {
                 try {
@@ -185,7 +202,7 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
         }
     }
 
-    public static Connection getConnection(Start start) throws SQLException {
+    public static Connection getConnection(Start start) throws SQLException, StorageQueryException {
         if (getInstance(start) == null) {
             throw new IllegalStateException("Please call initPool before getConnection");
         }
@@ -211,5 +228,10 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
                 removeInstance(start);
             }
         }
+    }
+
+    @FunctionalInterface
+    public static interface PostConnectCallback {
+        void apply(Connection connection) throws StorageQueryException;
     }
 }
