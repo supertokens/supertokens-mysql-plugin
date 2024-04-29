@@ -11,6 +11,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - Adds queries for Bulk Import
 
+## [7.0.1] - 2024-04-17
+
+- Fixes issues with partial failures during tenant creation
+
 ## [7.0.0] - 2024-03-13
 
 - Replace `TotpNotEnabledError` with `UnknownUserIdTotpError`.
