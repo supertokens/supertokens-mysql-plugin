@@ -55,6 +55,8 @@ public class MultitenancyQueries {
                 + "email_password_enabled BOOLEAN,"
                 + "passwordless_enabled BOOLEAN,"
                 + "third_party_enabled BOOLEAN,"
+                + "is_first_factors_null BOOLEAN,"
+                + "is_third_party_providers_null BOOLEAN,"
                 + "PRIMARY KEY (connection_uri_domain, app_id, tenant_id)"
                 + ");";
         // @formatter:on
@@ -154,25 +156,27 @@ public class MultitenancyQueries {
             }
         }
 
-        for (ThirdPartyConfig.Provider provider : tenantConfig.thirdPartyConfig.providers) {
-            try {
-                ThirdPartyProviderSQLHelper.create(start, sqlCon, tenantConfig, provider);
-            } catch (SQLIntegrityConstraintViolationException e) {
-                if (start.isPrimaryKeyError(e.getMessage(), Config.getConfig(start).getTenantThirdPartyProvidersTable())) {
-                    throw new StorageTransactionLogicException(new DuplicateThirdPartyIdException());
-                } else {
-                    throw e;
-                }
-            }
-
-            for (ThirdPartyConfig.ProviderClient providerClient : provider.clients) {
+        if (tenantConfig.thirdPartyConfig.providers != null) {
+            for (ThirdPartyConfig.Provider provider : tenantConfig.thirdPartyConfig.providers) {
                 try {
-                    ThirdPartyProviderClientSQLHelper.create(start, sqlCon, tenantConfig, provider, providerClient);
+                    ThirdPartyProviderSQLHelper.create(start, sqlCon, tenantConfig, provider);
                 } catch (SQLIntegrityConstraintViolationException e) {
-                    if (start.isPrimaryKeyError(e.getMessage(), Config.getConfig(start).getTenantThirdPartyProviderClientsTable())) {
-                        throw new StorageTransactionLogicException(new DuplicateClientTypeException());
+                    if (start.isPrimaryKeyError(e.getMessage(), Config.getConfig(start).getTenantThirdPartyProvidersTable())) {
+                        throw new StorageTransactionLogicException(new DuplicateThirdPartyIdException());
                     } else {
                         throw e;
+                    }
+                }
+
+                for (ThirdPartyConfig.ProviderClient providerClient : provider.clients) {
+                    try {
+                        ThirdPartyProviderClientSQLHelper.create(start, sqlCon, tenantConfig, provider, providerClient);
+                    } catch (SQLIntegrityConstraintViolationException e) {
+                        if (start.isPrimaryKeyError(e.getMessage(), Config.getConfig(start).getTenantThirdPartyProviderClientsTable())) {
+                            throw new StorageTransactionLogicException(new DuplicateClientTypeException());
+                        } else {
+                            throw e;
+                        }
                     }
                 }
             }
