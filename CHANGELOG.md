@@ -7,7 +7,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-## [7.1.0]
+## [7.1.0] - 2024-05-24
 
 - Adds implementation for a new method `getConfigFieldsInfo` to fetch the plugin config fields.
 - Adds `null` state for `firstFactors` and `providers` by adding `is_first_factors_null` and `is_third_party_providers_null` fields in `tenant_configs` table
@@ -15,8 +15,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Migration
 
 ```sql
-ALTER TABLE tenant_configs ADD COLUMN IF NOT EXISTS is_first_factors_null BOOLEAN DEFAULT TRUE;
-ALTER TABLE tenant_configs ADD COLUMN IF NOT EXISTS is_third_party_providers_null BOOLEAN DEFAULT TRUE;
+ALTER TABLE tenant_configs ADD COLUMN is_first_factors_null BOOLEAN DEFAULT TRUE;
+ALTER TABLE tenant_configs ADD COLUMN is_third_party_providers_null BOOLEAN DEFAULT TRUE;
 
 ALTER TABLE tenant_configs ALTER COLUMN is_first_factors_null DROP DEFAULT;
 ALTER TABLE tenant_configs ALTER COLUMN is_third_party_providers_null DROP DEFAULT;
@@ -223,6 +223,7 @@ CREATE INDEX app_id_to_user_id_user_id_index ON app_id_to_user_id (user_id);
 
     ```sql
     -- helper stored procedures
+    DELIMITER //
 
     CREATE PROCEDURE st_drop_all_fkeys()
     BEGIN
@@ -279,7 +280,7 @@ CREATE INDEX app_id_to_user_id_user_id_index ON app_id_to_user_id (user_id);
         END LOOP;
 
         CLOSE dropCur;
-    END
+    END //
 
     --
 
@@ -338,7 +339,7 @@ CREATE INDEX app_id_to_user_id_user_id_index ON app_id_to_user_id (user_id);
         END LOOP;
 
         CLOSE dropCur;
-    END
+    END //
 
     --
 
@@ -397,7 +398,7 @@ CREATE INDEX app_id_to_user_id_user_id_index ON app_id_to_user_id (user_id);
         END LOOP;
 
         CLOSE dropCur;
-    END
+    END //
 
     --
 
@@ -456,7 +457,7 @@ CREATE INDEX app_id_to_user_id_user_id_index ON app_id_to_user_id (user_id);
         END LOOP;
 
         CLOSE dropCur;
-    END
+    END //
 
     --
 
@@ -488,8 +489,9 @@ CREATE INDEX app_id_to_user_id_user_id_index ON app_id_to_user_id (user_id);
         execute add_column_sql;
           SELECT 'Column Successfully  Created!' INTO p_status_message;
         END IF;
-    END
+    END //
 
+    DELIMITER ;
     -- Drop constraints and indexes
 
     CALL st_drop_all_fkeys();
