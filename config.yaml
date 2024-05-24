@@ -24,9 +24,9 @@ mysql_config_version: 0
 # mysql_port:
 
 
-# (DIFFERENT_ACROSS_TENANTS | OPTIONAL | Default: root) string value. The MySQL user to use to query the database.
+# (DIFFERENT_ACROSS_TENANTS | OPTIONAL | Default: "root") string value. The MySQL user to use to query the database.
 # If the relevant tables are not already created by you, this user should have the
-# ability to create new tables. To see the tables needed, visit: https://supertokens.io/docs/community/getting-started/database-setup/mysql
+# ability to create new tables. To see the tables needed, visit: https://supertokens.com/docs/thirdpartyemailpassword/pre-built-ui/setup/database-setup/mysql
 # mysql_user:
 
 
@@ -39,7 +39,7 @@ mysql_config_version: 0
 # mysql_database_name:
 
 # (DIFFERENT_ACROSS_TENANTS | OPTIONAL | Default: "") string value. A prefix to add to all table names managed by SuperTokens. An "_" will be
-# added between this prefix and the actual table name if the prefix is defined
+# added between this prefix and the actual table name if the prefix is defined.
 # mysql_table_names_prefix:
 
 
@@ -75,7 +75,7 @@ mysql_config_version: 0
 
 # (DIFFERENT_ACROSS_TENANTS | OPTIONAL | Default: "thirdparty_users") string value. Specify the name of the table that will
 # store the thirdparty recipe users.
-# mysql_thirdparty_users_table_name
+# mysql_thirdparty_users_table_name:
 
 
 # (DIFFERENT_ACROSS_TENANTS | OPTIONAL | Default: 60000) long value. Timeout in milliseconds for the idle connections

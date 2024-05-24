@@ -2768,6 +2768,11 @@ public class Start
     }
 
     @Override
+    public List<ConfigFieldInfo> getPluginConfigFieldsInfo() {
+        return MySQLConfig.getConfigFieldsInfoForDashboard(this);
+    }
+
+    @Override
     public void setLogLevels(Set<LOG_LEVEL> logLevels) {
         Config.setLogLevels(this, logLevels);
     }
