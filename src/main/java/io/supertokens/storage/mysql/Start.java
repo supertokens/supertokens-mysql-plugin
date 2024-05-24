@@ -2768,7 +2768,7 @@ public class Start
     }
 
     @Override
-    public List<ConfigFieldInfo> getConfigFieldsInfoForDashboard() {
+    public List<ConfigFieldInfo> getPluginConfigFieldsInfo() {
         return MySQLConfig.getConfigFieldsInfoForDashboard(this);
     }
 
