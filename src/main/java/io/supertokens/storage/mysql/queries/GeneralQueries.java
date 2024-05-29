@@ -413,6 +413,15 @@ public class GeneralQueries {
             // index:
             update(con, TOTPQueries.getQueryToCreateUsedCodesExpiryTimeIndex(start), NO_OP_SETTER);
         }
+
+        if (!doesTableExists(start, con, Config.getConfig(start).getBulkImportUsersTable())) {
+            getInstance(start).addState(CREATING_NEW_TABLE, null);
+            update(start, BulkImportQueries.getQueryToCreateBulkImportUsersTable(start), NO_OP_SETTER);
+            // index:
+            update(start, BulkImportQueries.getQueryToCreateStatusUpdatedAtIndex(start), NO_OP_SETTER);
+            update(start, BulkImportQueries.getQueryToCreatePaginationIndex1(start), NO_OP_SETTER);
+            update(start, BulkImportQueries.getQueryToCreatePaginationIndex2(start), NO_OP_SETTER);
+        }
     }
 
     @TestOnly

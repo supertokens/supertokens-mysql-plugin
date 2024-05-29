@@ -317,6 +317,10 @@ public class MySQLConfig {
         return addPrefixToTableName("totp_used_codes");
     }
 
+    public String getBulkImportUsersTable() {
+        return addPrefixToTableName("bulk_import_users");
+    }
+
     private String addPrefixToTableName(String tableName) {
         return mysql_table_names_prefix + tableName;
     }

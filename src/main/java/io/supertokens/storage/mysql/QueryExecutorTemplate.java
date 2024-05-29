@@ -59,4 +59,16 @@ public interface QueryExecutorTemplate {
         }
     }
 
+    static <T> T update(Start start, String QUERY, PreparedStatementValueSetter setter, ResultSetValueExtractor<T> mapper)
+            throws SQLException, StorageQueryException {
+        try (Connection con = ConnectionPool.getConnection(start)) {
+            try (PreparedStatement pst = con.prepareStatement(QUERY)) {
+                setter.setValues(pst);
+                try (ResultSet result = pst.executeQuery()) {
+                    return mapper.extract(result);
+                }
+            }
+        }
+    }
+
 }
