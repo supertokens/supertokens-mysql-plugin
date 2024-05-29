@@ -18,25 +18,26 @@ package io.supertokens.storage.mysql;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Set;
 
 import com.google.gson.JsonObject;
 
 import io.supertokens.pluginInterface.LOG_LEVEL;
+import io.supertokens.pluginInterface.exceptions.DbInitException;
 import io.supertokens.pluginInterface.exceptions.InvalidConfigException;
 import io.supertokens.pluginInterface.exceptions.StorageQueryException;
 import io.supertokens.pluginInterface.exceptions.StorageTransactionLogicException;
 import io.supertokens.pluginInterface.multitenancy.TenantIdentifier;
 import io.supertokens.pluginInterface.sqlStorage.TransactionConnection;
-import io.supertokens.storage.mysql.config.Config;
-
 
 /**
  * BulkImportProxyStorage is a class extending Start, serving as a Storage instance in the bulk import user cronjob.
  * This cronjob extensively utilizes existing queries to import users, all of which internally operate within transactions.
  * 
  * For the purpose of bulkimport cronjob, we aim to employ a single connection for all queries and rollback any operations in case of query failures.
- * To achieve this, we override the startTransactionHelper method to utilize the same connection and prevent automatic query commits even upon transaction success.
+ * To achieve this, we override the startTransactionHelper method to utilize the same connection and prevent automatic query commits even upon transaction
+ * success.
  * Subsequently, the cronjob is responsible for committing the transaction after ensuring the successful execution of all queries.
  */
 
@@ -61,7 +62,7 @@ public class BulkImportProxyStorage extends Start {
 
     @Override
     public void commitTransaction(TransactionConnection con) throws StorageQueryException {
-        // We do not want to commit the queries when using the BulkImportProxyStorage to be able to rollback everything 
+        // We do not want to commit the queries when using the BulkImportProxyStorage to be able to rollback everything
         // if any query fails while importing the user
     }
 
@@ -71,14 +72,33 @@ public class BulkImportProxyStorage extends Start {
         // We are overriding the loadConfig method to set the connection pool size
         // to 1 to avoid creating many connections for the bulk import cronjob
         configJson.addProperty("postgresql_connection_pool_size", 1);
-        Config.loadConfig(this, configJson, logLevels, tenantIdentifier);
+        super.loadConfig(configJson, logLevels, tenantIdentifier);
+    }
+
+    @Override
+    public void initStorage(boolean shouldWait, List<TenantIdentifier> tenantIdentifiers) throws DbInitException {
+        super.initStorage(shouldWait, tenantIdentifiers);
+
+        // `BulkImportProxyStorage` uses `BulkImportProxyConnection`, which overrides the `.commit()` method on the Connection object.
+        // The `initStorage()` method runs `select * from table_name limit 1` queries to check if the tables exist but these queries
+        // don't get committed due to the overridden `.commit()`, so we need to manually commit the transaction to remove any locks on the tables.
+
+        // Without this commit, a call to `select * from bulk_import_users limit 1` in `doesTableExist()` locks the `bulk_import_users` table,
+        try {
+            this.commitTransactionForBulkImportProxyStorage();
+        } catch (StorageQueryException e) {
+            throw new DbInitException(e);
+        }
     }
 
     @Override
     public void closeConnectionForBulkImportProxyStorage() throws StorageQueryException {
         try {
-            this.connection.close();
-            this.connection = null;
+            if (this.connection != null) {
+                this.connection.close();
+                this.connection = null;
+            }
+            ConnectionPool.close(this);
         } catch (SQLException e) {
             throw new StorageQueryException(e);
         }

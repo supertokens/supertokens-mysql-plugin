@@ -44,7 +44,7 @@ public class BulkImportQueries {
         return "CREATE TABLE IF NOT EXISTS " + tableName + " ("
                 + "id CHAR(36),"
                 + "app_id VARCHAR(64) NOT NULL DEFAULT 'public',"
-                + "primary_user_id VARCHAR(64),"
+                + "primary_user_id VARCHAR(36),"
                 + "raw_data TEXT NOT NULL,"
                 + "status VARCHAR(128) DEFAULT 'NEW',"
                 + "error_msg TEXT,"
@@ -128,6 +128,10 @@ public class BulkImportQueries {
             Connection sqlCon = (Connection) con.getConnection();
             try {
                 // NOTE: On average, we take about 66 seconds to process 1000 users. If, for any reason, the bulk import users were marked as processing but couldn't be processed within 10 minutes, we'll attempt to process them again.
+
+                // "FOR UPDATE" ensures that multiple cron jobs don't read the same rows simultaneously.
+                // If one process locks the first 1000 rows, others will wait for the lock to be released.
+                // "SKIP LOCKED" allows other processes to skip locked rows and select the next 1000 available rows.
                 String selectQuery = "SELECT * FROM " + Config.getConfig(start).getBulkImportUsersTable()
                 + " WHERE app_id = ?"
                 + " AND (status = 'NEW' OR (status = 'PROCESSING' AND updated_at < (UNIX_TIMESTAMP() * 1000) - 10 * 60 * 1000))" /* 10 mins */
@@ -220,6 +224,8 @@ public class BulkImportQueries {
             return new ArrayList<>();
         }
 
+        // This function needs to return the IDs of the deleted users. Since the DELETE query doesn't return the IDs of the deleted entries,
+        // we first perform a SELECT query to find all IDs that actually exist in the database. After deletion, we return these IDs.
         String selectQuery = "SELECT id FROM " + Config.getConfig(start).getBulkImportUsersTable()
         + " WHERE app_id = ? AND id IN (" + Utils
                 .generateCommaSeperatedQuestionMarks(bulkImportUserIds.length) + ")";
@@ -279,6 +285,32 @@ public class BulkImportQueries {
             pst.setLong(2, System.currentTimeMillis());
             pst.setString(3, appIdentifier.getAppId());
             pst.setString(4, bulkImportUserId);
+        });
+    }
+
+    public static long getBulkImportUsersCount(Start start, AppIdentifier appIdentifier, @Nullable BULK_IMPORT_USER_STATUS status) throws SQLException, StorageQueryException {
+        String baseQuery = "SELECT COUNT(*) FROM " + Config.getConfig(start).getBulkImportUsersTable();
+        StringBuilder queryBuilder = new StringBuilder(baseQuery);
+
+        List<Object> parameters = new ArrayList<>();
+
+        queryBuilder.append(" WHERE app_id = ?");
+        parameters.add(appIdentifier.getAppId());
+
+        if (status != null) {
+            queryBuilder.append(" AND status = ?");
+            parameters.add(status.toString());
+        }
+
+        String query = queryBuilder.toString();
+
+        return execute(start, query, pst -> {
+            for (int i = 0; i < parameters.size(); i++) {
+                pst.setObject(i + 1, parameters.get(i));
+            }
+        }, result -> {
+            result.next();
+            return result.getLong(1);
         });
     }
 
