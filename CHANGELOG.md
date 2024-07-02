@@ -9,17 +9,14 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [7.1.0] - 2024-05-24
 
-- Adds implementation for a new method `getConfigFieldsInfo` to fetch the plugin config fields.
-- Adds `null` state for `firstFactors` and `providers` by adding `is_first_factors_null` and `is_third_party_providers_null` fields in `tenant_configs` table
+- Adds implementation for a new method `getConfigFieldsInfo` to fetch the plugin config fields
+- Adds `null` state for `firstFactors` by adding `is_first_factors_null` fields in `tenant_configs` table
 
 ### Migration
 
 ```sql
 ALTER TABLE tenant_configs ADD COLUMN is_first_factors_null BOOLEAN DEFAULT TRUE;
-ALTER TABLE tenant_configs ADD COLUMN is_third_party_providers_null BOOLEAN DEFAULT TRUE;
-
 ALTER TABLE tenant_configs ALTER COLUMN is_first_factors_null DROP DEFAULT;
-ALTER TABLE tenant_configs ALTER COLUMN is_third_party_providers_null DROP DEFAULT;
 ```
 
 ## [7.0.1] - 2024-04-17
