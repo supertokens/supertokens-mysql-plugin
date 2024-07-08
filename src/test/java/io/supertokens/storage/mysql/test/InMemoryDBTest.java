@@ -56,7 +56,7 @@ public class InMemoryDBTest {
             Utils.commentConfigValue("mysql_user");
             Utils.commentConfigValue("mysql_password");
 
-            String[] args = { "../" };
+            String[] args = {"../"};
             TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
             assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
 
@@ -72,7 +72,7 @@ public class InMemoryDBTest {
             assert sessionInfo.accessToken != null;
             assert sessionInfo.refreshToken != null;
 
-            assertEquals(((SessionStorage)StorageLayer.getStorage(process.getProcess())).getNumberOfSessions(
+            assertEquals(((SessionStorage) StorageLayer.getStorage(process.getProcess())).getNumberOfSessions(
                     TenantIdentifier.BASE_TENANT), 1);
 
             process.kill();
@@ -80,12 +80,13 @@ public class InMemoryDBTest {
         }
 
         {
-            String[] args = { "../" };
+            String[] args = {"../"};
             StorageLayer.close();
             TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
             assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
 
-            assertEquals(((SessionStorage)StorageLayer.getStorage(process.getProcess())).getNumberOfSessions(TenantIdentifier.BASE_TENANT), 0);
+            assertEquals(((SessionStorage) StorageLayer.getStorage(process.getProcess())).getNumberOfSessions(
+                    TenantIdentifier.BASE_TENANT), 0);
 
             process.kill();
             assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
@@ -95,7 +96,7 @@ public class InMemoryDBTest {
     @Test
     public void checkThatActualDBWorksIfCorrectConfigDev() throws Exception {
         {
-            String[] args = { "../" };
+            String[] args = {"../"};
             TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
             assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
 
@@ -111,17 +112,19 @@ public class InMemoryDBTest {
             assert sessionInfo.accessToken != null;
             assert sessionInfo.refreshToken != null;
 
-            assertEquals(((SessionStorage)StorageLayer.getStorage(process.getProcess())).getNumberOfSessions(TenantIdentifier.BASE_TENANT), 1);
+            assertEquals(((SessionStorage) StorageLayer.getStorage(process.getProcess())).getNumberOfSessions(
+                    TenantIdentifier.BASE_TENANT), 1);
 
             process.kill(false);
             assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
         }
         {
-            String[] args = { "../" };
+            String[] args = {"../"};
             TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
             assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
 
-            assertEquals(((SessionStorage)StorageLayer.getStorage(process.getProcess())).getNumberOfSessions(TenantIdentifier.BASE_TENANT), 1);
+            assertEquals(((SessionStorage) StorageLayer.getStorage(process.getProcess())).getNumberOfSessions(
+                    TenantIdentifier.BASE_TENANT), 1);
 
             process.kill();
             assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
@@ -131,7 +134,7 @@ public class InMemoryDBTest {
     @Test
     public void checkThatActualDBWorksIfCorrectConfigProduction() throws Exception {
         {
-            String[] args = { "../" };
+            String[] args = {"../"};
             TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
             assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
 
@@ -147,17 +150,19 @@ public class InMemoryDBTest {
             assert sessionInfo.accessToken != null;
             assert sessionInfo.refreshToken != null;
 
-            assertEquals(((SessionStorage)StorageLayer.getStorage(process.getProcess())).getNumberOfSessions(TenantIdentifier.BASE_TENANT), 1);
+            assertEquals(((SessionStorage) StorageLayer.getStorage(process.getProcess())).getNumberOfSessions(
+                    TenantIdentifier.BASE_TENANT), 1);
 
             process.kill(false);
             assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
         }
         {
-            String[] args = { "../" };
+            String[] args = {"../"};
             TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
             assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
 
-            assertEquals(((SessionStorage)StorageLayer.getStorage(process.getProcess())).getNumberOfSessions(TenantIdentifier.BASE_TENANT), 1);
+            assertEquals(((SessionStorage) StorageLayer.getStorage(process.getProcess())).getNumberOfSessions(
+                    TenantIdentifier.BASE_TENANT), 1);
 
             process.kill();
             assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
@@ -166,7 +171,7 @@ public class InMemoryDBTest {
 
     @Test
     public void checkThatErrorIsThrownIfIncorrectConfigInProduction() throws IOException, InterruptedException {
-        String[] args = { "../" };
+        String[] args = {"../"};
 
         Utils.commentConfigValue("mysql_user");
 
@@ -184,7 +189,7 @@ public class InMemoryDBTest {
 
     @Test
     public void ifForceNoInMemoryThenDevShouldThrowError() throws IOException, InterruptedException {
-        String[] args = { "../", "forceNoInMemDB=true" };
+        String[] args = {"../", "forceNoInMemDB=true"};
 
         Utils.commentConfigValue("mysql_user");
 

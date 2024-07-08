@@ -42,7 +42,6 @@ import java.io.IOException;
 
 import static junit.framework.TestCase.assertEquals;
 import static org.junit.Assert.*;
-import static org.junit.Assert.assertNotNull;
 
 public class SuperTokensSaaSSecretTest {
     @Rule
@@ -102,10 +101,11 @@ public class SuperTokensSaaSSecretTest {
             try {
                 JsonObject j = new JsonObject();
                 j.addProperty(PROTECTED_CORE_CONFIG[i], "");
-                Multitenancy.addNewOrUpdateAppOrTenant(process.main, new TenantConfig(new TenantIdentifier(null, null, "t1"), new EmailPasswordConfig(false),
-                        new ThirdPartyConfig(false, new ThirdPartyConfig.Provider[0]),
-                        new PasswordlessConfig(false),
-                        null, null, j), true);
+                Multitenancy.addNewOrUpdateAppOrTenant(process.main,
+                        new TenantConfig(new TenantIdentifier(null, null, "t1"), new EmailPasswordConfig(false),
+                                new ThirdPartyConfig(false, new ThirdPartyConfig.Provider[0]),
+                                new PasswordlessConfig(false),
+                                null, null, j), true);
                 fail();
             } catch (BadPermissionException e) {
                 assertEquals(e.getMessage(), "Not allowed to modify DB related configs.");
@@ -195,7 +195,8 @@ public class SuperTokensSaaSSecretTest {
 
             {
                 JsonObject response = HttpRequestForTesting.sendJsonRequest(process.getProcess(), "",
-                        HttpRequestForTesting.getMultitenantUrl(TenantIdentifier.BASE_TENANT, "/recipe/multitenancy/tenant/list"),
+                        HttpRequestForTesting.getMultitenantUrl(TenantIdentifier.BASE_TENANT,
+                                "/recipe/multitenancy/tenant/list"),
                         null, 1000, 1000, null,
                         SemVer.v3_0.get(), "GET", apiKey, "multitenancy");
 
@@ -216,7 +217,8 @@ public class SuperTokensSaaSSecretTest {
 
             {
                 JsonObject response = HttpRequestForTesting.sendJsonRequest(process.getProcess(), "",
-                        HttpRequestForTesting.getMultitenantUrl(TenantIdentifier.BASE_TENANT, "/recipe/multitenancy/tenant/list"),
+                        HttpRequestForTesting.getMultitenantUrl(TenantIdentifier.BASE_TENANT,
+                                "/recipe/multitenancy/tenant/list"),
                         null, 1000, 1000, null,
                         SemVer.v3_0.get(), "GET", saasSecret, "multitenancy");
 
