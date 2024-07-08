@@ -352,7 +352,7 @@ public class MySQLConfig {
                 throw new InvalidConfigException(
                         "'mysql_minimum_idle_connections' must be a >= 0");
             }
-    
+
             if (mysql_minimum_idle_connections > mysql_connection_pool_size) {
                 throw new InvalidConfigException(
                         "'mysql_minimum_idle_connections' must be less than or equal to "
@@ -499,7 +499,8 @@ public class MySQLConfig {
         }
 
         if (mysql_emailverification_verified_emails_table_name == null) {
-            mysql_emailverification_verified_emails_table_name = addPrefixToTableName("emailverification_verified_emails");
+            mysql_emailverification_verified_emails_table_name = addPrefixToTableName(
+                    "emailverification_verified_emails");
         }
 
         if (mysql_thirdparty_users_table_name == null) {
@@ -509,7 +510,8 @@ public class MySQLConfig {
         isValidAndNormalised = true;
     }
 
-    public void assertThatConfigFromSameUserPoolIsNotConflicting(MySQLConfig otherConfig) throws InvalidConfigException {
+    public void assertThatConfigFromSameUserPoolIsNotConflicting(MySQLConfig otherConfig)
+            throws InvalidConfigException {
         for (Field field : MySQLConfig.class.getDeclaredFields()) {
             if (field.isAnnotationPresent(NotConflictingWithinUserPool.class)) {
                 try {
@@ -549,10 +551,11 @@ public class MySQLConfig {
                 try {
                     String fieldName = field.getName();
                     String fieldValue = field.get(this) != null ? field.get(this).toString() : null;
-                    if(fieldValue == null) {
+                    if (fieldValue == null) {
                         continue;
                     }
-                    // To ensure a unique connectionPoolId we include the database password and use the "|db_pass|" identifier.
+                    // To ensure a unique connectionPoolId we include the database password and use the "|db_pass|"
+                    // identifier.
                     // This facilitates easy removal of the password from logs when necessary.
                     if (fieldName.equals("mysql_password")) {
                         connectionPoolId.append("|db_pass|" + fieldValue + "|db_pass");

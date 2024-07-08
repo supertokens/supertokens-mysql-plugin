@@ -745,7 +745,8 @@ public class StorageLayerTest {
                     tenantConfigJson);
 
             StorageLayer.getMultitenancyStorage(process.getProcess()).createTenant(tenantConfig);
-            MultitenancyHelper.getInstance(process.getProcess()).refreshTenantsInCoreBasedOnChangesInCoreConfigOrIfTenantListChanged(true);
+            MultitenancyHelper.getInstance(process.getProcess())
+                    .refreshTenantsInCoreBasedOnChangesInCoreConfigOrIfTenantListChanged(true);
 
             try {
                 EmailPassword.signIn(tid, (StorageLayer.getStorage(tid, process.getProcess())),

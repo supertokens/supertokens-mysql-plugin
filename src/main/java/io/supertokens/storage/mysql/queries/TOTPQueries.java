@@ -26,19 +26,19 @@ public class TOTPQueries {
                 + "user_id VARCHAR(128) NOT NULL,"
                 + "PRIMARY KEY (app_id, user_id),"
                 + "FOREIGN KEY(app_id)"
-                + " REFERENCES " + Config.getConfig(start).getAppsTable() +  " (app_id) ON DELETE CASCADE"
+                + " REFERENCES " + Config.getConfig(start).getAppsTable() + " (app_id) ON DELETE CASCADE"
                 + ")";
     }
 
     public static String getQueryToCreateUserDevicesTable(Start start) {
         return "CREATE TABLE IF NOT EXISTS " + Config.getConfig(start).getTotpUserDevicesTable() + " ("
                 + "app_id VARCHAR(64) DEFAULT 'public',"
-                + "user_id VARCHAR(128) NOT NULL," 
-				+ "device_name VARCHAR(256) NOT NULL,"
+                + "user_id VARCHAR(128) NOT NULL,"
+                + "device_name VARCHAR(256) NOT NULL,"
                 + "secret_key VARCHAR(256) NOT NULL,"
-                + "period INTEGER NOT NULL," 
-				+ "skew INTEGER NOT NULL," 
-				+ "verified BOOLEAN NOT NULL,"
+                + "period INTEGER NOT NULL,"
+                + "skew INTEGER NOT NULL,"
+                + "verified BOOLEAN NOT NULL,"
                 + "created_at BIGINT UNSIGNED NOT NULL,"
                 + "PRIMARY KEY (app_id, user_id, device_name),"
                 + "FOREIGN KEY (app_id, user_id)"
@@ -86,10 +86,13 @@ public class TOTPQueries {
         });
     }
 
-    private static int insertDevice_Transaction(Start start, Connection con, AppIdentifier appIdentifier, TOTPDevice device)
+    private static int insertDevice_Transaction(Start start, Connection con, AppIdentifier appIdentifier,
+                                                TOTPDevice device)
             throws SQLException, StorageQueryException {
         String QUERY = "INSERT INTO " + Config.getConfig(start).getTotpUserDevicesTable()
-                + " (app_id, user_id, device_name, secret_key, period, skew, verified, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                +
+                " (app_id, user_id, device_name, secret_key, period, skew, verified, created_at) VALUES (?, ?, ?, ?, " +
+                "?, ?, ?, ?)";
 
         return update(con, QUERY, pst -> {
             pst.setString(1, appIdentifier.getAppId());
@@ -103,13 +106,15 @@ public class TOTPQueries {
         });
     }
 
-    public static void createDevice_Transaction(Start start, Connection sqlCon, AppIdentifier appIdentifier, TOTPDevice device)
+    public static void createDevice_Transaction(Start start, Connection sqlCon, AppIdentifier appIdentifier,
+                                                TOTPDevice device)
             throws SQLException, StorageQueryException {
         insertUser_Transaction(start, sqlCon, appIdentifier, device.userId);
         insertDevice_Transaction(start, sqlCon, appIdentifier, device);
     }
 
-    public static TOTPDevice getDeviceByName_Transaction(Start start, Connection sqlCon, AppIdentifier appIdentifier, String userId, String deviceName)
+    public static TOTPDevice getDeviceByName_Transaction(Start start, Connection sqlCon, AppIdentifier appIdentifier,
+                                                         String userId, String deviceName)
             throws SQLException, StorageQueryException {
         String QUERY = "SELECT * FROM " + Config.getConfig(start).getTotpUserDevicesTable()
                 + " WHERE app_id = ? AND user_id = ? AND device_name = ? FOR UPDATE;";
@@ -137,7 +142,8 @@ public class TOTPQueries {
         });
     }
 
-    public static int deleteDevice_Transaction(Start start, Connection con, AppIdentifier appIdentifier, String userId, String deviceName)
+    public static int deleteDevice_Transaction(Start start, Connection con, AppIdentifier appIdentifier, String userId,
+                                               String deviceName)
             throws SQLException, StorageQueryException {
         String QUERY = "DELETE FROM " + Config.getConfig(start).getTotpUserDevicesTable()
                 + " WHERE app_id = ? AND user_id = ? AND device_name = ?;";
@@ -174,7 +180,8 @@ public class TOTPQueries {
         return removedUsersCount > 0;
     }
 
-    public static int updateDeviceName(Start start, AppIdentifier appIdentifier, String userId, String oldDeviceName, String newDeviceName)
+    public static int updateDeviceName(Start start, AppIdentifier appIdentifier, String userId, String oldDeviceName,
+                                       String newDeviceName)
             throws StorageQueryException, SQLException {
         String QUERY = "UPDATE " + Config.getConfig(start).getTotpUserDevicesTable()
                 + " SET device_name = ? WHERE app_id = ? AND user_id = ? AND device_name = ?;";
@@ -205,7 +212,8 @@ public class TOTPQueries {
         });
     }
 
-    public static TOTPDevice[] getDevices_Transaction(Start start, Connection con, AppIdentifier appIdentifier, String userId)
+    public static TOTPDevice[] getDevices_Transaction(Start start, Connection con, AppIdentifier appIdentifier,
+                                                      String userId)
             throws StorageQueryException, SQLException {
         String QUERY = "SELECT * FROM " + Config.getConfig(start).getTotpUserDevicesTable()
                 + " WHERE app_id = ? AND user_id = ? FOR UPDATE;";
@@ -224,10 +232,13 @@ public class TOTPQueries {
 
     }
 
-    public static int insertUsedCode_Transaction(Start start, Connection con, TenantIdentifier tenantIdentifier, TOTPUsedCode code)
+    public static int insertUsedCode_Transaction(Start start, Connection con, TenantIdentifier tenantIdentifier,
+                                                 TOTPUsedCode code)
             throws SQLException, StorageQueryException {
         String QUERY = "INSERT INTO " + Config.getConfig(start).getTotpUsedCodesTable()
-                + " (app_id, tenant_id, user_id, code, is_valid, expiry_time_ms, created_time_ms) VALUES (?, ?, ?, ?, ?, ?, ?);";
+                +
+                " (app_id, tenant_id, user_id, code, is_valid, expiry_time_ms, created_time_ms) VALUES (?, ?, ?, ?, " +
+                "?, ?, ?);";
 
         return update(con, QUERY, pst -> {
             pst.setString(1, tenantIdentifier.getAppId());

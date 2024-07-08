@@ -75,7 +75,7 @@ public class DeadlockTest {
     @Test
     public void transactionDeadlockTesting()
             throws InterruptedException, StorageQueryException, StorageTransactionLogicException {
-        String[] args = { "../" };
+        String[] args = {"../"};
         TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
 
@@ -84,7 +84,8 @@ public class DeadlockTest {
         sqlStorage.startTransaction(con -> {
             try {
                 sqlStorage.setKeyValue_Transaction(TenantIdentifier.BASE_TENANT, con, "Key", new KeyValueInfo("Value"));
-                sqlStorage.setKeyValue_Transaction(TenantIdentifier.BASE_TENANT, con, "Key1", new KeyValueInfo("Value1"));
+                sqlStorage.setKeyValue_Transaction(TenantIdentifier.BASE_TENANT, con, "Key1",
+                        new KeyValueInfo("Value1"));
                 sqlStorage.commitTransaction(con);
             } catch (TenantOrAppNotFoundException e) {
                 throw new StorageTransactionLogicException(e);
@@ -175,7 +176,7 @@ public class DeadlockTest {
 
     @Test
     public void testCodeCreationRapidly() throws Exception {
-        String[] args = { "../" };
+        String[] args = {"../"};
 
         TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
@@ -211,7 +212,7 @@ public class DeadlockTest {
 
     @Test
     public void testCodeCreationRapidlyWithDifferentEmails() throws Exception {
-        String[] args = { "../" };
+        String[] args = {"../"};
 
         TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
@@ -260,7 +261,8 @@ public class DeadlockTest {
         System.out.println("Durations: " + durations.toString());
 
         assertNull(process
-                .checkOrWaitForEventInPlugin(io.supertokens.storage.mysql.ProcessState.PROCESS_STATE.DEADLOCK_NOT_RESOLVED));
+                .checkOrWaitForEventInPlugin(
+                        io.supertokens.storage.mysql.ProcessState.PROCESS_STATE.DEADLOCK_NOT_RESOLVED));
         assertNotNull(process
                 .checkOrWaitForEventInPlugin(io.supertokens.storage.mysql.ProcessState.PROCESS_STATE.DEADLOCK_FOUND));
         assert (pass.get());
@@ -271,7 +273,7 @@ public class DeadlockTest {
 
     @Test
     public void testConcurrentDeleteAndInsert() throws Exception {
-        String[] args = { "../" };
+        String[] args = {"../"};
         TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
 
@@ -392,7 +394,8 @@ public class DeadlockTest {
                     TOTPUsedCode code2 = new TOTPUsedCode("user", "1234", false, nextDay, now + 1);
                     try {
                         totpStorage.insertUsedCode_Transaction(con, TenantIdentifier.BASE_TENANT, code2);
-                    } catch (UnknownTotpUserIdException | UsedCodeAlreadyExistsException | TenantOrAppNotFoundException e) {
+                    } catch (UnknownTotpUserIdException | UsedCodeAlreadyExistsException |
+                             TenantOrAppNotFoundException e) {
                         // This should not happen
                         throw new StorageTransactionLogicException(e);
                     }
@@ -436,7 +439,7 @@ public class DeadlockTest {
 
     @Test
     public void testConcurrentDeleteAndUpdate() throws Exception {
-        String[] args = { "../" };
+        String[] args = {"../"};
         TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
 
@@ -623,7 +626,8 @@ public class DeadlockTest {
         for (int i = 0; i < 3000; i++) {
             es.execute(() -> {
                 try {
-                    AuthRecipe.linkAccounts(process.getProcess(), user2.getSupertokensUserId(), user1.getSupertokensUserId());
+                    AuthRecipe.linkAccounts(process.getProcess(), user2.getSupertokensUserId(),
+                            user1.getSupertokensUserId());
                     AuthRecipe.unlinkAccounts(process.getProcess(), user2.getSupertokensUserId());
                 } catch (Exception e) {
                     if (e.getMessage().toLowerCase().contains("the transaction might succeed if retried")) {
@@ -638,7 +642,8 @@ public class DeadlockTest {
 
         assert (pass.get());
         assertNull(process
-                .checkOrWaitForEventInPlugin(io.supertokens.storage.mysql.ProcessState.PROCESS_STATE.DEADLOCK_NOT_RESOLVED));
+                .checkOrWaitForEventInPlugin(
+                        io.supertokens.storage.mysql.ProcessState.PROCESS_STATE.DEADLOCK_NOT_RESOLVED));
         assertNotNull(process
                 .checkOrWaitForEventInPlugin(io.supertokens.storage.mysql.ProcessState.PROCESS_STATE.DEADLOCK_FOUND));
 
@@ -681,7 +686,8 @@ public class DeadlockTest {
 
         assert (pass.get());
         assertNull(process
-                .checkOrWaitForEventInPlugin(io.supertokens.storage.mysql.ProcessState.PROCESS_STATE.DEADLOCK_NOT_RESOLVED));
+                .checkOrWaitForEventInPlugin(
+                        io.supertokens.storage.mysql.ProcessState.PROCESS_STATE.DEADLOCK_NOT_RESOLVED));
         assertNotNull(process
                 .checkOrWaitForEventInPlugin(io.supertokens.storage.mysql.ProcessState.PROCESS_STATE.DEADLOCK_FOUND));
 

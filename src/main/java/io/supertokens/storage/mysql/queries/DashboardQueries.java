@@ -100,7 +100,8 @@ public class DashboardQueries {
 
     }
 
-    public static DashboardUser[] getAllDashBoardUsers(Start start, AppIdentifier appIdentifier) throws SQLException, StorageQueryException {
+    public static DashboardUser[] getAllDashBoardUsers(Start start, AppIdentifier appIdentifier)
+            throws SQLException, StorageQueryException {
         String QUERY = "SELECT * FROM "
                 + Config.getConfig(start).getDashboardUsersTable() + " WHERE app_id = ? ORDER BY time_joined ASC";
         return QueryExecutorTemplate.execute(start, QUERY,
@@ -153,7 +154,8 @@ public class DashboardQueries {
         return rowsUpdated > 0;
     }
 
-    public static void createDashboardSession(Start start, AppIdentifier appIdentifier, String userId, String sessionId, long timeCreated,
+    public static void createDashboardSession(Start start, AppIdentifier appIdentifier, String userId, String sessionId,
+                                              long timeCreated,
                                               long expiry) throws SQLException, StorageQueryException {
         String QUERY = "INSERT INTO " + Config.getConfig(start).getDashboardSessionsTable()
                 + "(app_id, user_id, session_id, time_created, expiry)" + " VALUES(?, ?, ?, ?, ?)";
@@ -166,7 +168,8 @@ public class DashboardQueries {
         });
     }
 
-    public static DashboardSessionInfo getSessionInfoWithSessionId(Start start, AppIdentifier appIdentifier, String sessionId)
+    public static DashboardSessionInfo getSessionInfoWithSessionId(Start start, AppIdentifier appIdentifier,
+                                                                   String sessionId)
             throws SQLException, StorageQueryException {
         String QUERY = "SELECT * FROM "
                 + Config.getConfig(start).getDashboardSessionsTable() + " WHERE app_id = ? AND session_id = ?";
@@ -181,7 +184,8 @@ public class DashboardQueries {
         });
     }
 
-    public static DashboardSessionInfo[] getAllSessionsForUserId(Start start, AppIdentifier appIdentifier, String userId)
+    public static DashboardSessionInfo[] getAllSessionsForUserId(Start start, AppIdentifier appIdentifier,
+                                                                 String userId)
             throws SQLException, StorageQueryException {
         String QUERY = "SELECT * FROM "
                 + Config.getConfig(start).getDashboardSessionsTable() + " WHERE app_id = ? AND user_id = ?";
@@ -215,7 +219,8 @@ public class DashboardQueries {
         });
     }
 
-    public static boolean deleteDashboardUserSessionWithSessionId(Start start, AppIdentifier appIdentifier, String sessionId)
+    public static boolean deleteDashboardUserSessionWithSessionId(Start start, AppIdentifier appIdentifier,
+                                                                  String sessionId)
             throws SQLException, StorageQueryException {
         String QUERY = "DELETE FROM " + Config.getConfig(start).getDashboardSessionsTable()
                 + " WHERE app_id = ? AND session_id = ?";

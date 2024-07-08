@@ -40,7 +40,8 @@ import static io.supertokens.storage.mysql.config.Config.getConfig;
 public class ThirdPartyProviderClientSQLHelper {
     public static class TenantThirdPartyProviderClientRowMapper implements
             RowMapper<ThirdPartyConfig.ProviderClient, ResultSet> {
-        public static final TenantThirdPartyProviderClientRowMapper INSTANCE = new TenantThirdPartyProviderClientRowMapper();
+        public static final TenantThirdPartyProviderClientRowMapper INSTANCE =
+                new TenantThirdPartyProviderClientRowMapper();
 
         private TenantThirdPartyProviderClientRowMapper() {
         }
@@ -59,7 +60,7 @@ public class ThirdPartyProviderClientSQLHelper {
                 } else {
                     JsonArray scopeArray = new Gson().fromJson(scopeArrayStr, JsonArray.class);
                     scopeStringArray = new String[scopeArray.size()];
-                    for (int i=0; i < scopeArray.size(); i++) {
+                    for (int i = 0; i < scopeArray.size(); i++) {
                         scopeStringArray[i] = scopeArray.get(i).getAsString();
                     }
                 }
@@ -85,37 +86,47 @@ public class ThirdPartyProviderClientSQLHelper {
         }
     }
 
-    public static HashMap<TenantIdentifier, HashMap<String, HashMap<String, ThirdPartyConfig.ProviderClient>>> selectAll(Start start)
+    public static HashMap<TenantIdentifier, HashMap<String, HashMap<String, ThirdPartyConfig.ProviderClient>>> selectAll(
+            Start start)
             throws SQLException, StorageQueryException {
         HashMap<TenantIdentifier, HashMap<String, HashMap<String, ThirdPartyConfig.ProviderClient>>> providerClientsMap = new HashMap<>();
 
-        String QUERY = "SELECT connection_uri_domain, app_id, tenant_id, third_party_id, client_type, client_id, client_secret, scope, force_pkce, additional_config FROM "
-                + getConfig(start).getTenantThirdPartyProviderClientsTable() + ";";
+        String QUERY =
+                "SELECT connection_uri_domain, app_id, tenant_id, third_party_id, client_type, client_id, " +
+                        "client_secret, scope, force_pkce, additional_config FROM "
+                        + getConfig(start).getTenantThirdPartyProviderClientsTable() + ";";
 
-        execute(start, QUERY, pst -> {}, result -> {
+        execute(start, QUERY, pst -> {
+        }, result -> {
             while (result.next()) {
-                TenantIdentifier tenantIdentifier = new TenantIdentifier(result.getString("connection_uri_domain"), result.getString("app_id"), result.getString("tenant_id"));
-                ThirdPartyConfig.ProviderClient providerClient = TenantThirdPartyProviderClientRowMapper.getInstance().mapOrThrow(result);
+                TenantIdentifier tenantIdentifier = new TenantIdentifier(result.getString("connection_uri_domain"),
+                        result.getString("app_id"), result.getString("tenant_id"));
+                ThirdPartyConfig.ProviderClient providerClient = TenantThirdPartyProviderClientRowMapper.getInstance()
+                        .mapOrThrow(result);
                 if (!providerClientsMap.containsKey(tenantIdentifier)) {
                     providerClientsMap.put(tenantIdentifier, new HashMap<>());
                 }
 
-                if(!providerClientsMap.get(tenantIdentifier).containsKey(result.getString("third_party_id"))) {
+                if (!providerClientsMap.get(tenantIdentifier).containsKey(result.getString("third_party_id"))) {
                     providerClientsMap.get(tenantIdentifier).put(result.getString("third_party_id"), new HashMap<>());
                 }
 
-                providerClientsMap.get(tenantIdentifier).get(result.getString("third_party_id")).put(providerClient.clientType, providerClient);
+                providerClientsMap.get(tenantIdentifier).get(result.getString("third_party_id"))
+                        .put(providerClient.clientType, providerClient);
             }
             return null;
         });
         return providerClientsMap;
     }
 
-    public static void create(Start start, Connection sqlCon, TenantConfig tenantConfig, ThirdPartyConfig.Provider provider, ThirdPartyConfig.ProviderClient providerClient)
+    public static void create(Start start, Connection sqlCon, TenantConfig tenantConfig,
+                              ThirdPartyConfig.Provider provider, ThirdPartyConfig.ProviderClient providerClient)
             throws SQLException, StorageTransactionLogicException {
 
         String QUERY = "INSERT INTO " + getConfig(start).getTenantThirdPartyProviderClientsTable()
-                + "(connection_uri_domain, app_id, tenant_id, third_party_id, client_type, client_id, client_secret, scope, force_pkce, additional_config)"
+                +
+                "(connection_uri_domain, app_id, tenant_id, third_party_id, client_type, client_id, client_secret, " +
+                "scope, force_pkce, additional_config)"
                 + " VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         String scopeArrayStr;

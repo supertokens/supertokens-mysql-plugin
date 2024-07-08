@@ -46,7 +46,7 @@ public class EmailVerificationQueries {
                 + "email VARCHAR(256) NOT NULL,"
                 + "PRIMARY KEY (app_id, user_id, email),"
                 + "FOREIGN KEY(app_id)"
-                + " REFERENCES " + Config.getConfig(start).getAppsTable() +  " (app_id) ON DELETE CASCADE"
+                + " REFERENCES " + Config.getConfig(start).getAppsTable() + " (app_id) ON DELETE CASCADE"
                 + ");";
     }
 
@@ -60,7 +60,7 @@ public class EmailVerificationQueries {
                 + "token_expiry BIGINT UNSIGNED NOT NULL,"
                 + "PRIMARY KEY (app_id, tenant_id, user_id, email, token),"
                 + "FOREIGN KEY(app_id, tenant_id)"
-                + " REFERENCES " + Config.getConfig(start).getTenantsTable() +  " (app_id, tenant_id) ON DELETE CASCADE"
+                + " REFERENCES " + Config.getConfig(start).getTenantsTable() + " (app_id, tenant_id) ON DELETE CASCADE"
                 + ")";
     }
 
@@ -221,7 +221,8 @@ public class EmailVerificationQueries {
         }, result -> result.next());
     }
 
-    public static void updateIsEmailVerifiedToExternalUserId(Start start, AppIdentifier appIdentifier, String supertokensUserId, String externalUserId)
+    public static void updateIsEmailVerifiedToExternalUserId(Start start, AppIdentifier appIdentifier,
+                                                             String supertokensUserId, String externalUserId)
             throws StorageQueryException {
         try {
             start.startTransaction((TransactionConnection con) -> {
@@ -283,8 +284,10 @@ public class EmailVerificationQueries {
         // We have external user id stored in the email verification table, so we need to fetch the mapped userids for
         // calculating the verified emails
 
-        HashMap<String, String> supertokensUserIdToExternalUserIdMap = UserIdMappingQueries.getUserIdMappingWithUserIds_Transaction(start,
-                sqlCon, appIdentifier, supertokensUserIds);
+        HashMap<String, String> supertokensUserIdToExternalUserIdMap =
+                UserIdMappingQueries.getUserIdMappingWithUserIds_Transaction(
+                        start,
+                        sqlCon, appIdentifier, supertokensUserIds);
         HashMap<String, String> externalUserIdToSupertokensUserIdMap = new HashMap<>();
 
         List<String> supertokensOrExternalUserIdsToQuery = new ArrayList<>();
@@ -311,7 +314,8 @@ public class EmailVerificationQueries {
         }
 
         String QUERY = "SELECT * FROM " + getConfig(start).getEmailVerificationTable()
-                + " WHERE app_id = ? AND user_id IN (" + Utils.generateCommaSeperatedQuestionMarks(supertokensOrExternalUserIdsToQuery.size()) +
+                + " WHERE app_id = ? AND user_id IN (" +
+                Utils.generateCommaSeperatedQuestionMarks(supertokensOrExternalUserIdsToQuery.size()) +
                 ") AND email IN (" + Utils.generateCommaSeperatedQuestionMarks(emails.size()) + ")";
 
         return execute(sqlCon, QUERY, pst -> {
@@ -337,7 +341,7 @@ public class EmailVerificationQueries {
     }
 
     public static List<String> isEmailVerified(Start start, AppIdentifier appIdentifier,
-                                                           List<UserIdAndEmail> userIdAndEmail)
+                                               List<UserIdAndEmail> userIdAndEmail)
             throws SQLException, StorageQueryException {
         if (userIdAndEmail.isEmpty()) {
             return new ArrayList<>();
@@ -351,7 +355,8 @@ public class EmailVerificationQueries {
         }
         // We have external user id stored in the email verification table, so we need to fetch the mapped userids for
         // calculating the verified emails
-        HashMap<String, String> supertokensUserIdToExternalUserIdMap = UserIdMappingQueries.getUserIdMappingWithUserIds(start,
+        HashMap<String, String> supertokensUserIdToExternalUserIdMap = UserIdMappingQueries.getUserIdMappingWithUserIds(
+                start,
                 appIdentifier, supertokensUserIds);
         HashMap<String, String> externalUserIdToSupertokensUserIdMap = new HashMap<>();
         List<String> supertokensOrExternalUserIdsToQuery = new ArrayList<>();
@@ -377,7 +382,8 @@ public class EmailVerificationQueries {
             supertokensOrExternalUserIdToEmailMap.put(supertokensOrExternalUserId, ue.email);
         }
         String QUERY = "SELECT * FROM " + getConfig(start).getEmailVerificationTable()
-                + " WHERE app_id = ? AND user_id IN (" + Utils.generateCommaSeperatedQuestionMarks(supertokensOrExternalUserIdsToQuery.size()) +
+                + " WHERE app_id = ? AND user_id IN (" +
+                Utils.generateCommaSeperatedQuestionMarks(supertokensOrExternalUserIdsToQuery.size()) +
                 ") AND email IN (" + Utils.generateCommaSeperatedQuestionMarks(emails.size()) + ")";
         return execute(start, QUERY, pst -> {
             pst.setString(1, appIdentifier.getAppId());
