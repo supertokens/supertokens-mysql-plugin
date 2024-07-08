@@ -47,15 +47,9 @@ import static io.supertokens.storage.mysql.QueryExecutorTemplate.execute;
 import static io.supertokens.storage.mysql.QueryExecutorTemplate.update;
 import static io.supertokens.storage.mysql.queries.EmailPasswordQueries.getQueryToCreatePasswordResetTokenExpiryIndex;
 import static io.supertokens.storage.mysql.queries.EmailPasswordQueries.getQueryToCreatePasswordResetTokensTable;
-import static io.supertokens.storage.mysql.queries.EmailVerificationQueries.getQueryToCreateEmailVerificationTable;
-import static io.supertokens.storage.mysql.queries.EmailVerificationQueries.getQueryToCreateEmailVerificationTokenExpiryIndex;
-import static io.supertokens.storage.mysql.queries.EmailVerificationQueries.getQueryToCreateEmailVerificationTokensTable;
+import static io.supertokens.storage.mysql.queries.EmailVerificationQueries.*;
 import static io.supertokens.storage.mysql.queries.JWTSigningQueries.getQueryToCreateJWTSigningTable;
-import static io.supertokens.storage.mysql.queries.PasswordlessQueries.getQueryToCreateCodeCreatedAtIndex;
-import static io.supertokens.storage.mysql.queries.PasswordlessQueries.getQueryToCreateCodesTable;
-import static io.supertokens.storage.mysql.queries.PasswordlessQueries.getQueryToCreateDeviceEmailIndex;
-import static io.supertokens.storage.mysql.queries.PasswordlessQueries.getQueryToCreateDevicePhoneNumberIndex;
-import static io.supertokens.storage.mysql.queries.PasswordlessQueries.getQueryToCreateDevicesTable;
+import static io.supertokens.storage.mysql.queries.PasswordlessQueries.*;
 import static io.supertokens.storage.mysql.queries.SessionQueries.*;
 import static io.supertokens.storage.mysql.queries.UserMetadataQueries.getQueryToCreateUserMetadataTable;
 
@@ -90,9 +84,11 @@ public class GeneralQueries {
                 + "FOREIGN KEY(app_id, tenant_id)"
                 + " REFERENCES " + Config.getConfig(start).getTenantsTable() + " (app_id, tenant_id) ON DELETE CASCADE,"
                 + "FOREIGN KEY(app_id, user_id)"
-                + " REFERENCES " + Config.getConfig(start).getAppIdToUserIdTable() + " (app_id, user_id) ON DELETE CASCADE,"
+                + " REFERENCES " + Config.getConfig(start).getAppIdToUserIdTable() +
+                " (app_id, user_id) ON DELETE CASCADE,"
                 + "FOREIGN KEY(app_id, primary_or_recipe_user_id)"
-                + " REFERENCES " + Config.getConfig(start).getAppIdToUserIdTable() + " (app_id, user_id) ON DELETE CASCADE"
+                + " REFERENCES " + Config.getConfig(start).getAppIdToUserIdTable() +
+                " (app_id, user_id) ON DELETE CASCADE"
                 + ");";
         // @formatter:on
     }
@@ -108,7 +104,9 @@ public class GeneralQueries {
 
     static String getQueryToCreateUserPaginationIndex3(Start start) {
         return "CREATE INDEX all_auth_recipe_users_pagination_index3 ON " + Config.getConfig(start).getUsersTable()
-                + "(recipe_id, app_id, tenant_id, primary_or_recipe_user_time_joined DESC, primary_or_recipe_user_id DESC);";
+                +
+                "(recipe_id, app_id, tenant_id, primary_or_recipe_user_time_joined DESC, primary_or_recipe_user_id " +
+                "DESC);";
     }
 
     static String getQueryToCreatePrimaryUserId(Start start) {
@@ -184,7 +182,8 @@ public class GeneralQueries {
                 + "FOREIGN KEY (app_id)"
                 + " REFERENCES " + Config.getConfig(start).getAppsTable() + " (app_id) ON DELETE CASCADE,"
                 + "FOREIGN KEY(app_id, primary_or_recipe_user_id)"
-                + " REFERENCES " + Config.getConfig(start).getAppIdToUserIdTable() + " (app_id, user_id) ON DELETE CASCADE"
+                + " REFERENCES " + Config.getConfig(start).getAppIdToUserIdTable() +
+                " (app_id, user_id) ON DELETE CASCADE"
                 + ");";
         // @formatter:on
     }
@@ -505,7 +504,7 @@ public class GeneralQueries {
             throws SQLException, StorageQueryException {
         StringBuilder QUERY = new StringBuilder(
                 "SELECT COUNT(DISTINCT primary_or_recipe_user_id) AS total FROM " +
-                            Config.getConfig(start).getUsersTable());
+                        Config.getConfig(start).getUsersTable());
         QUERY.append(" WHERE app_id = ?");
         if (includeRecipeIds != null && includeRecipeIds.length > 0) {
             QUERY.append(" AND recipe_id IN (");
@@ -538,7 +537,8 @@ public class GeneralQueries {
     public static long getUsersCount(Start start, TenantIdentifier tenantIdentifier, RECIPE_ID[] includeRecipeIds)
             throws SQLException, StorageQueryException {
         StringBuilder QUERY = new StringBuilder(
-                "SELECT COUNT(DISTINCT primary_or_recipe_user_id) AS total FROM " + Config.getConfig(start).getUsersTable());
+                "SELECT COUNT(DISTINCT primary_or_recipe_user_id) AS total FROM " +
+                        Config.getConfig(start).getUsersTable());
         QUERY.append(" WHERE app_id = ? AND tenant_id = ?");
         if (includeRecipeIds != null && includeRecipeIds.length > 0) {
             QUERY.append(" AND recipe_id IN (");
@@ -581,7 +581,8 @@ public class GeneralQueries {
         }, ResultSet::next);
     }
 
-    public static boolean doesUserIdExist_Transaction(Start start, Connection sqlCon, AppIdentifier appIdentifier, String userId)
+    public static boolean doesUserIdExist_Transaction(Start start, Connection sqlCon, AppIdentifier appIdentifier,
+                                                      String userId)
             throws SQLException, StorageQueryException {
         // We query both tables cause there is a case where a primary user ID exists, but its associated
         // recipe user ID has been deleted AND there are other recipe user IDs linked to this primary user ID already.
@@ -629,12 +630,15 @@ public class GeneralQueries {
                 {
                     // check if we should search through the emailpassword table
                     if (dashboardSearchTags.shouldEmailPasswordTableBeSearched()) {
-                        String QUERY = "SELECT  allAuthUsersTable.*" + " FROM " + Config.getConfig(start).getUsersTable()
-                                + " AS allAuthUsersTable" +
-                                " JOIN " + Config.getConfig(start).getEmailPasswordUserToTenantTable()
-                                + " AS emailpasswordTable ON allAuthUsersTable.app_id = emailpasswordTable.app_id AND "
-                                + "allAuthUsersTable.tenant_id = emailpasswordTable.tenant_id AND "
-                                + "allAuthUsersTable.user_id = emailpasswordTable.user_id";
+                        String QUERY =
+                                "SELECT  allAuthUsersTable.*" + " FROM " + Config.getConfig(start).getUsersTable()
+                                        + " AS allAuthUsersTable" +
+                                        " JOIN " + Config.getConfig(start).getEmailPasswordUserToTenantTable()
+                                        +
+                                        " AS emailpasswordTable ON allAuthUsersTable.app_id = emailpasswordTable" +
+                                        ".app_id AND "
+                                        + "allAuthUsersTable.tenant_id = emailpasswordTable.tenant_id AND "
+                                        + "allAuthUsersTable.user_id = emailpasswordTable.user_id";
 
                         // attach email tags to queries
                         QUERY = QUERY +
@@ -658,15 +662,20 @@ public class GeneralQueries {
                 {
                     // check if we should search through the thirdparty table
                     if (dashboardSearchTags.shouldThirdPartyTableBeSearched()) {
-                        String QUERY = "SELECT  allAuthUsersTable.*" + " FROM " + Config.getConfig(start).getUsersTable()
-                                + " AS allAuthUsersTable"
-                                + " JOIN " + Config.getConfig(start).getThirdPartyUserToTenantTable()
-                                + " AS thirdPartyToTenantTable ON allAuthUsersTable.app_id = thirdPartyToTenantTable.app_id AND"
-                                + " allAuthUsersTable.tenant_id = thirdPartyToTenantTable.tenant_id AND"
-                                + " allAuthUsersTable.user_id = thirdPartyToTenantTable.user_id"
-                                + " JOIN " + Config.getConfig(start).getThirdPartyUsersTable()
-                                + " AS thirdPartyTable ON thirdPartyToTenantTable.app_id = thirdPartyTable.app_id AND"
-                                + " thirdPartyToTenantTable.user_id = thirdPartyTable.user_id";
+                        String QUERY =
+                                "SELECT  allAuthUsersTable.*" + " FROM " + Config.getConfig(start).getUsersTable()
+                                        + " AS allAuthUsersTable"
+                                        + " JOIN " + Config.getConfig(start).getThirdPartyUserToTenantTable()
+                                        +
+                                        " AS thirdPartyToTenantTable ON allAuthUsersTable.app_id = " +
+                                        "thirdPartyToTenantTable.app_id AND"
+                                        + " allAuthUsersTable.tenant_id = thirdPartyToTenantTable.tenant_id AND"
+                                        + " allAuthUsersTable.user_id = thirdPartyToTenantTable.user_id"
+                                        + " JOIN " + Config.getConfig(start).getThirdPartyUsersTable()
+                                        +
+                                        " AS thirdPartyTable ON thirdPartyToTenantTable.app_id = thirdPartyTable" +
+                                        ".app_id AND"
+                                        + " thirdPartyToTenantTable.user_id = thirdPartyTable.user_id";
 
                         // check if email tag is present
                         if (dashboardSearchTags.emails != null) {
@@ -727,12 +736,15 @@ public class GeneralQueries {
                 {
                     // check if we should search through the passwordless table
                     if (dashboardSearchTags.shouldPasswordlessTableBeSearched()) {
-                        String QUERY = "SELECT  allAuthUsersTable.*" + " FROM " + Config.getConfig(start).getUsersTable()
-                                + " AS allAuthUsersTable" +
-                                " JOIN " + Config.getConfig(start).getPasswordlessUserToTenantTable()
-                                + " AS passwordlessTable ON allAuthUsersTable.app_id = passwordlessTable.app_id AND"
-                                + " allAuthUsersTable.tenant_id = passwordlessTable.tenant_id AND"
-                                + " allAuthUsersTable.user_id = passwordlessTable.user_id";
+                        String QUERY =
+                                "SELECT  allAuthUsersTable.*" + " FROM " + Config.getConfig(start).getUsersTable()
+                                        + " AS allAuthUsersTable" +
+                                        " JOIN " + Config.getConfig(start).getPasswordlessUserToTenantTable()
+                                        +
+                                        " AS passwordlessTable ON allAuthUsersTable.app_id = passwordlessTable.app_id" +
+                                        " AND"
+                                        + " allAuthUsersTable.tenant_id = passwordlessTable.tenant_id AND"
+                                        + " allAuthUsersTable.user_id = passwordlessTable.user_id";
 
                         // check if email tag is present
                         if (dashboardSearchTags.emails != null) {
@@ -791,8 +803,11 @@ public class GeneralQueries {
                     usersFromQuery = new ArrayList<>();
                 } else {
 
-                    String finalQuery = "SELECT DISTINCT primary_or_recipe_user_id, primary_or_recipe_user_time_joined  FROM ( " + USER_SEARCH_TAG_CONDITION.toString() + " )"
-                            + " AS finalResultTable ORDER BY primary_or_recipe_user_time_joined " + timeJoinedOrder + ", primary_or_recipe_user_id " + timeJoinedOrder;
+                    String finalQuery =
+                            "SELECT DISTINCT primary_or_recipe_user_id, primary_or_recipe_user_time_joined  FROM ( " +
+                                    USER_SEARCH_TAG_CONDITION.toString() + " )"
+                                    + " AS finalResultTable ORDER BY primary_or_recipe_user_time_joined " +
+                                    timeJoinedOrder + ", primary_or_recipe_user_id " + timeJoinedOrder;
                     usersFromQuery = execute(start, finalQuery, pst -> {
                         for (int i = 1; i <= queryList.size(); i++) {
                             pst.setString(i, queryList.get(i - 1));
@@ -1052,7 +1067,8 @@ public class GeneralQueries {
         // now that we have locks on all the relevant tables, we can read from them safely
         List<String> userIds = ThirdPartyQueries.listUserIdsByThirdPartyInfo_Transaction(start, sqlCon, appIdentifier,
                 thirdPartyId, thirdPartyUserId);
-        List<AuthRecipeUserInfo> result = getPrimaryUserInfoForUserIds_Transaction(start, sqlCon, appIdentifier, userIds);
+        List<AuthRecipeUserInfo> result = getPrimaryUserInfoForUserIds_Transaction(start, sqlCon, appIdentifier,
+                userIds);
 
         // this is going to order them based on oldest that joined to newest that joined.
         result.sort(Comparator.comparingLong(o -> o.timeJoined));
@@ -1150,9 +1166,9 @@ public class GeneralQueries {
     }
 
     public static AuthRecipeUserInfo getPrimaryUserByThirdPartyInfo(Start start,
-                                                                        TenantIdentifier tenantIdentifier,
-                                                                        String thirdPartyId,
-                                                                        String thirdPartyUserId)
+                                                                    TenantIdentifier tenantIdentifier,
+                                                                    String thirdPartyId,
+                                                                    String thirdPartyUserId)
             throws StorageQueryException, SQLException {
         String userId = ThirdPartyQueries.getUserIdByThirdPartyInfo(start, tenantIdentifier,
                 thirdPartyId, thirdPartyUserId);
@@ -1186,7 +1202,7 @@ public class GeneralQueries {
     }
 
     public static AuthRecipeUserInfo getPrimaryUserInfoForUserId_Transaction(Start start, Connection con,
-                                                                  AppIdentifier appIdentifier, String id)
+                                                                             AppIdentifier appIdentifier, String id)
             throws SQLException, StorageQueryException {
         List<String> ids = new ArrayList<>();
         ids.add(id);
@@ -1209,14 +1225,18 @@ public class GeneralQueries {
         // which is linked to a primary user ID in which case it won't be in the primary_or_recipe_user_id column,
         // or the input may have a primary user ID whose recipe user ID was removed, so it won't be in the user_id
         // column
-        String QUERY = "SELECT au.user_id, au.primary_or_recipe_user_id, au.is_linked_or_is_a_primary_user, au.recipe_id, aaru.tenant_id, aaru.time_joined FROM " + Config.getConfig(start).getAppIdToUserIdTable() + " as au " +
-                "LEFT JOIN " + Config.getConfig(start).getUsersTable() + " as aaru ON au.app_id = aaru.app_id AND au.user_id = aaru.user_id" +
-                " WHERE au.primary_or_recipe_user_id IN (SELECT primary_or_recipe_user_id FROM " +
-                Config.getConfig(start).getAppIdToUserIdTable() + " WHERE (user_id IN ("
-                + Utils.generateCommaSeperatedQuestionMarks(userIds.size()) +
-                ") OR primary_or_recipe_user_id IN (" +
-                Utils.generateCommaSeperatedQuestionMarks(userIds.size()) +
-                ")) AND app_id = ?) AND au.app_id = ?";
+        String QUERY =
+                "SELECT au.user_id, au.primary_or_recipe_user_id, au.is_linked_or_is_a_primary_user, au.recipe_id, " +
+                        "aaru.tenant_id, aaru.time_joined FROM " +
+                        Config.getConfig(start).getAppIdToUserIdTable() + " as au " +
+                        "LEFT JOIN " + Config.getConfig(start).getUsersTable() +
+                        " as aaru ON au.app_id = aaru.app_id AND au.user_id = aaru.user_id" +
+                        " WHERE au.primary_or_recipe_user_id IN (SELECT primary_or_recipe_user_id FROM " +
+                        Config.getConfig(start).getAppIdToUserIdTable() + " WHERE (user_id IN ("
+                        + Utils.generateCommaSeperatedQuestionMarks(userIds.size()) +
+                        ") OR primary_or_recipe_user_id IN (" +
+                        Utils.generateCommaSeperatedQuestionMarks(userIds.size()) +
+                        ")) AND app_id = ?) AND au.app_id = ?";
 
         List<AllAuthRecipeUsersResultHolder> allAuthUsersResult = execute(start, QUERY, pst -> {
             // IN user_id
@@ -1290,8 +1310,8 @@ public class GeneralQueries {
     }
 
     private static List<AuthRecipeUserInfo> getPrimaryUserInfoForUserIds_Transaction(Start start, Connection sqlCon,
-                                                                         AppIdentifier appIdentifier,
-                                                                         List<String> userIds)
+                                                                                     AppIdentifier appIdentifier,
+                                                                                     List<String> userIds)
             throws StorageQueryException, SQLException {
         if (userIds.size() == 0) {
             return new ArrayList<>();
@@ -1301,14 +1321,18 @@ public class GeneralQueries {
         // which is linked to a primary user ID in which case it won't be in the primary_or_recipe_user_id column,
         // or the input may have a primary user ID whose recipe user ID was removed, so it won't be in the user_id
         // column
-        String QUERY = "SELECT au.user_id, au.primary_or_recipe_user_id, au.is_linked_or_is_a_primary_user, au.recipe_id, aaru.tenant_id, aaru.time_joined FROM " + Config.getConfig(start).getAppIdToUserIdTable() + " as au" +
-                " LEFT JOIN " + Config.getConfig(start).getUsersTable() + " as aaru ON au.app_id = aaru.app_id AND au.user_id = aaru.user_id" +
-                " WHERE au.primary_or_recipe_user_id IN (SELECT primary_or_recipe_user_id FROM " +
-                Config.getConfig(start).getAppIdToUserIdTable() + " WHERE (user_id IN ("
-                + Utils.generateCommaSeperatedQuestionMarks(userIds.size()) +
-                ") OR primary_or_recipe_user_id IN (" +
-                Utils.generateCommaSeperatedQuestionMarks(userIds.size()) +
-                ")) AND app_id = ?) AND au.app_id = ?";
+        String QUERY =
+                "SELECT au.user_id, au.primary_or_recipe_user_id, au.is_linked_or_is_a_primary_user, au.recipe_id, " +
+                        "aaru.tenant_id, aaru.time_joined FROM " +
+                        Config.getConfig(start).getAppIdToUserIdTable() + " as au" +
+                        " LEFT JOIN " + Config.getConfig(start).getUsersTable() +
+                        " as aaru ON au.app_id = aaru.app_id AND au.user_id = aaru.user_id" +
+                        " WHERE au.primary_or_recipe_user_id IN (SELECT primary_or_recipe_user_id FROM " +
+                        Config.getConfig(start).getAppIdToUserIdTable() + " WHERE (user_id IN ("
+                        + Utils.generateCommaSeperatedQuestionMarks(userIds.size()) +
+                        ") OR primary_or_recipe_user_id IN (" +
+                        Utils.generateCommaSeperatedQuestionMarks(userIds.size()) +
+                        ")) AND app_id = ?) AND au.app_id = ?";
 
         List<AllAuthRecipeUsersResultHolder> allAuthUsersResult = execute(sqlCon, QUERY, pst -> {
             // IN user_id
@@ -1345,10 +1369,13 @@ public class GeneralQueries {
 
         List<LoginMethod> loginMethods = new ArrayList<>();
         loginMethods.addAll(
-                EmailPasswordQueries.getUsersInfoUsingIdList_Transaction(start, sqlCon, recipeUserIdsToFetch, appIdentifier));
-        loginMethods.addAll(ThirdPartyQueries.getUsersInfoUsingIdList_Transaction(start, sqlCon, recipeUserIdsToFetch, appIdentifier));
+                EmailPasswordQueries.getUsersInfoUsingIdList_Transaction(start, sqlCon, recipeUserIdsToFetch,
+                        appIdentifier));
+        loginMethods.addAll(ThirdPartyQueries.getUsersInfoUsingIdList_Transaction(start, sqlCon, recipeUserIdsToFetch,
+                appIdentifier));
         loginMethods.addAll(
-                PasswordlessQueries.getUsersInfoUsingIdList_Transaction(start, sqlCon, recipeUserIdsToFetch, appIdentifier));
+                PasswordlessQueries.getUsersInfoUsingIdList_Transaction(start, sqlCon, recipeUserIdsToFetch,
+                        appIdentifier));
 
         Map<String, LoginMethod> recipeUserIdToLoginMethodMap = new HashMap<>();
         for (LoginMethod loginMethod : loginMethods) {
@@ -1526,7 +1553,7 @@ public class GeneralQueries {
         List<String> tableNames = new ArrayList<>();
         try (Connection con = ConnectionPool.getConnection(start)) {
             DatabaseMetaData metadata = con.getMetaData();
-            ResultSet resultSet = metadata.getTables(null, null, null, new String[] { "TABLE" });
+            ResultSet resultSet = metadata.getTables(null, null, null, new String[]{"TABLE"});
             while (resultSet.next()) {
                 String tableName = resultSet.getString("TABLE_NAME");
                 tableNames.add(tableName);
@@ -1538,7 +1565,7 @@ public class GeneralQueries {
 
     @TestOnly
     public static String[] getAllTablesInTheDatabaseThatHasDataForAppId(Start start, String appId)
-    throws StorageQueryException, SQLException {
+            throws StorageQueryException, SQLException {
         if (!Start.isTesting) {
             throw new UnsupportedOperationException();
         }
@@ -1616,7 +1643,8 @@ public class GeneralQueries {
         });
     }
 
-    public static AccountLinkingInfo getAccountLinkingInfo_Transaction(Start start, Connection sqlCon, AppIdentifier appIdentifier, String userId)
+    public static AccountLinkingInfo getAccountLinkingInfo_Transaction(Start start, Connection sqlCon,
+                                                                       AppIdentifier appIdentifier, String userId)
             throws SQLException, StorageQueryException {
         GeneralQueries.AccountLinkingInfo accountLinkingInfo = new GeneralQueries.AccountLinkingInfo(userId, false);
         {
@@ -1638,9 +1666,11 @@ public class GeneralQueries {
         return accountLinkingInfo;
     }
 
-    public static void updateTimeJoinedForPrimaryUser_Transaction(Start start, Connection sqlCon, AppIdentifier appIdentifier, String primaryUserId)
+    public static void updateTimeJoinedForPrimaryUser_Transaction(Start start, Connection sqlCon,
+                                                                  AppIdentifier appIdentifier, String primaryUserId)
             throws SQLException, StorageQueryException {
-        // Query like postgres causes issue in mysql, so we have to fetch min time joined first on a separate query and then update it
+        // Query like postgres causes issue in mysql, so we have to fetch min time joined first on a separate query
+        // and then update it
         String QUERY1 = "SELECT MIN(time_joined) AS min_time_joined FROM " +
                 Config.getConfig(start).getUsersTable() + " WHERE app_id = ? AND primary_or_recipe_user_id = ?";
         long minTimeJoined = execute(sqlCon, QUERY1, pst -> {

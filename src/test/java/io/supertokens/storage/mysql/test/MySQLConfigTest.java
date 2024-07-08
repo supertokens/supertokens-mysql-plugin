@@ -17,19 +17,15 @@
 
 package io.supertokens.storage.mysql.test;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.supertokens.ProcessState;
 import io.supertokens.storage.mysql.annotations.DashboardInfo;
 import io.supertokens.storage.mysql.config.MySQLConfig;
-
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
-
-import com.fasterxml.jackson.annotation.JsonProperty;
-
-import static org.junit.Assert.*;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -38,6 +34,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import static org.junit.Assert.*;
 
 public class MySQLConfigTest {
 
@@ -56,14 +54,14 @@ public class MySQLConfigTest {
 
     @Test
     public void testMatchConfigPropertiesDescription() throws Exception {
-        String[] args = { "../" };
+        String[] args = {"../"};
 
         TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
 
         // Skipping mysql_config_version because it doesn't
         // have a description in the config.yaml file
-        String[] ignoredProperties = { "mysql_config_version" };
+        String[] ignoredProperties = {"mysql_config_version"};
 
         // Match the descriptions in the config.yaml file with the descriptions in the
         // CoreConfig class
@@ -144,8 +142,10 @@ public class MySQLConfigTest {
 
                 System.out.println(field.getName());
                 String descriptionInConfig = field.getAnnotation(DashboardInfo.class).description();
-                descriptionInConfig = "(DIFFERENT_ACROSS_TENANTS" + (field.getAnnotation(DashboardInfo.class).isOptional() ? " | OPTIONAL" : " | COMPULSORY")
-                        + (field.getAnnotation(DashboardInfo.class).isOptional() ? " | Default: " + field.getAnnotation(DashboardInfo.class).defaultValue() : "")
+                descriptionInConfig = "(DIFFERENT_ACROSS_TENANTS" +
+                        (field.getAnnotation(DashboardInfo.class).isOptional() ? " | OPTIONAL" : " | COMPULSORY")
+                        + (field.getAnnotation(DashboardInfo.class).isOptional() ?
+                        " | Default: " + field.getAnnotation(DashboardInfo.class).defaultValue() : "")
                         + ") "
                         + valueInfo + " "
                         + descriptionInConfig;

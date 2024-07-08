@@ -61,7 +61,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
 import static org.junit.Assert.*;
-import static org.junit.Assert.assertEquals;
 
 public class OneMillionUsersTest {
     @Rule
@@ -110,7 +109,8 @@ public class OneMillionUsersTest {
                     String userId = io.supertokens.utils.Utils.getUUID();
                     long timeJoined = System.currentTimeMillis();
 
-                    storage.signUp(TenantIdentifier.BASE_TENANT, userId, "eptest" + finalI + "@example.com", combinedPasswordHash,
+                    storage.signUp(TenantIdentifier.BASE_TENANT, userId, "eptest" + finalI + "@example.com",
+                            combinedPasswordHash,
                             timeJoined);
                     synchronized (lock) {
                         allUserIds.add(userId);
@@ -119,7 +119,7 @@ public class OneMillionUsersTest {
                     throw new RuntimeException(e);
                 }
                 if (finalI % 10000 == 9999) {
-                    System.out.println("Created " + ((finalI +1)) + " users");
+                    System.out.println("Created " + ((finalI + 1)) + " users");
                 }
             });
         }
@@ -140,7 +140,8 @@ public class OneMillionUsersTest {
                 String userId = io.supertokens.utils.Utils.getUUID();
                 long timeJoined = System.currentTimeMillis();
                 try {
-                    storage.createUser(TenantIdentifier.BASE_TENANT, userId, "pltest" + finalI + "@example.com", null, timeJoined);
+                    storage.createUser(TenantIdentifier.BASE_TENANT, userId, "pltest" + finalI + "@example.com", null,
+                            timeJoined);
                     synchronized (lock) {
                         allUserIds.add(userId);
                     }
@@ -149,7 +150,7 @@ public class OneMillionUsersTest {
                 }
 
                 if (finalI % 10000 == 9999) {
-                    System.out.println("Created " + ((finalI +1)) + " users");
+                    System.out.println("Created " + ((finalI + 1)) + " users");
                 }
             });
         }
@@ -179,7 +180,7 @@ public class OneMillionUsersTest {
                 }
 
                 if (finalI % 10000 == 9999) {
-                    System.out.println("Created " + ((finalI +1)) + " users");
+                    System.out.println("Created " + ((finalI + 1)) + " users");
                 }
             });
         }
@@ -201,7 +202,8 @@ public class OneMillionUsersTest {
                 long timeJoined = System.currentTimeMillis();
 
                 try {
-                    storage.signUp(TenantIdentifier.BASE_TENANT, userId, "tptest" + finalI + "@example.com", new LoginMethod.ThirdParty("google", "googleid" + finalI), timeJoined );
+                    storage.signUp(TenantIdentifier.BASE_TENANT, userId, "tptest" + finalI + "@example.com",
+                            new LoginMethod.ThirdParty("google", "googleid" + finalI), timeJoined);
                     synchronized (lock) {
                         allUserIds.add(userId);
                     }
@@ -210,7 +212,7 @@ public class OneMillionUsersTest {
                 }
 
                 if (finalI % 10000 == 9999) {
-                    System.out.println("Created " + (finalI +1) + " users");
+                    System.out.println("Created " + (finalI + 1) + " users");
                 }
             });
         }
@@ -655,7 +657,8 @@ public class OneMillionUsersTest {
             JsonArray userRolesArr = response.getAsJsonArray("roles");
             assertEquals(1, userRolesArr.size());
             assertTrue(
-                    userRolesArr.get(0).getAsString().equals("admin") || userRolesArr.get(0).getAsString().equals("user")
+                    userRolesArr.get(0).getAsString().equals("admin") ||
+                            userRolesArr.get(0).getAsString().equals("user")
             );
         }
 
@@ -800,7 +803,8 @@ public class OneMillionUsersTest {
                     int finalI = i;
                     es.execute(() -> {
                         try {
-                            ThirdParty.signInUp(main, "twitter", "twitterid" + finalI, "twitter" + finalI + "@example.com");
+                            ThirdParty.signInUp(main, "twitter", "twitterid" + finalI,
+                                    "twitter" + finalI + "@example.com");
                         } catch (Exception e) {
                             errorCount.incrementAndGet();
                             throw new RuntimeException(e);
@@ -826,7 +830,8 @@ public class OneMillionUsersTest {
                     int finalI = i;
                     es.execute(() -> {
                         try {
-                            ThirdParty.signInUp(main, "twitter", "twitterid" + finalI, "twitter" + finalI + "@example.com");
+                            ThirdParty.signInUp(main, "twitter", "twitterid" + finalI,
+                                    "twitter" + finalI + "@example.com");
                         } catch (Exception e) {
                             errorCount.incrementAndGet();
                             throw new RuntimeException(e);

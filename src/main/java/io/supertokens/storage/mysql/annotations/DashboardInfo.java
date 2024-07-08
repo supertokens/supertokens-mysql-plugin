@@ -25,11 +25,15 @@ import java.lang.annotation.Target;
  * Annotation to provide a description for a configuration fields. To be used on the fields of `CoreConfig` and config
  * class in the plugin like `PostgreSQLConfig`, `MysqlConfig`, etc.
  */
-@Retention(RetentionPolicy.RUNTIME) // Make annotation accessible at runtime so that config descriptions can be read from API
+@Retention(RetentionPolicy.RUNTIME)
+// Make annotation accessible at runtime so that config descriptions can be read from API
 @Target(ElementType.FIELD) // Annotation can only be applied to fields
 public @interface DashboardInfo {
     String description() default "";
+
     boolean isOptional() default false;
+
     String defaultValue() default "";
+
     boolean isEditable() default false;
 }

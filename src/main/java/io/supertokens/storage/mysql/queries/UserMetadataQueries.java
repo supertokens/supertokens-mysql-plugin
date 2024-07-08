@@ -18,7 +18,6 @@ package io.supertokens.storage.mysql.queries;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-
 import io.supertokens.pluginInterface.exceptions.StorageQueryException;
 import io.supertokens.pluginInterface.multitenancy.AppIdentifier;
 import io.supertokens.storage.mysql.Start;
@@ -39,9 +38,10 @@ public class UserMetadataQueries {
         return "CREATE TABLE IF NOT EXISTS " + tableName + " ("
                 + "app_id VARCHAR(64) DEFAULT 'public',"
                 + "user_id VARCHAR(128) NOT NULL,"
-                + "user_metadata TEXT NOT NULL," 
+                + "user_metadata TEXT NOT NULL,"
                 + "PRIMARY KEY(app_id, user_id),"
-                + "FOREIGN KEY (app_id) REFERENCES " + Config.getConfig(start).getAppsTable() + "(app_id) ON DELETE CASCADE"
+                + "FOREIGN KEY (app_id) REFERENCES " + Config.getConfig(start).getAppsTable() +
+                "(app_id) ON DELETE CASCADE"
                 + " );";
         // @formatter:on
 

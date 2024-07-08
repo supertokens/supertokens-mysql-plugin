@@ -27,19 +27,20 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
-import static io.supertokens.storage.mysql.QueryExecutorTemplate.*;
+import static io.supertokens.storage.mysql.QueryExecutorTemplate.execute;
+import static io.supertokens.storage.mysql.QueryExecutorTemplate.update;
 
 public class UserRolesQueries {
     public static String getQueryToCreateRolesTable(Start start) {
         String tableName = Config.getConfig(start).getRolesTable();
         // @formatter:off
-            return "CREATE TABLE IF NOT EXISTS " + tableName + " ( "
-                    + "app_id VARCHAR(64) DEFAULT 'public',"
-                    + "role VARCHAR(255) NOT NULL,"
-                    + "PRIMARY KEY(app_id, role),"
-                    + "FOREIGN KEY(app_id)"
-                    + " REFERENCES " + Config.getConfig(start).getAppsTable() +  " (app_id) ON DELETE CASCADE"
-                    + ")";
+        return "CREATE TABLE IF NOT EXISTS " + tableName + " ( "
+                + "app_id VARCHAR(64) DEFAULT 'public',"
+                + "role VARCHAR(255) NOT NULL,"
+                + "PRIMARY KEY(app_id, role),"
+                + "FOREIGN KEY(app_id)"
+                + " REFERENCES " + Config.getConfig(start).getAppsTable() + " (app_id) ON DELETE CASCADE"
+                + ")";
         // @formatter:on
     }
 
@@ -52,7 +53,7 @@ public class UserRolesQueries {
                 + "permission VARCHAR(255) NOT NULL, "
                 + "PRIMARY KEY (app_id, role, permission), "
                 + "FOREIGN KEY (app_id, role)"
-                + " REFERENCES " + Config.getConfig(start).getRolesTable()+ "(app_id, role) ON DELETE CASCADE )";
+                + " REFERENCES " + Config.getConfig(start).getRolesTable() + "(app_id, role) ON DELETE CASCADE )";
         // @formatter:on
     }
 
@@ -75,7 +76,8 @@ public class UserRolesQueries {
     }
 
     public static String getQueryToCreateUserRolesRoleIndex(Start start) {
-        return "CREATE INDEX user_roles_role_index ON " + Config.getConfig(start).getUserRolesTable() + "(app_id, tenant_id, role)";
+        return "CREATE INDEX user_roles_role_index ON " + Config.getConfig(start).getUserRolesTable() +
+                "(app_id, tenant_id, role)";
     }
 
     public static boolean createNewRoleOrDoNothingIfExists_Transaction(Start start, Connection con,
@@ -99,7 +101,8 @@ public class UserRolesQueries {
 
     public static void addPermissionToRoleOrDoNothingIfExists_Transaction(Start start, Connection con,
                                                                           AppIdentifier appIdentifier, String role,
-                                                                          String permission) throws SQLException, StorageQueryException {
+                                                                          String permission)
+            throws SQLException, StorageQueryException {
         // ON CONFLICT DO NOTHING
         String QUERY = "INSERT INTO " + Config.getConfig(start).getUserRolesPermissionsTable()
                 + "(app_id, role, permission) "
