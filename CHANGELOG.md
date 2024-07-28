@@ -7,11 +7,23 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [7.1.1] - 2024-06-29
+
+- Fixes issue where `is_third_party_providers_null` is added to the `tenant_configs` table.
+
+### Migration
+
+```sql
+ALTER TABLE tenant_configs DROP COLUMN is_third_party_providers_null;
+```
+
 ## [7.1.0] - 2024-05-24
 
+- Compatible with plugin interface version 6.2
 - Adds implementation for a new method `getConfigFieldsInfo` to fetch the plugin config fields.
-- Adds `null` state for `firstFactors` and `providers` by adding `is_first_factors_null`
-  and `is_third_party_providers_null` fields in `tenant_configs` table
+- Adds `DashboardInfo` annotations to the config properties in `PostgreSQLConfig`
+- Adds `null` state for `firstFactors` by adding `is_first_factors_null` field in `tenant_configs` table. The value of
+  this column is only applicable when there are no entries in the `tenant_first_factors` table for the tenant.
 
 ### Migration
 
