@@ -162,7 +162,8 @@ public class TestForNoCrashDuringStartup {
             fail();
         } catch (HttpResponseException e) {
             // ignore
-            assertEquals("Http error. Status Code: 500. Message: java.sql.SQLException: com.zaxxer.hikari.pool.HikariPool$PoolInitializationException: Failed to initialize pool: Could not connect to address=(host=localhost)(port=3306)(type=master) : (conn=2381) Unknown database 'st5000'", e.getMessage());
+            assertTrue(e.getMessage().contains("Unknown database 'st5000'"));
+            assertTrue(e.getMessage().contains("Http error. Status Code: 500"));
         }
 
         update(start, "CREATE DATABASE st5000;", pst -> {
@@ -540,7 +541,8 @@ public class TestForNoCrashDuringStartup {
             fail();
         } catch (HttpResponseException e) {
             // ignore
-            assertEquals("Http error. Status Code: 500. Message: java.sql.SQLException: com.zaxxer.hikari.pool.HikariPool$PoolInitializationException: Failed to initialize pool: Could not connect to address=(host=localhost)(port=3306)(type=master) : (conn=2509) Unknown database 'st5000'", e.getMessage());
+            assertTrue(e.getMessage().contains("Unknown database 'st5000'"));
+            assertTrue(e.getMessage().contains("Http error. Status Code: 500"));
         }
 
         process.kill(false);
