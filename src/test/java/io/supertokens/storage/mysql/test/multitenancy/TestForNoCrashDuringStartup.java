@@ -112,7 +112,7 @@ public class TestForNoCrashDuringStartup {
             fail();
         } catch (HttpResponseException e) {
             // ignore
-            assertTrue(e.getMessage().contains("Internal Error")); // retried creating tenant entry
+            assertEquals("Http error. Status Code: 500. Message: java.sql.SQLException: Simulated error in addTenantIdInTargetStorage", e.getMessage());
         }
 
         MultitenancyQueries.simulateErrorInAddingTenantIdInTargetStorage_forTesting = false;
@@ -162,7 +162,7 @@ public class TestForNoCrashDuringStartup {
             fail();
         } catch (HttpResponseException e) {
             // ignore
-            assertTrue(e.getMessage().contains("Internal Error")); // db is still down
+            assertEquals("Http error. Status Code: 500. Message: java.sql.SQLException: com.zaxxer.hikari.pool.HikariPool$PoolInitializationException: Failed to initialize pool: Could not connect to address=(host=localhost)(port=3306)(type=master) : (conn=2381) Unknown database 'st5000'", e.getMessage());
         }
 
         update(start, "CREATE DATABASE st5000;", pst -> {
@@ -540,7 +540,7 @@ public class TestForNoCrashDuringStartup {
             fail();
         } catch (HttpResponseException e) {
             // ignore
-            assertTrue(e.getMessage().contains("Internal Error")); // db is still down
+            assertEquals("Http error. Status Code: 500. Message: java.sql.SQLException: com.zaxxer.hikari.pool.HikariPool$PoolInitializationException: Failed to initialize pool: Could not connect to address=(host=localhost)(port=3306)(type=master) : (conn=2509) Unknown database 'st5000'", e.getMessage());
         }
 
         process.kill(false);

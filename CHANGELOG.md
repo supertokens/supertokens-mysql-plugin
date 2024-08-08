@@ -7,6 +7,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [7.1.2] - 2024-08-08
+
+- Fixes tests that check for `Internal Error` in 500 status responses
+
 ## [7.1.1] - 2024-06-29
 
 - Fixes issue where `is_third_party_providers_null` is added to the `tenant_configs` table.
