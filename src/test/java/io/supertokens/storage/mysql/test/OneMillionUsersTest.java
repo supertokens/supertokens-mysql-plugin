@@ -548,7 +548,7 @@ public class OneMillionUsersTest {
         System.out.println("Max memory used: " + (maxMemory.get() / (1024 * 1024)) + " MB");
         System.out.println("Current Memory user: " + (used_mem / (1024 * 1024)) + " MB");
 
-        process.kill(false);
+        process.kill();
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
     }
 

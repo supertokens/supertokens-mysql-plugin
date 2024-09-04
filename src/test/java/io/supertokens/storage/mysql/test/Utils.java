@@ -97,7 +97,7 @@ public abstract class Utils extends Mockito {
             process.waitFor();
 
             TestingProcessManager.killAll();
-//            TestingProcessManager.deleteAllInformation();
+            TestingProcessManager.deleteAllInformation();
             TestingProcessManager.killAll();
 
             byteArrayOutputStream = new ByteArrayOutputStream();
