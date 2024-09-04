@@ -238,6 +238,10 @@ public class GeneralQueries {
         if (!doesTableExists(start, con, Config.getConfig(start).getUserLastActiveTable())) {
             getInstance(start).addState(CREATING_NEW_TABLE, null);
             update(con, ActiveUsersQueries.getQueryToCreateUserLastActiveTable(start), NO_OP_SETTER);
+
+            // index
+            update(con, ActiveUsersQueries.getQueryToCreateLastActiveTimeIndexForUserLastActiveTable(start),
+                    NO_OP_SETTER);
         }
 
         if (!doesTableExists(start, con, Config.getConfig(start).getAccessTokenSigningKeysTable())) {

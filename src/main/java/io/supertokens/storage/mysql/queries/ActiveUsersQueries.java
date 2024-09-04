@@ -8,6 +8,8 @@ import io.supertokens.storage.mysql.config.Config;
 import java.sql.Connection;
 import java.sql.SQLException;
 
+import org.jetbrains.annotations.TestOnly;
+
 import static io.supertokens.storage.mysql.QueryExecutorTemplate.execute;
 import static io.supertokens.storage.mysql.QueryExecutorTemplate.update;
 
@@ -21,6 +23,11 @@ public class ActiveUsersQueries {
                 + "FOREIGN KEY (app_id) REFERENCES "
                 + Config.getConfig(start).getAppsTable() + "(app_id) ON DELETE CASCADE"
                 + " );";
+    }
+
+    public static String getQueryToCreateLastActiveTimeIndexForUserLastActiveTable(Start start) {
+        return "CREATE INDEX user_last_active_last_active_time_index ON "
+                + Config.getConfig(start).getUserLastActiveTable() + "(last_active_time DESC, app_id DESC);";
     }
 
     public static int countUsersActiveSince(Start start, AppIdentifier appIdentifier, long sinceTime)
@@ -107,6 +114,20 @@ public class ActiveUsersQueries {
             pst.setString(2, userId);
             pst.setLong(3, now);
             pst.setLong(4, now);
+        });
+    }
+
+    @TestOnly
+    public static int updateUserLastActive(Start start, AppIdentifier appIdentifier, String userId, long timestamp)
+            throws SQLException, StorageQueryException {
+        String QUERY = "INSERT INTO " + Config.getConfig(start).getUserLastActiveTable()
+                + "(app_id, user_id, last_active_time) VALUES(?, ?, ?) ON DUPLICATE KEY UPDATE last_active_time = ?";
+
+        return update(start, QUERY, pst -> {
+            pst.setString(1, appIdentifier.getAppId());
+            pst.setString(2, userId);
+            pst.setLong(3, timestamp);
+            pst.setLong(4, timestamp);
         });
     }
 
