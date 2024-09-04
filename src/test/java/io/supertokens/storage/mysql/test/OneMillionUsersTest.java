@@ -425,7 +425,7 @@ public class OneMillionUsersTest {
     @Test
     public void testCreatingOneMillionUsers() throws Exception {
         if (System.getenv("ONE_MILLION_USERS_TEST") == null) {
-//            return;
+            return;
         }
 
         String[] args = {"../"};
@@ -443,52 +443,52 @@ public class OneMillionUsersTest {
         AtomicBoolean memoryCheckRunning = new AtomicBoolean(true);
         AtomicLong maxMemory = new AtomicLong(0);
 
-       {
-           long st = System.currentTimeMillis();
-           createOneMillionUsers(process.getProcess());
-           long en = System.currentTimeMillis();
-           System.out.println("Time taken to create " + TOTAL_USERS + " users: " + ((en - st) / 1000) + " sec");
-           assertEquals(TOTAL_USERS, AuthRecipe.getUsersCount(process.getProcess(), null));
-       }
+        {
+            long st = System.currentTimeMillis();
+            createOneMillionUsers(process.getProcess());
+            long en = System.currentTimeMillis();
+            System.out.println("Time taken to create " + TOTAL_USERS + " users: " + ((en - st) / 1000) + " sec");
+            assertEquals(TOTAL_USERS, AuthRecipe.getUsersCount(process.getProcess(), null));
+        }
 
-       {
-           long st = System.currentTimeMillis();
-           doAccountLinking(process.getProcess());
-           long en = System.currentTimeMillis();
-           System.out.println("Time taken to link accounts: " + ((en - st) / 1000) + " sec");
-       }
+        {
+            long st = System.currentTimeMillis();
+            doAccountLinking(process.getProcess());
+            long en = System.currentTimeMillis();
+            System.out.println("Time taken to link accounts: " + ((en - st) / 1000) + " sec");
+        }
 
-       {
-           long st = System.currentTimeMillis();
-           createUserIdMappings(process.getProcess());
-           long en = System.currentTimeMillis();
-           System.out.println("Time taken to create user id mappings: " + ((en - st) / 1000) + " sec");
-       }
+        {
+            long st = System.currentTimeMillis();
+            createUserIdMappings(process.getProcess());
+            long en = System.currentTimeMillis();
+            System.out.println("Time taken to create user id mappings: " + ((en - st) / 1000) + " sec");
+        }
 
-       {
-           UserRoles.createNewRoleOrModifyItsPermissions(process.getProcess(), "admin", new String[]{"p1"});
-           UserRoles.createNewRoleOrModifyItsPermissions(process.getProcess(), "user", new String[]{"p2"});
-           long st = System.currentTimeMillis();
-           createUserData(process.getProcess());
-           long en = System.currentTimeMillis();
-           System.out.println("Time taken to create user data: " + ((en - st) / 1000) + " sec");
-       }
+        {
+            UserRoles.createNewRoleOrModifyItsPermissions(process.getProcess(), "admin", new String[]{"p1"});
+            UserRoles.createNewRoleOrModifyItsPermissions(process.getProcess(), "user", new String[]{"p2"});
+            long st = System.currentTimeMillis();
+            createUserData(process.getProcess());
+            long en = System.currentTimeMillis();
+            System.out.println("Time taken to create user data: " + ((en - st) / 1000) + " sec");
+        }
 
-       {
-           long st = System.currentTimeMillis();
-           createSessions(process.getProcess());
-           long en = System.currentTimeMillis();
-           System.out.println("Time taken to create sessions: " + ((en - st) / 1000) + " sec");
-       }
+        {
+            long st = System.currentTimeMillis();
+            createSessions(process.getProcess());
+            long en = System.currentTimeMillis();
+            System.out.println("Time taken to create sessions: " + ((en - st) / 1000) + " sec");
+        }
 
-       {
-           long st = System.currentTimeMillis();
-           createActiveUserEntries(process.getProcess());
-           long en = System.currentTimeMillis();
-           System.out.println("Time taken to create active user entries: " + ((en - st) / 1000) + " sec");
-       }
+        {
+            long st = System.currentTimeMillis();
+            createActiveUserEntries(process.getProcess());
+            long en = System.currentTimeMillis();
+            System.out.println("Time taken to create active user entries: " + ((en - st) / 1000) + " sec");
+        }
 
-       sanityCheckAPIs(process.getProcess());
+        sanityCheckAPIs(process.getProcess());
         allUserIds.clear();
         allPrimaryUserIds.clear();
         userIdMappings.clear();
@@ -725,8 +725,8 @@ public class OneMillionUsersTest {
                         try {
                             EmailPassword.signUp(main, "ep" + finalI + "@example.com", "password" + finalI);
                         } catch (Exception e) {
-//                            errorCount.incrementAndGet();
-//                            throw new RuntimeException(e);
+                            errorCount.incrementAndGet();
+                            throw new RuntimeException(e);
                         }
                     });
                 }
