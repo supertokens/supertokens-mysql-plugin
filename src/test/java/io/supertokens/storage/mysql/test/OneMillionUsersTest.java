@@ -425,7 +425,7 @@ public class OneMillionUsersTest {
     @Test
     public void testCreatingOneMillionUsers() throws Exception {
         if (System.getenv("ONE_MILLION_USERS_TEST") == null) {
-//            return;
+            return;
         }
 
         String[] args = {"../"};
