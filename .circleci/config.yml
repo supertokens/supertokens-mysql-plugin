@@ -175,6 +175,7 @@ workflows:
             - test
             - test-onemillionusers
   testrun-by-hand:
-    when: { equal: [ api, << pipeline.trigger_source >> ] }
+    when:
+      equal: [ api, << pipeline.trigger_source >> ]
       jobs:
         - test
