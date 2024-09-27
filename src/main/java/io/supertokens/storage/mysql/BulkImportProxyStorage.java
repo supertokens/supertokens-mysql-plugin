@@ -62,7 +62,8 @@ public class BulkImportProxyStorage extends Start {
 
     @Override
     public void commitTransaction(TransactionConnection con) throws StorageQueryException {
-
+        // We do not want to commit the queries when using the BulkImportProxyStorage to be able to rollback everything
+        // if any query fails while importing the user
     }
 
     @Override
