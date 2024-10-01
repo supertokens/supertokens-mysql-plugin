@@ -32,7 +32,7 @@ public class TestingProcessManager {
 
     static void deleteAllInformation() throws Exception {
         System.out.println("----------DELETE ALL INFORMATION----------");
-        String[] args = { "../" };
+        String[] args = {"../"};
         TestingProcess process = TestingProcessManager.start(args);
         process.checkOrWaitForEvent(PROCESS_STATE.STARTED);
         process.main.deleteAllInformationForTesting();
@@ -148,7 +148,8 @@ public class TestingProcessManager {
             return checkOrWaitForEvent(state, 15000);
         }
 
-        public EventAndException checkOrWaitForEvent(PROCESS_STATE state, long timeToWaitMS) throws InterruptedException {
+        public EventAndException checkOrWaitForEvent(PROCESS_STATE state, long timeToWaitMS)
+                throws InterruptedException {
             EventAndException e = ProcessState.getInstance(main).getLastEventByName(state);
             if (e == null) {
                 // we shall now wait until some time as passed.

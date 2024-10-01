@@ -19,21 +19,18 @@ package io.supertokens.storage.mysql.config;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import io.supertokens.pluginInterface.ConfigFieldInfo;
 import io.supertokens.pluginInterface.exceptions.InvalidConfigException;
-import io.supertokens.storage.mysql.annotations.ConnectionPoolProperty;
-import io.supertokens.storage.mysql.annotations.IgnoreForAnnotationCheck;
-import io.supertokens.storage.mysql.annotations.NotConflictingWithinUserPool;
-import io.supertokens.storage.mysql.annotations.UserPoolProperty;
+import io.supertokens.storage.mysql.Start;
+import io.supertokens.storage.mysql.annotations.*;
 
 import java.lang.reflect.Field;
 import java.net.URI;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class MySQLConfig {
@@ -44,76 +41,135 @@ public class MySQLConfig {
 
     @JsonProperty
     @ConnectionPoolProperty
+    @DashboardInfo(
+            description = "Defines the connection pool size to MySQL. Please see https://github" +
+                    ".com/brettwooldridge/HikariCP/wiki/About-Pool-Sizing",
+            defaultValue = "10", isOptional = true, isEditable = true)
     private int mysql_connection_pool_size = 10;
 
     @JsonProperty
     @UserPoolProperty
+    @DashboardInfo(
+            description = "Specify the mysql host url here. For example: - \"localhost\" - \"192.168.0.1\" - \"<IP to" +
+                    " cloud instance>\" - \"example.com\"",
+            defaultValue = "\"localhost\"", isOptional = true)
     private String mysql_host = "localhost";
 
     @JsonProperty
     @UserPoolProperty
+    @DashboardInfo(description = "Specify the port to use when connecting to MySQL instance.", defaultValue = "3306",
+            isOptional = true)
     private int mysql_port = 3306;
 
     @JsonProperty
     @ConnectionPoolProperty
+    @DashboardInfo(
+            description = "The MySQL user to use to query the database. If the relevant tables are not already " +
+                    "created by you, this user should have the ability to create new tables. To see the tables " +
+                    "needed, visit: https://supertokens.com/docs/thirdpartyemailpassword/pre-built-ui/setup/database" +
+                    "-setup/mysql",
+            isOptional = true, defaultValue = "\"root\"")
     private String mysql_user = null;
 
     @JsonProperty
     @ConnectionPoolProperty
+    @DashboardInfo(
+            description = "Password for the MySQL user. If you have not set a password make this an empty string.",
+            isOptional = true, defaultValue = "no password")
     private String mysql_password = null;
 
     @JsonProperty
     @UserPoolProperty
+    @DashboardInfo(description = "The database name to store SuperTokens related data.",
+            defaultValue = "\"supertokens\"", isOptional = true)
     private String mysql_database_name = "supertokens";
 
     @JsonProperty
     @NotConflictingWithinUserPool
+    @DashboardInfo(
+            description = "A prefix to add to all table names managed by SuperTokens. An \"_\" will be added between " +
+                    "this prefix and the actual table name if the prefix is defined.",
+            defaultValue = "\"\"", isOptional = true)
     private String mysql_table_names_prefix = "";
 
     @JsonProperty
     @NotConflictingWithinUserPool
+    @DashboardInfo(
+            description = "Specify the name of the table that will store secret keys and app info necessary for the " +
+                    "functioning sessions.",
+            defaultValue = "\"key_value\"", isOptional = true)
     private String mysql_key_value_table_name = null;
 
     @JsonProperty
     @NotConflictingWithinUserPool
+    @DashboardInfo(description = "Specify the name of the table that will store the session info for users.",
+            defaultValue = "\"session_info\"", isOptional = true)
     private String mysql_session_info_table_name = null;
 
     @JsonProperty
     @NotConflictingWithinUserPool
+    @DashboardInfo(
+            description = "Specify the name of the table that will store the user information, along with their email" +
+                    " and hashed password.",
+            defaultValue = "\"emailpassword_users\"", isOptional = true)
     private String mysql_emailpassword_users_table_name = null;
 
     @JsonProperty
     @NotConflictingWithinUserPool
+    @DashboardInfo(description = "Specify the name of the table that will store the password reset tokens for users.",
+            defaultValue = "\"emailpassword_pswd_reset_tokens\"", isOptional = true)
     private String mysql_emailpassword_pswd_reset_tokens_table_name = null;
 
     @JsonProperty
     @NotConflictingWithinUserPool
+    @DashboardInfo(
+            description = "Specify the name of the table that will store the email verification tokens for users.",
+            defaultValue = "\"emailverification_tokens\"", isOptional = true)
     private String mysql_emailverification_tokens_table_name = null;
 
     @JsonProperty
     @NotConflictingWithinUserPool
+    @DashboardInfo(description = "Specify the name of the table that will store the verified email addresses.",
+            defaultValue = "\"emailverification_verified_emails\"", isOptional = true)
     private String mysql_emailverification_verified_emails_table_name = null;
 
     @JsonProperty
     @NotConflictingWithinUserPool
+    @DashboardInfo(description = "Specify the name of the table that will store the thirdparty recipe users.",
+            defaultValue = "\"thirdparty_users\"", isOptional = true)
     private String mysql_thirdparty_users_table_name = null;
 
     @JsonProperty
     @IgnoreForAnnotationCheck
+    @DashboardInfo(
+            description = "Specify the MySQL connection URI in the following format: " +
+                    "mysql://[user[:[password]]@]host[:port][/dbname][?attr1=val1&attr2=val2... Values provided via " +
+                    "other configs will override values provided by this config.",
+            defaultValue = "null", isOptional = true)
     private String mysql_connection_uri = null;
 
     @ConnectionPoolProperty
+    @DashboardInfo(description = "The connection attributes of the MySQL database.",
+            defaultValue = "\"allowPublicKeyRetrieval=true\"", isOptional = true)
     private String mysql_connection_attributes = "allowPublicKeyRetrieval=true";
 
     @ConnectionPoolProperty
+    @DashboardInfo(description = "The scheme of the MySQL database.", defaultValue = "\"postgresql\"",
+            isOptional = true)
     private String mysql_connection_scheme = "mysql";
 
     @JsonProperty
     @ConnectionPoolProperty
+    @DashboardInfo(description = "Timeout in milliseconds for the idle connections to be closed.",
+            defaultValue = "60000", isOptional = true, isEditable = true)
     private long mysql_idle_connection_timeout = 60000;
 
     @JsonProperty
     @ConnectionPoolProperty
+    @DashboardInfo(
+            description = "Minimum number of idle connections to be kept active. If not set, minimum idle connections" +
+                    " will be same as the connection pool size.",
+            defaultValue = "null", isOptional = true, isEditable = true)
     private Integer mysql_minimum_idle_connections = null;
 
     @IgnoreForAnnotationCheck
@@ -325,42 +381,111 @@ public class MySQLConfig {
         return mysql_table_names_prefix + tableName;
     }
 
-    void validateAndNormalise() throws InvalidConfigException {
+    public static ArrayList<ConfigFieldInfo> getConfigFieldsInfoForDashboard(Start start) {
+        ArrayList<ConfigFieldInfo> result = new ArrayList<ConfigFieldInfo>();
+
+        JsonObject tenantConfig = new Gson().toJsonTree(Config.getConfig(start)).getAsJsonObject();
+
+        MySQLConfig defaultConfigObj = new MySQLConfig();
+        try {
+            defaultConfigObj.validateAndNormalise(true); // skip validation and just populate defaults
+        } catch (InvalidConfigException e) {
+            throw new IllegalStateException(e); // should never happen
+        }
+
+        JsonObject defaultConfig = new Gson().toJsonTree(defaultConfigObj).getAsJsonObject();
+
+        for (String fieldId : MySQLConfig.getValidFields()) {
+            try {
+                Field field = MySQLConfig.class.getDeclaredField(fieldId);
+                if (!field.isAnnotationPresent(DashboardInfo.class)) {
+                    continue;
+                }
+
+                if (field.getName().endsWith("_table_name")) {
+                    continue; // do not show
+                }
+
+                String key = field.getName();
+                String description = field.isAnnotationPresent(DashboardInfo.class)
+                        ? field.getAnnotation(DashboardInfo.class).description()
+                        : "";
+                boolean isDifferentAcrossTenants = true;
+
+                String valueType = null;
+
+                Class<?> fieldType = field.getType();
+
+                if (fieldType == String.class) {
+                    valueType = "string";
+                } else if (fieldType == boolean.class) {
+                    valueType = "boolean";
+                } else if (fieldType == int.class || fieldType == long.class || fieldType == Integer.class) {
+                    valueType = "number";
+                } else {
+                    throw new RuntimeException("Unknown field type " + fieldType.getName());
+                }
+
+                JsonElement value = tenantConfig.get(field.getName());
+
+                JsonElement defaultValue = defaultConfig.get(field.getName());
+                boolean isNullable = defaultValue == null;
+
+                boolean isEditable = field.getAnnotation(DashboardInfo.class).isEditable();
+
+                result.add(new ConfigFieldInfo(
+                        key, valueType, value, description, isDifferentAcrossTenants,
+                        null, isNullable, defaultValue, true, isEditable));
+
+            } catch (NoSuchFieldException e) {
+                continue;
+            }
+        }
+        return result;
+    }
+
+    public void validateAndNormalise() throws InvalidConfigException {
+        validateAndNormalise(false);
+    }
+
+    private void validateAndNormalise(boolean skipValidation) throws InvalidConfigException {
         if (isValidAndNormalised) {
             return;
         }
 
-        if (mysql_connection_uri != null) {
-            try {
-                URI ignored = URI.create(mysql_connection_uri);
-            } catch (Exception e) {
-                throw new InvalidConfigException(
-                        "The provided mysql connection URI has an incorrect format. Please use a format like "
-                                + "mysql://[user[:[password]]@]host[:port][/dbname][?attr1=val1&attr2=val2...");
+        if (!skipValidation) {
+            if (mysql_connection_uri != null) {
+                try {
+                    URI ignored = URI.create(mysql_connection_uri);
+                } catch (Exception e) {
+                    throw new InvalidConfigException(
+                            "The provided mysql connection URI has an incorrect format. Please use a format like "
+                                    + "mysql://[user[:[password]]@]host[:port][/dbname][?attr1=val1&attr2=val2...");
+                }
+            } else {
+                if (this.getUser() == null) {
+                    throw new InvalidConfigException(
+                            "'mysql_user' and 'mysql_connection_uri' are not set. Please set at least one of "
+                                    + "these values");
+                }
             }
-        } else {
-            if (this.getUser() == null) {
-                throw new InvalidConfigException(
-                        "'mysql_user' and 'mysql_connection_uri' are not set. Please set at least one of "
-                                + "these values");
-            }
-        }
 
-        if (mysql_connection_pool_size <= 0) {
-            throw new InvalidConfigException(
-                    "'mysql_connection_pool_size' in the config.yaml file must be > 0");
-        }
-
-        if (mysql_minimum_idle_connections != null) {
-            if (mysql_minimum_idle_connections < 0) {
+            if (mysql_connection_pool_size <= 0) {
                 throw new InvalidConfigException(
-                        "'mysql_minimum_idle_connections' must be a >= 0");
+                        "'mysql_connection_pool_size' in the config.yaml file must be > 0");
             }
-    
-            if (mysql_minimum_idle_connections > mysql_connection_pool_size) {
-                throw new InvalidConfigException(
-                        "'mysql_minimum_idle_connections' must be less than or equal to "
-                                + "'mysql_connection_pool_size'");
+
+            if (mysql_minimum_idle_connections != null) {
+                if (mysql_minimum_idle_connections < 0) {
+                    throw new InvalidConfigException(
+                            "'mysql_minimum_idle_connections' must be a >= 0");
+                }
+
+                if (mysql_minimum_idle_connections > mysql_connection_pool_size) {
+                    throw new InvalidConfigException(
+                            "'mysql_minimum_idle_connections' must be less than or equal to "
+                                    + "'mysql_connection_pool_size'");
+                }
             }
         }
 
@@ -503,7 +628,8 @@ public class MySQLConfig {
         }
 
         if (mysql_emailverification_verified_emails_table_name == null) {
-            mysql_emailverification_verified_emails_table_name = addPrefixToTableName("emailverification_verified_emails");
+            mysql_emailverification_verified_emails_table_name = addPrefixToTableName(
+                    "emailverification_verified_emails");
         }
 
         if (mysql_thirdparty_users_table_name == null) {
@@ -513,7 +639,8 @@ public class MySQLConfig {
         isValidAndNormalised = true;
     }
 
-    public void assertThatConfigFromSameUserPoolIsNotConflicting(MySQLConfig otherConfig) throws InvalidConfigException {
+    public void assertThatConfigFromSameUserPoolIsNotConflicting(MySQLConfig otherConfig)
+            throws InvalidConfigException {
         for (Field field : MySQLConfig.class.getDeclaredFields()) {
             if (field.isAnnotationPresent(NotConflictingWithinUserPool.class)) {
                 try {
@@ -553,10 +680,11 @@ public class MySQLConfig {
                 try {
                     String fieldName = field.getName();
                     String fieldValue = field.get(this) != null ? field.get(this).toString() : null;
-                    if(fieldValue == null) {
+                    if (fieldValue == null) {
                         continue;
                     }
-                    // To ensure a unique connectionPoolId we include the database password and use the "|db_pass|" identifier.
+                    // To ensure a unique connectionPoolId we include the database password and use the "|db_pass|"
+                    // identifier.
                     // This facilitates easy removal of the password from logs when necessary.
                     if (fieldName.equals("mysql_password")) {
                         connectionPoolId.append("|db_pass|" + fieldValue + "|db_pass");

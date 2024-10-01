@@ -15,6 +15,7 @@
  */
 
 package io.supertokens.storage.mysql.test.multitenancy;
+
 import com.google.gson.JsonObject;
 import io.supertokens.ProcessState;
 import io.supertokens.emailpassword.EmailPassword;
@@ -110,7 +111,8 @@ public class TestUserPoolIdChangeBehaviour {
         String userPoolId2 = storage.getUserPoolId();
         assertNotEquals(userPoolId, userPoolId2);
 
-        AuthRecipeUserInfo user2 = EmailPassword.signIn(tenantIdentifier, storage, process.getProcess(), "user@example.com", "password");
+        AuthRecipeUserInfo user2 = EmailPassword.signIn(tenantIdentifier, storage, process.getProcess(),
+                "user@example.com", "password");
 
         assertEquals(userInfo, user2);
     }
@@ -160,7 +162,8 @@ public class TestUserPoolIdChangeBehaviour {
         String userPoolId2 = storage.getUserPoolId();
         assertNotEquals(userPoolId, userPoolId2);
 
-        AuthRecipeUserInfo user2 = EmailPassword.signIn(tenantIdentifier, storage, process.getProcess(), "user@example.com", "password");
+        AuthRecipeUserInfo user2 = EmailPassword.signIn(tenantIdentifier, storage, process.getProcess(),
+                "user@example.com", "password");
 
         assertEquals(userInfo, user2);
     }

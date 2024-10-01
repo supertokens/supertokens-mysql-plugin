@@ -59,7 +59,7 @@ public class ConfigTest {
 
     @Test
     public void testThatDefaultConfigLoadsCorrectly() throws Exception {
-        String[] args = { "../" };
+        String[] args = {"../"};
 
         TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
@@ -75,7 +75,7 @@ public class ConfigTest {
 
     @Test
     public void testThatCustomConfigLoadsCorrectly() throws Exception {
-        String[] args = { "../" };
+        String[] args = {"../"};
 
         Utils.setValueInConfig("mysql_connection_pool_size", "5");
 
@@ -91,7 +91,7 @@ public class ConfigTest {
 
     @Test
     public void testThatInvalidConfigThrowsRightError() throws Exception {
-        String[] args = { "../" };
+        String[] args = {"../"};
 
         // mysql_connection_pool_size is not set properly in the config file
 
@@ -111,7 +111,7 @@ public class ConfigTest {
 
     @Test
     public void testThatMissingConfigFileThrowsError() throws Exception {
-        String[] args = { "../" };
+        String[] args = {"../"};
 
         ProcessBuilder pb = new ProcessBuilder("rm", "-r", "config.yaml");
         pb.directory(new File(args[0]));
@@ -132,7 +132,7 @@ public class ConfigTest {
 
     @Test
     public void testCustomLocationForConfigLoadsCorrectly() throws Exception {
-        String[] args = { "../", "configFile=../temp/config.yaml" };
+        String[] args = {"../", "configFile=../temp/config.yaml"};
 
         TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
         ProcessState.EventAndException e = process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.INIT_FAILURE);
@@ -144,7 +144,7 @@ public class ConfigTest {
 
         // absolute path
         File f = new File("../temp/config.yaml");
-        args = new String[] { "../", "configFile=" + f.getAbsolutePath() };
+        args = new String[]{"../", "configFile=" + f.getAbsolutePath()};
 
         process = TestingProcessManager.start(args);
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
@@ -158,7 +158,7 @@ public class ConfigTest {
 
     @Test
     public void testBadPortInput() throws Exception {
-        String[] args = { "../" };
+        String[] args = {"../"};
 
         Utils.setValueInConfig("mysql_port", "8989");
         TestingProcessManager.TestingProcess process = TestingProcessManager.start(args, false);
@@ -185,7 +185,7 @@ public class ConfigTest {
 
     @Test
     public void storageDisabledAndThenEnabled() throws Exception {
-        String[] args = { "../" };
+        String[] args = {"../"};
 
         TestingProcessManager.TestingProcess process = TestingProcessManager.start(args, false);
         process.getProcess().waitToInitStorageModule();
@@ -210,7 +210,7 @@ public class ConfigTest {
 
     @Test
     public void testBadHostInput() throws Exception {
-        String[] args = { "../" };
+        String[] args = {"../"};
 
         Utils.setValueInConfig("mysql_host", "random");
 
@@ -219,7 +219,8 @@ public class ConfigTest {
         assertNotNull(e);
 
         assertEquals("Failed to initialize pool: Could not connect to address=(host=random)(port=3306)(type=master) : "
-                + "Socket fail to connect to host:random, port:3306. random", e.exception.getCause().getCause().getCause().getMessage());
+                        + "Socket fail to connect to host:random, port:3306. random",
+                e.exception.getCause().getCause().getCause().getMessage());
 
         process.kill();
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
@@ -228,7 +229,7 @@ public class ConfigTest {
 
     @Test
     public void testThatChangeInTableNameIsCorrect() throws Exception {
-        String[] args = { "../" };
+        String[] args = {"../"};
 
         Utils.setValueInConfig("mysql_key_value_table_name", "key_value_table");
         Utils.setValueInConfig("mysql_session_info_table_name", "session_info_table");
@@ -251,7 +252,7 @@ public class ConfigTest {
 
     @Test
     public void testAddingTableNamePrefixWorks() throws Exception {
-        String[] args = { "../" };
+        String[] args = {"../"};
 
         Utils.setValueInConfig("mysql_key_value_table_name", "key_value_table");
         Utils.setValueInConfig("mysql_table_names_prefix", "some_prefix");
@@ -278,7 +279,7 @@ public class ConfigTest {
         MySQLConfig userConfig = mapper.readValue(new File("../config.yaml"), MySQLConfig.class);
         String hostname = userConfig.getHostName();
         {
-            String[] args = { "../" };
+            String[] args = {"../"};
 
             Utils.setValueInConfig("mysql_connection_uri", "mysql://root:root@" + hostname + ":3306/supertokens");
             Utils.commentConfigValue("mysql_password");
@@ -298,7 +299,7 @@ public class ConfigTest {
 
         {
             Utils.reset();
-            String[] args = { "../" };
+            String[] args = {"../"};
 
             Utils.setValueInConfig("mysql_connection_uri", "mysql://root:root@" + hostname + "/supertokens");
             Utils.commentConfigValue("mysql_password");
@@ -318,7 +319,7 @@ public class ConfigTest {
 
         {
             Utils.reset();
-            String[] args = { "../" };
+            String[] args = {"../"};
 
             Utils.setValueInConfig("mysql_connection_uri", "mysql://" + hostname + ":3306/supertokens");
             Utils.commentConfigValue("mysql_port");
@@ -336,7 +337,7 @@ public class ConfigTest {
 
         {
             Utils.reset();
-            String[] args = { "../" };
+            String[] args = {"../"};
 
             Utils.setValueInConfig("mysql_connection_uri", "mysql://root@" + hostname + ":3306/supertokens");
             Utils.commentConfigValue("mysql_user");
@@ -355,7 +356,7 @@ public class ConfigTest {
 
         {
             Utils.reset();
-            String[] args = { "../" };
+            String[] args = {"../"};
 
             Utils.setValueInConfig("mysql_connection_uri", "mysql://root:root@" + hostname + ":3306");
             Utils.commentConfigValue("mysql_password");
@@ -380,7 +381,7 @@ public class ConfigTest {
         MySQLConfig userConfig = mapper.readValue(new File("../config.yaml"), MySQLConfig.class);
         String hostname = userConfig.getHostName();
         {
-            String[] args = { "../" };
+            String[] args = {"../"};
 
             Utils.setValueInConfig("mysql_connection_uri", ":/" + hostname + ":3306/supertokens");
 
@@ -399,7 +400,7 @@ public class ConfigTest {
 
         {
             Utils.reset();
-            String[] args = { "../" };
+            String[] args = {"../"};
 
             Utils.setValueInConfig("mysql_connection_uri",
                     "mysql://root:wrongPassword@" + hostname + ":3306/supertokens");
@@ -426,7 +427,7 @@ public class ConfigTest {
         MySQLConfig userConfig = mapper.readValue(new File("../config.yaml"), MySQLConfig.class);
         String hostname = userConfig.getHostName();
         {
-            String[] args = { "../" };
+            String[] args = {"../"};
 
             Utils.setValueInConfig("mysql_connection_uri",
                     "mysql://root:root@" + hostname + ":3306/supertokens?key1=value1");
@@ -442,7 +443,7 @@ public class ConfigTest {
 
         {
             Utils.reset();
-            String[] args = { "../" };
+            String[] args = {"../"};
 
             Utils.setValueInConfig("mysql_connection_uri", "mysql://root:root@" + hostname
                     + ":3306/supertokens?key1=value1&allowPublicKeyRetrieval=false&key2" + "=value2");
@@ -485,9 +486,12 @@ public class ConfigTest {
                 continue;
             }
 
-            if (!(field.isAnnotationPresent(UserPoolProperty.class) || field.isAnnotationPresent(ConnectionPoolProperty.class) || field.isAnnotationPresent(
+            if (!(field.isAnnotationPresent(UserPoolProperty.class) ||
+                    field.isAnnotationPresent(ConnectionPoolProperty.class) || field.isAnnotationPresent(
                     NotConflictingWithinUserPool.class))) {
-                fail(field.getName() + " does not have UserPoolProperty, ConnectionPoolProperty or NotConflictingWithinUserPool annotation");
+                fail(field.getName() +
+                        " does not have UserPoolProperty, ConnectionPoolProperty or NotConflictingWithinUserPool " +
+                        "annotation");
             }
         }
     }

@@ -7,11 +7,50 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+- Adds queries for Bulk Import
 - Adds support for multithreaded bulk import
 
-## [7.1.0] - 2024-04-10
+## [7.1.3] - 2024-09-04
 
-- Adds queries for Bulk Import
+- Adds index on `last_active_time` for `user_last_active` table to improve the performance of MAU computation.
+
+### Migration
+
+```sql
+CREATE INDEX user_last_active_last_active_time_index ON user_last_active (last_active_time DESC, app_id DESC);
+```
+
+## [7.1.2] - 2024-08-08
+
+- Fixes tests that check for `Internal Error` in 500 status responses
+
+## [7.1.1] - 2024-06-29
+
+- Fixes issue where `is_third_party_providers_null` is added to the `tenant_configs` table.
+
+### Migration
+
+```sql
+ALTER TABLE tenant_configs DROP COLUMN is_third_party_providers_null;
+```
+
+## [7.1.0] - 2024-05-24
+
+- Compatible with plugin interface version 6.2
+- Adds implementation for a new method `getConfigFieldsInfo` to fetch the plugin config fields.
+- Adds `DashboardInfo` annotations to the config properties in `PostgreSQLConfig`
+- Adds `null` state for `firstFactors` by adding `is_first_factors_null` field in `tenant_configs` table. The value of
+  this column is only applicable when there are no entries in the `tenant_first_factors` table for the tenant.
+
+### Migration
+
+```sql
+ALTER TABLE tenant_configs ADD COLUMN is_first_factors_null BOOLEAN DEFAULT TRUE;
+ALTER TABLE tenant_configs ADD COLUMN is_third_party_providers_null BOOLEAN DEFAULT TRUE;
+
+ALTER TABLE tenant_configs ALTER COLUMN is_first_factors_null DROP DEFAULT;
+ALTER TABLE tenant_configs ALTER COLUMN is_third_party_providers_null DROP DEFAULT;
+```
 
 ## [7.0.1] - 2024-04-17
 
@@ -23,8 +62,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Support for MFA recipe
 - Adds `firstFactors` and `requiredSecondaryFactors` for tenant config.
 - Adds a new `useStaticKey` param to `updateSessionInfo_Transaction`
-  - This enables smooth switching between `useDynamicAccessTokenSigningKey` settings by allowing refresh calls to
-    change the signing key type of a session
+    - This enables smooth switching between `useDynamicAccessTokenSigningKey` settings by allowing refresh calls to
+      change the signing key type of a session
 - Fixes performance issue with user pagination
 
 ### Migration
@@ -62,12 +101,12 @@ ALTER TABLE user_roles
 
 - Fixes the issue where passwords were inadvertently logged in the logs.
 - Adds tests to check connection pool behaviour.
-- Adds `mysql_idle_connection_timeout` and `mysql_minimum_idle_connections` configs to control active connections to the database.
+- Adds `mysql_idle_connection_timeout` and `mysql_minimum_idle_connections` configs to control active connections to the
+  database.
 
 ## [5.0.5] - 2023-12-06
 
 - Validates db config types in `canBeUsed` function
-
 
 ## [5.0.4] - 2023-11-10
 
@@ -101,15 +140,16 @@ CREATE INDEX app_id_to_user_id_user_id_index ON app_id_to_user_id (user_id);
 ### Changes
 
 - Support for Account Linking
-  - Adds columns `primary_or_recipe_user_id`, `is_linked_or_is_a_primary_user` and `primary_or_recipe_user_time_joined` to `all_auth_recipe_users` table
-  - Adds columns `primary_or_recipe_user_id` and `is_linked_or_is_a_primary_user` to `app_id_to_user_id` table
-  - Removes index `all_auth_recipe_users_pagination_index` and addes `all_auth_recipe_users_pagination_index1`, 
-    `all_auth_recipe_users_pagination_index2`, `all_auth_recipe_users_pagination_index3` and 
-    `all_auth_recipe_users_pagination_index4` indexes instead on `all_auth_recipe_users` table
-  - Adds `all_auth_recipe_users_recipe_id_index` on `all_auth_recipe_users` table
-  - Adds `all_auth_recipe_users_primary_user_id_index` on `all_auth_recipe_users` table
-  - Adds `email` column to `emailpassword_pswd_reset_tokens` table
-  - Changes `user_id` foreign key constraint on `emailpassword_pswd_reset_tokens` to `app_id_to_user_id` table
+    - Adds columns `primary_or_recipe_user_id`, `is_linked_or_is_a_primary_user`
+      and `primary_or_recipe_user_time_joined` to `all_auth_recipe_users` table
+    - Adds columns `primary_or_recipe_user_id` and `is_linked_or_is_a_primary_user` to `app_id_to_user_id` table
+    - Removes index `all_auth_recipe_users_pagination_index` and addes `all_auth_recipe_users_pagination_index1`,
+      `all_auth_recipe_users_pagination_index2`, `all_auth_recipe_users_pagination_index3` and
+      `all_auth_recipe_users_pagination_index4` indexes instead on `all_auth_recipe_users` table
+    - Adds `all_auth_recipe_users_recipe_id_index` on `all_auth_recipe_users` table
+    - Adds `all_auth_recipe_users_primary_user_id_index` on `all_auth_recipe_users` table
+    - Adds `email` column to `emailpassword_pswd_reset_tokens` table
+    - Changes `user_id` foreign key constraint on `emailpassword_pswd_reset_tokens` to `app_id_to_user_id` table
 
 ### Migration
 
@@ -194,16 +234,16 @@ CREATE INDEX app_id_to_user_id_user_id_index ON app_id_to_user_id (user_id);
 
 - Fixes duplicate users in users search queries when user is associated to multiple tenants
 
-
 ## [4.0.0] - 2023-06-02
 
 ### Changes
 
 - Support for multitenancy
-  - New tables `apps` and `tenants` have been added.
-  - Schema of tables have been changed, adding `app_id` and `tenant_id` columns in tables and constraints & indexes have been modified to include this columns.
-  - New user tables have been added to map users to apps and tenants.
-  - New tables for multitenancy have been added.
+    - New tables `apps` and `tenants` have been added.
+    - Schema of tables have been changed, adding `app_id` and `tenant_id` columns in tables and constraints & indexes
+      have been modified to include this columns.
+    - New user tables have been added to map users to apps and tenants.
+    - New tables for multitenancy have been added.
 - Increased transaction retry count to 50 from 20.
 
 ### Migration
@@ -214,6 +254,7 @@ CREATE INDEX app_id_to_user_id_user_id_index ON app_id_to_user_id (user_id);
 
     ```sql
     -- helper stored procedures
+    DELIMITER //
 
     CREATE PROCEDURE st_drop_all_fkeys()
     BEGIN
@@ -223,7 +264,33 @@ CREATE INDEX app_id_to_user_id_user_id_index ON app_id_to_user_id (user_id);
               SELECT concat('ALTER TABLE ', table_schema,'.',table_name,' DROP FOREIGN KEY ', constraint_name, ';') 
               FROM information_schema.table_constraints
               WHERE constraint_type='FOREIGN KEY' 
-                  AND table_schema = DATABASE();
+                  AND table_schema = DATABASE()
+                  AND table_name in (
+                    'all_auth_recipe_users',
+                    'dashboard_user_sessions',
+                    'dashboard_users',
+                    'emailpassword_pswd_reset_tokens',
+                    'emailpassword_users',
+                    'emailverification_tokens',
+                    'emailverification_verified_emails',
+                    'jwt_signing_keys',
+                    'key_value',
+                    'passwordless_codes',
+                    'passwordless_devices',
+                    'passwordless_users',
+                    'role_permissions',
+                    'roles',
+                    'session_access_token_signing_keys',
+                    'session_info',
+                    'thirdparty_users',
+                    'totp_used_codes',
+                    'totp_user_devices',
+                    'totp_users',
+                    'user_last_active',
+                    'user_metadata',
+                    'user_roles',
+                    'userid_mapping'
+                  );
 
       DECLARE CONTINUE handler for NOT found SET done = true;
         OPEN dropCur;
@@ -244,9 +311,9 @@ CREATE INDEX app_id_to_user_id_user_id_index ON app_id_to_user_id (user_id);
         END LOOP;
 
         CLOSE dropCur;
-    END
+    END //
 
-    ---
+    --
 
     CREATE PROCEDURE st_drop_all_pkeys()
     BEGIN
@@ -256,7 +323,33 @@ CREATE INDEX app_id_to_user_id_user_id_index ON app_id_to_user_id (user_id);
               SELECT concat('ALTER TABLE ', table_schema,'.',table_name,' DROP PRIMARY KEY ', ';') 
               FROM information_schema.table_constraints
               WHERE constraint_type='PRIMARY KEY' 
-                  AND table_schema = DATABASE();
+                  AND table_schema = DATABASE()
+                  AND table_name in (
+                    'all_auth_recipe_users',
+                    'dashboard_user_sessions',
+                    'dashboard_users',
+                    'emailpassword_pswd_reset_tokens',
+                    'emailpassword_users',
+                    'emailverification_tokens',
+                    'emailverification_verified_emails',
+                    'jwt_signing_keys',
+                    'key_value',
+                    'passwordless_codes',
+                    'passwordless_devices',
+                    'passwordless_users',
+                    'role_permissions',
+                    'roles',
+                    'session_access_token_signing_keys',
+                    'session_info',
+                    'thirdparty_users',
+                    'totp_used_codes',
+                    'totp_user_devices',
+                    'totp_users',
+                    'user_last_active',
+                    'user_metadata',
+                    'user_roles',
+                    'userid_mapping'
+                  );
 
       DECLARE CONTINUE handler for NOT found SET done = true;
         OPEN dropCur;
@@ -277,9 +370,9 @@ CREATE INDEX app_id_to_user_id_user_id_index ON app_id_to_user_id (user_id);
         END LOOP;
 
         CLOSE dropCur;
-    END
+    END //
 
-    ---
+    --
 
     CREATE PROCEDURE st_drop_all_keys()
     BEGIN
@@ -289,7 +382,33 @@ CREATE INDEX app_id_to_user_id_user_id_index ON app_id_to_user_id (user_id);
               SELECT concat('ALTER TABLE ', table_schema,'.',table_name,' DROP INDEX ', constraint_name, ';') 
               FROM information_schema.table_constraints
               WHERE constraint_type='UNIQUE' 
-                  AND table_schema = DATABASE();
+                  AND table_schema = DATABASE()
+                  AND table_name in (
+                    'all_auth_recipe_users',
+                    'dashboard_user_sessions',
+                    'dashboard_users',
+                    'emailpassword_pswd_reset_tokens',
+                    'emailpassword_users',
+                    'emailverification_tokens',
+                    'emailverification_verified_emails',
+                    'jwt_signing_keys',
+                    'key_value',
+                    'passwordless_codes',
+                    'passwordless_devices',
+                    'passwordless_users',
+                    'role_permissions',
+                    'roles',
+                    'session_access_token_signing_keys',
+                    'session_info',
+                    'thirdparty_users',
+                    'totp_used_codes',
+                    'totp_user_devices',
+                    'totp_users',
+                    'user_last_active',
+                    'user_metadata',
+                    'user_roles',
+                    'userid_mapping'
+                  );
 
       DECLARE CONTINUE handler for NOT found SET done = true;
         OPEN dropCur;
@@ -310,9 +429,9 @@ CREATE INDEX app_id_to_user_id_user_id_index ON app_id_to_user_id (user_id);
         END LOOP;
 
         CLOSE dropCur;
-    END
+    END //
 
-    ---
+    --
 
     CREATE PROCEDURE st_drop_all_indexes()
     BEGIN
@@ -321,7 +440,34 @@ CREATE INDEX app_id_to_user_id_user_id_index ON app_id_to_user_id (user_id);
       DECLARE dropCur CURSOR for 
               SELECT DISTINCT concat('ALTER TABLE ', table_schema, '.', table_name, ' DROP INDEX ', index_name, ';')
               FROM information_schema.statistics
-              WHERE NON_UNIQUE = 1 AND table_schema = database();
+              WHERE NON_UNIQUE = 1 
+                AND table_schema = database()
+                AND table_name in (
+                  'all_auth_recipe_users',
+                  'dashboard_user_sessions',
+                  'dashboard_users',
+                  'emailpassword_pswd_reset_tokens',
+                  'emailpassword_users',
+                  'emailverification_tokens',
+                  'emailverification_verified_emails',
+                  'jwt_signing_keys',
+                  'key_value',
+                  'passwordless_codes',
+                  'passwordless_devices',
+                  'passwordless_users',
+                  'role_permissions',
+                  'roles',
+                  'session_access_token_signing_keys',
+                  'session_info',
+                  'thirdparty_users',
+                  'totp_used_codes',
+                  'totp_user_devices',
+                  'totp_users',
+                  'user_last_active',
+                  'user_metadata',
+                  'user_roles',
+                  'userid_mapping'
+                );
 
       DECLARE CONTINUE handler for NOT found SET done = true;
         OPEN dropCur;
@@ -342,9 +488,9 @@ CREATE INDEX app_id_to_user_id_user_id_index ON app_id_to_user_id (user_id);
         END LOOP;
 
         CLOSE dropCur;
-    END
+    END //
 
-    ---
+    --
 
     CREATE PROCEDURE st_add_column_if_not_exists(
     IN p_table_name varchar(50), 
@@ -374,8 +520,9 @@ CREATE INDEX app_id_to_user_id_user_id_index ON app_id_to_user_id (user_id);
         execute add_column_sql;
           SELECT 'Column Successfully  Created!' INTO p_status_message;
         END IF;
-    END
+    END //
 
+    DELIMITER ;
     -- Drop constraints and indexes
 
     CALL st_drop_all_fkeys();
@@ -396,7 +543,7 @@ CREATE INDEX app_id_to_user_id_user_id_index ON app_id_to_user_id (user_id);
     INSERT IGNORE INTO apps (app_id, created_at_time) 
       VALUES ('public', 0);
 
-    ------------------------------------------------------------
+    --
 
     CREATE TABLE IF NOT EXISTS tenants (
       app_id VARCHAR(64) NOT NULL DEFAULT 'public',
@@ -414,7 +561,7 @@ CREATE INDEX app_id_to_user_id_user_id_index ON app_id_to_user_id (user_id);
     INSERT IGNORE INTO tenants (app_id, tenant_id, created_at_time) 
       VALUES ('public', 'public', 0);
 
-    ------------------------------------------------------------
+    --
 
     CALL st_add_column_if_not_exists('key_value', 'app_id', 'VARCHAR(64)', 'NOT NULL DEFAULT \'public\'', @status_message);
     CALL st_add_column_if_not_exists('key_value', 'tenant_id', 'VARCHAR(64)', 'NOT NULL DEFAULT \'public\'', @status_message);
@@ -426,7 +573,7 @@ CREATE INDEX app_id_to_user_id_user_id_index ON app_id_to_user_id (user_id);
       ADD FOREIGN KEY (app_id, tenant_id)
         REFERENCES tenants (app_id, tenant_id) ON DELETE CASCADE;
 
-    ------------------------------------------------------------
+    --
 
     CREATE TABLE IF NOT EXISTS app_id_to_user_id (
       app_id VARCHAR(64) NOT NULL DEFAULT 'public',
@@ -445,7 +592,7 @@ CREATE INDEX app_id_to_user_id_user_id_index ON app_id_to_user_id (user_id);
       SELECT user_id, recipe_id
       FROM all_auth_recipe_users;
 
-    ------------------------------------------------------------
+    --
 
     CALL st_add_column_if_not_exists('all_auth_recipe_users', 'app_id', 'VARCHAR(64)', 'NOT NULL DEFAULT \'public\'', @status_message);
     CALL st_add_column_if_not_exists('all_auth_recipe_users', 'tenant_id', 'VARCHAR(64)', 'NOT NULL DEFAULT \'public\'', @status_message);
@@ -478,7 +625,7 @@ CREATE INDEX app_id_to_user_id_user_id_index ON app_id_to_user_id (user_id);
     ALTER TABLE tenant_configs
       ADD PRIMARY KEY (connection_uri_domain, app_id, tenant_id);
 
-    ------------------------------------------------------------
+    --
 
     CREATE TABLE IF NOT EXISTS tenant_thirdparty_providers (
       connection_uri_domain VARCHAR(256) DEFAULT '',
@@ -511,7 +658,7 @@ CREATE INDEX app_id_to_user_id_user_id_index ON app_id_to_user_id (user_id);
       ADD FOREIGN KEY (connection_uri_domain, app_id, tenant_id)
         REFERENCES tenant_configs (connection_uri_domain, app_id, tenant_id) ON DELETE CASCADE;
 
-    ------------------------------------------------------------
+    --
 
     CREATE TABLE IF NOT EXISTS tenant_thirdparty_provider_clients (
       connection_uri_domain VARCHAR(256) DEFAULT '',
@@ -548,7 +695,7 @@ CREATE INDEX app_id_to_user_id_user_id_index ON app_id_to_user_id (user_id);
 
     CREATE INDEX session_expiry_index ON session_info (expires_at);
 
-    ------------------------------------------------------------
+    --
 
     CALL st_add_column_if_not_exists('session_access_token_signing_keys', 'app_id', 'VARCHAR(64)', 'NOT NULL DEFAULT \'public\'', @status_message);
 
@@ -581,7 +728,7 @@ CREATE INDEX app_id_to_user_id_user_id_index ON app_id_to_user_id (user_id);
       ADD FOREIGN KEY (app_id)
         REFERENCES apps (app_id) ON DELETE CASCADE;
 
-    ------------------------------------------------------------
+    --
 
     CALL st_add_column_if_not_exists('emailverification_tokens', 'app_id', 'VARCHAR(64)', 'NOT NULL DEFAULT \'public\'', @status_message);
     CALL st_add_column_if_not_exists('emailverification_tokens', 'tenant_id', 'VARCHAR(64)', 'NOT NULL DEFAULT \'public\'', @status_message);
@@ -609,7 +756,7 @@ CREATE INDEX app_id_to_user_id_user_id_index ON app_id_to_user_id (user_id);
       ADD FOREIGN KEY (app_id, user_id)
         REFERENCES app_id_to_user_id (app_id, user_id) ON DELETE CASCADE;
 
-    -- ------------------------------------------------------------
+    -- --
 
     CREATE TABLE IF NOT EXISTS emailpassword_user_to_tenant (
       app_id VARCHAR(64) DEFAULT 'public',
@@ -631,7 +778,7 @@ CREATE INDEX app_id_to_user_id_user_id_index ON app_id_to_user_id (user_id);
     INSERT IGNORE INTO emailpassword_user_to_tenant (user_id, email)
       SELECT user_id, email FROM emailpassword_users;
 
-    ------------------------------------------------------------
+    --
 
     CALL st_add_column_if_not_exists('emailpassword_pswd_reset_tokens', 'app_id', 'VARCHAR(64)', 'NOT NULL DEFAULT \'public\'', @status_message);
 
@@ -658,7 +805,7 @@ CREATE INDEX app_id_to_user_id_user_id_index ON app_id_to_user_id (user_id);
       ADD FOREIGN KEY (app_id, user_id)
         REFERENCES app_id_to_user_id (app_id, user_id) ON DELETE CASCADE;
 
-    ------------------------------------------------------------
+    --
 
     CREATE TABLE IF NOT EXISTS passwordless_user_to_tenant (
       app_id VARCHAR(64) DEFAULT 'public',
@@ -684,7 +831,7 @@ CREATE INDEX app_id_to_user_id_user_id_index ON app_id_to_user_id (user_id);
     INSERT IGNORE INTO passwordless_user_to_tenant (user_id, email, phone_number)
       SELECT user_id, email, phone_number FROM passwordless_users;
 
-    ------------------------------------------------------------
+    --
 
     CALL st_add_column_if_not_exists('passwordless_devices', 'app_id', 'VARCHAR(64)', 'NOT NULL DEFAULT \'public\'', @status_message);
     CALL st_add_column_if_not_exists('passwordless_devices', 'tenant_id', 'VARCHAR(64)', 'NOT NULL DEFAULT \'public\'', @status_message);
@@ -700,7 +847,7 @@ CREATE INDEX app_id_to_user_id_user_id_index ON app_id_to_user_id (user_id);
 
     CREATE INDEX passwordless_devices_phone_number_index ON passwordless_devices (app_id, tenant_id, phone_number);
 
-    ------------------------------------------------------------
+    --
 
     CALL st_add_column_if_not_exists('passwordless_codes', 'app_id', 'VARCHAR(64)', 'NOT NULL DEFAULT \'public\'', @status_message);
     CALL st_add_column_if_not_exists('passwordless_codes', 'tenant_id', 'VARCHAR(64)', 'NOT NULL DEFAULT \'public\'', @status_message);
@@ -733,7 +880,7 @@ CREATE INDEX app_id_to_user_id_user_id_index ON app_id_to_user_id (user_id);
 
     CREATE INDEX thirdparty_users_email_index ON thirdparty_users (app_id, email);
 
-    ------------------------------------------------------------
+    --
 
     CREATE TABLE IF NOT EXISTS thirdparty_user_to_tenant (
       app_id VARCHAR(64) DEFAULT 'public',
@@ -787,7 +934,7 @@ CREATE INDEX app_id_to_user_id_user_id_index ON app_id_to_user_id (user_id);
       ADD FOREIGN KEY (app_id)
         REFERENCES apps (app_id) ON DELETE CASCADE;
 
-    ------------------------------------------------------------
+    --
 
     CALL st_add_column_if_not_exists('role_permissions', 'app_id', 'VARCHAR(64)', 'NOT NULL DEFAULT \'public\'', @status_message);
 
@@ -800,7 +947,7 @@ CREATE INDEX app_id_to_user_id_user_id_index ON app_id_to_user_id (user_id);
 
     CREATE INDEX role_permissions_permission_index ON role_permissions (app_id, permission);
 
-    ------------------------------------------------------------
+    --
 
     CALL st_add_column_if_not_exists('user_roles', 'app_id', 'VARCHAR(64)', 'NOT NULL DEFAULT \'public\'', @status_message);
     CALL st_add_column_if_not_exists('user_roles', 'tenant_id', 'VARCHAR(64)', 'NOT NULL DEFAULT \'public\'', @status_message);
@@ -844,7 +991,7 @@ CREATE INDEX app_id_to_user_id_user_id_index ON app_id_to_user_id (user_id);
       ADD FOREIGN KEY (app_id)
         REFERENCES apps (app_id) ON DELETE CASCADE;
 
-    ------------------------------------------------------------
+    --
 
     CALL st_add_column_if_not_exists('dashboard_user_sessions', 'app_id', 'VARCHAR(64)', 'NOT NULL DEFAULT \'public\'', @status_message);
 
@@ -868,7 +1015,7 @@ CREATE INDEX app_id_to_user_id_user_id_index ON app_id_to_user_id (user_id);
       ADD FOREIGN KEY (app_id)
         REFERENCES apps (app_id) ON DELETE CASCADE;
 
-    ------------------------------------------------------------
+    --
 
     CALL st_add_column_if_not_exists('totp_user_devices', 'app_id', 'VARCHAR(64)', 'NOT NULL DEFAULT \'public\'', @status_message);
 
@@ -879,7 +1026,7 @@ CREATE INDEX app_id_to_user_id_user_id_index ON app_id_to_user_id (user_id);
       ADD FOREIGN KEY (app_id, user_id)
         REFERENCES totp_users (app_id, user_id) ON DELETE CASCADE;
 
-    ------------------------------------------------------------
+    --
 
     CALL st_add_column_if_not_exists('totp_used_codes', 'app_id', 'VARCHAR(64)', 'NOT NULL DEFAULT \'public\'', @status_message);
     CALL st_add_column_if_not_exists('totp_used_codes', 'tenant_id', 'VARCHAR(64)', 'NOT NULL DEFAULT \'public\'', @status_message);
@@ -931,19 +1078,19 @@ CREATE INDEX app_id_to_user_id_user_id_index ON app_id_to_user_id (user_id);
 ### Migration
 
 - If using `access_token_signing_key_dynamic` false in the core:
-  - ```sql
-    ALTER TABLE session_info ADD COLUMN use_static_key BOOLEAN NOT NULL DEFAULT true;
-    ALTER TABLE session_info ALTER COLUMN use_static_key DROP DEFAULT;
+    - ```sql
+  ALTER TABLE session_info ADD COLUMN use_static_key BOOLEAN NOT NULL DEFAULT true;
+  ALTER TABLE session_info ALTER COLUMN use_static_key DROP DEFAULT;
     ```
-  - ```sql
+    - ```sql
     INSERT INTO jwt_signing_keys(key_id, key_string, algorithm, created_at)
       select CONCAT('s-', created_at_time) as key_id, value as key_string, 'RS256' as algorithm, created_at_time as created_at
       from session_access_token_signing_keys;
     ```
 - If using `access_token_signing_key_dynamic` true (or not set) in the core:
-  - ```sql
-    ALTER TABLE session_info ADD COLUMN use_static_key BOOLEAN NOT NULL DEFAULT false;
-    ALTER TABLE session_info ALTER COLUMN use_static_key DROP DEFAULT;
+    - ```sql
+  ALTER TABLE session_info ADD COLUMN use_static_key BOOLEAN NOT NULL DEFAULT false;
+  ALTER TABLE session_info ALTER COLUMN use_static_key DROP DEFAULT;
     ```
 
 ## [2.4.0] - 2023-03-30
@@ -951,15 +1098,17 @@ CREATE INDEX app_id_to_user_id_user_id_index ON app_id_to_user_id (user_id);
 - Support for Dashboard Search
 
 ## [2.3.0] - 2023-03-27
+
 - Support for TOTP recipe
 - Support for active users
 
 ### Database changes
 
 - Add new tables for TOTP recipe:
-  - `totp_users` that stores the users that have enabled TOTP
-  - `totp_user_devices` that stores devices (each device has its own secret) for each user
-  - `totp_used_codes` that stores used codes for each user. This is to implement rate limiting and prevent replay attacks.
+    - `totp_users` that stores the users that have enabled TOTP
+    - `totp_user_devices` that stores devices (each device has its own secret) for each user
+    - `totp_used_codes` that stores used codes for each user. This is to implement rate limiting and prevent replay
+      attacks.
 - Add `user_last_active` table to store the last active time of a user.
 
 ## [2.2.0] - 2023-02-21

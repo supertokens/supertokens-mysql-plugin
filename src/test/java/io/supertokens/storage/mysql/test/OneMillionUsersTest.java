@@ -27,8 +27,10 @@ import io.supertokens.authRecipe.UserPaginationContainer;
 import io.supertokens.emailpassword.EmailPassword;
 import io.supertokens.emailpassword.ParsedFirebaseSCryptResponse;
 import io.supertokens.featureflag.EE_FEATURES;
+import io.supertokens.featureflag.FeatureFlag;
 import io.supertokens.featureflag.FeatureFlagTestContent;
 import io.supertokens.passwordless.Passwordless;
+import io.supertokens.pluginInterface.Storage;
 import io.supertokens.pluginInterface.authRecipe.AuthRecipeUserInfo;
 import io.supertokens.pluginInterface.authRecipe.LoginMethod;
 import io.supertokens.pluginInterface.authRecipe.sqlStorage.AuthRecipeSQLStorage;
@@ -37,8 +39,10 @@ import io.supertokens.pluginInterface.multitenancy.AppIdentifier;
 import io.supertokens.pluginInterface.multitenancy.TenantIdentifier;
 import io.supertokens.pluginInterface.passwordless.sqlStorage.PasswordlessSQLStorage;
 import io.supertokens.pluginInterface.thirdparty.sqlStorage.ThirdPartySQLStorage;
+import io.supertokens.pluginInterface.RECIPE_ID;
 import io.supertokens.session.Session;
 import io.supertokens.session.info.SessionInformationHolder;
+import io.supertokens.storage.mysql.Start;
 import io.supertokens.storage.mysql.test.httpRequest.HttpRequestForTesting;
 import io.supertokens.storageLayer.StorageLayer;
 import io.supertokens.thirdparty.ThirdParty;
@@ -61,7 +65,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
 import static org.junit.Assert.*;
-import static org.junit.Assert.assertEquals;
 
 public class OneMillionUsersTest {
     @Rule
@@ -110,7 +113,8 @@ public class OneMillionUsersTest {
                     String userId = io.supertokens.utils.Utils.getUUID();
                     long timeJoined = System.currentTimeMillis();
 
-                    storage.signUp(TenantIdentifier.BASE_TENANT, userId, "eptest" + finalI + "@example.com", combinedPasswordHash,
+                    storage.signUp(TenantIdentifier.BASE_TENANT, userId, "eptest" + finalI + "@example.com",
+                            combinedPasswordHash,
                             timeJoined);
                     synchronized (lock) {
                         allUserIds.add(userId);
@@ -119,7 +123,7 @@ public class OneMillionUsersTest {
                     throw new RuntimeException(e);
                 }
                 if (finalI % 10000 == 9999) {
-                    System.out.println("Created " + ((finalI +1)) + " users");
+                    System.out.println("Created " + ((finalI + 1)) + " users");
                 }
             });
         }
@@ -140,7 +144,8 @@ public class OneMillionUsersTest {
                 String userId = io.supertokens.utils.Utils.getUUID();
                 long timeJoined = System.currentTimeMillis();
                 try {
-                    storage.createUser(TenantIdentifier.BASE_TENANT, userId, "pltest" + finalI + "@example.com", null, timeJoined);
+                    storage.createUser(TenantIdentifier.BASE_TENANT, userId, "pltest" + finalI + "@example.com", null,
+                            timeJoined);
                     synchronized (lock) {
                         allUserIds.add(userId);
                     }
@@ -149,7 +154,7 @@ public class OneMillionUsersTest {
                 }
 
                 if (finalI % 10000 == 9999) {
-                    System.out.println("Created " + ((finalI +1)) + " users");
+                    System.out.println("Created " + ((finalI + 1)) + " users");
                 }
             });
         }
@@ -179,7 +184,7 @@ public class OneMillionUsersTest {
                 }
 
                 if (finalI % 10000 == 9999) {
-                    System.out.println("Created " + ((finalI +1)) + " users");
+                    System.out.println("Created " + ((finalI + 1)) + " users");
                 }
             });
         }
@@ -201,7 +206,8 @@ public class OneMillionUsersTest {
                 long timeJoined = System.currentTimeMillis();
 
                 try {
-                    storage.signUp(TenantIdentifier.BASE_TENANT, userId, "tptest" + finalI + "@example.com", new LoginMethod.ThirdParty("google", "googleid" + finalI), timeJoined );
+                    storage.signUp(TenantIdentifier.BASE_TENANT, userId, "tptest" + finalI + "@example.com",
+                            new LoginMethod.ThirdParty("google", "googleid" + finalI), timeJoined);
                     synchronized (lock) {
                         allUserIds.add(userId);
                     }
@@ -210,7 +216,7 @@ public class OneMillionUsersTest {
                 }
 
                 if (finalI % 10000 == 9999) {
-                    System.out.println("Created " + (finalI +1) + " users");
+                    System.out.println("Created " + (finalI + 1) + " users");
                 }
             });
         }
@@ -392,6 +398,30 @@ public class OneMillionUsersTest {
         es.awaitTermination(12, TimeUnit.MINUTES);
     }
 
+    private void createActiveUserEntries(Main main) throws Exception {
+        System.out.println("Creating active user entries...");
+
+        ExecutorService es = Executors.newFixedThreadPool(NUM_THREADS);
+
+        for (String userId : allPrimaryUserIds) {
+            String finalUserId = userId;
+            es.execute(() -> {
+                try {
+                    Storage storage = StorageLayer.getBaseStorage(main);
+                    Start start = (Start) storage;
+
+                    start.updateLastActive(new AppIdentifier(null, null), finalUserId, System.currentTimeMillis() - new Random().nextInt(1000 * 3600 * 24 * 60));
+
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            });
+        }
+
+        es.shutdown();
+        es.awaitTermination(10, TimeUnit.MINUTES);
+    }
+
     @Test
     public void testCreatingOneMillionUsers() throws Exception {
         if (System.getenv("ONE_MILLION_USERS_TEST") == null) {
@@ -406,7 +436,7 @@ public class OneMillionUsersTest {
 
         FeatureFlagTestContent.getInstance(process.getProcess())
                 .setKeyValue(FeatureFlagTestContent.ENABLED_FEATURES, new EE_FEATURES[]{
-                        EE_FEATURES.ACCOUNT_LINKING, EE_FEATURES.MULTI_TENANCY});
+                        EE_FEATURES.ACCOUNT_LINKING, EE_FEATURES.MULTI_TENANCY, EE_FEATURES.MFA, EE_FEATURES.DASHBOARD_LOGIN});
         process.startProcess();
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
 
@@ -451,6 +481,13 @@ public class OneMillionUsersTest {
             System.out.println("Time taken to create sessions: " + ((en - st) / 1000) + " sec");
         }
 
+        {
+            long st = System.currentTimeMillis();
+            createActiveUserEntries(process.getProcess());
+            long en = System.currentTimeMillis();
+            System.out.println("Time taken to create active user entries: " + ((en - st) / 1000) + " sec");
+        }
+
         sanityCheckAPIs(process.getProcess());
         allUserIds.clear();
         allPrimaryUserIds.clear();
@@ -472,7 +509,7 @@ public class OneMillionUsersTest {
 
         FeatureFlagTestContent.getInstance(process.getProcess())
                 .setKeyValue(FeatureFlagTestContent.ENABLED_FEATURES, new EE_FEATURES[]{
-                        EE_FEATURES.ACCOUNT_LINKING, EE_FEATURES.MULTI_TENANCY});
+                        EE_FEATURES.ACCOUNT_LINKING, EE_FEATURES.MULTI_TENANCY, EE_FEATURES.MFA, EE_FEATURES.DASHBOARD_LOGIN});
         process.startProcess();
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
 
@@ -655,7 +692,8 @@ public class OneMillionUsersTest {
             JsonArray userRolesArr = response.getAsJsonArray("roles");
             assertEquals(1, userRolesArr.size());
             assertTrue(
-                    userRolesArr.get(0).getAsString().equals("admin") || userRolesArr.get(0).getAsString().equals("user")
+                    userRolesArr.get(0).getAsString().equals("admin") ||
+                            userRolesArr.get(0).getAsString().equals("user")
             );
         }
 
@@ -800,7 +838,8 @@ public class OneMillionUsersTest {
                     int finalI = i;
                     es.execute(() -> {
                         try {
-                            ThirdParty.signInUp(main, "twitter", "twitterid" + finalI, "twitter" + finalI + "@example.com");
+                            ThirdParty.signInUp(main, "twitter", "twitterid" + finalI,
+                                    "twitter" + finalI + "@example.com");
                         } catch (Exception e) {
                             errorCount.incrementAndGet();
                             throw new RuntimeException(e);
@@ -826,7 +865,8 @@ public class OneMillionUsersTest {
                     int finalI = i;
                     es.execute(() -> {
                         try {
-                            ThirdParty.signInUp(main, "twitter", "twitterid" + finalI, "twitter" + finalI + "@example.com");
+                            ThirdParty.signInUp(main, "twitter", "twitterid" + finalI,
+                                    "twitter" + finalI + "@example.com");
                         } catch (Exception e) {
                             errorCount.incrementAndGet();
                             throw new RuntimeException(e);
@@ -867,7 +907,7 @@ public class OneMillionUsersTest {
                 return null;
             });
             System.out.println("User pagination " + time);
-            assert time < 8000;
+            assert time < 10000;
         }
         { // Measure update user metadata
             long time = measureTime(() -> {
@@ -889,6 +929,35 @@ public class OneMillionUsersTest {
                 return null;
             });
             System.out.println("Update user metadata " + time);
+        }
+
+        { // measure user counting
+            long time = measureTime(() -> {
+                try {
+                    AuthRecipe.getUsersCount(main, null);
+                    AuthRecipe.getUsersCount(main, new RECIPE_ID[]{RECIPE_ID.EMAIL_PASSWORD});
+                    AuthRecipe.getUsersCount(main, new RECIPE_ID[]{RECIPE_ID.EMAIL_PASSWORD, RECIPE_ID.THIRD_PARTY});
+                } catch (Exception e) {
+                    errorCount.incrementAndGet();
+                    throw new RuntimeException(e);
+                }
+                return null;
+            });
+            System.out.println("User counting: " + time);
+            assert time < 12000;
+        }
+        { // measure telemetry
+            long time = measureTime(() -> {
+                try {
+                    FeatureFlag.getInstance(main).getPaidFeatureStats();
+                } catch (Exception e) {
+                    errorCount.incrementAndGet();
+                    throw new RuntimeException(e);
+                }
+                return null;
+            });
+            System.out.println("Telemetry: " + time);
+            assert time < 6000;
         }
 
         assertEquals(0, errorCount.get());

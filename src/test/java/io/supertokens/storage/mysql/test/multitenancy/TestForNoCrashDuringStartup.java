@@ -48,8 +48,8 @@ import org.junit.Test;
 
 import java.io.IOException;
 
-import static org.junit.Assert.*;
 import static io.supertokens.storage.mysql.QueryExecutorTemplate.update;
+import static org.junit.Assert.*;
 
 public class TestForNoCrashDuringStartup {
     TestingProcessManager.TestingProcess process;
@@ -107,24 +107,27 @@ public class TestForNoCrashDuringStartup {
         assertEquals(2, allTenants.length); // should have the new CUD
 
         try {
-            tpSignInUpAndGetResponse(new TenantIdentifier("127.0.0.1", null, null), "google", "googleid1", "test@example.com", process.getProcess(), SemVer.v5_0);
+            tpSignInUpAndGetResponse(new TenantIdentifier("127.0.0.1", null, null), "google", "googleid1",
+                    "test@example.com", process.getProcess(), SemVer.v5_0);
             fail();
         } catch (HttpResponseException e) {
             // ignore
-            assertTrue(e.getMessage().contains("Internal Error")); // retried creating tenant entry
+            assertEquals("Http error. Status Code: 500. Message: java.sql.SQLException: Simulated error in addTenantIdInTargetStorage", e.getMessage());
         }
 
         MultitenancyQueries.simulateErrorInAddingTenantIdInTargetStorage_forTesting = false;
 
         // this should succeed now
-        tpSignInUpAndGetResponse(new TenantIdentifier("127.0.0.1", null, null), "google", "googleid1", "test@example.com", process.getProcess(), SemVer.v5_0);
+        tpSignInUpAndGetResponse(new TenantIdentifier("127.0.0.1", null, null), "google", "googleid1",
+                "test@example.com", process.getProcess(), SemVer.v5_0);
     }
 
     @Test
     public void testThatCUDRecoversWhenTheDbIsDownDuringCreationButDbComesUpLater() throws Exception {
         Start start = ((Start) StorageLayer.getBaseStorage(process.getProcess()));
         try {
-            update(start, "DROP DATABASE st5000;", pst -> {});
+            update(start, "DROP DATABASE st5000;", pst -> {
+            });
         } catch (Exception e) {
             // ignore
         }
@@ -154,17 +157,21 @@ public class TestForNoCrashDuringStartup {
         assertEquals(2, allTenants.length); // should have the new CUD
 
         try {
-            tpSignInUpAndGetResponse(new TenantIdentifier("127.0.0.1", null, null), "google", "googleid1", "test@example.com", process.getProcess(), SemVer.v5_0);
+            tpSignInUpAndGetResponse(new TenantIdentifier("127.0.0.1", null, null), "google", "googleid1",
+                    "test@example.com", process.getProcess(), SemVer.v5_0);
             fail();
         } catch (HttpResponseException e) {
             // ignore
-            assertTrue(e.getMessage().contains("Internal Error")); // db is still down
+            assertTrue(e.getMessage().contains("Unknown database 'st5000'"));
+            assertTrue(e.getMessage().contains("Http error. Status Code: 500"));
         }
 
-        update(start, "CREATE DATABASE st5000;", pst -> {});
+        update(start, "CREATE DATABASE st5000;", pst -> {
+        });
 
         // this should succeed now
-        tpSignInUpAndGetResponse(new TenantIdentifier("127.0.0.1", null, null), "google", "googleid1", "test@example.com", process.getProcess(), SemVer.v5_0);
+        tpSignInUpAndGetResponse(new TenantIdentifier("127.0.0.1", null, null), "google", "googleid1",
+                "test@example.com", process.getProcess(), SemVer.v5_0);
     }
 
     @Test
@@ -260,7 +267,8 @@ public class TestForNoCrashDuringStartup {
         MultitenancyQueries.simulateErrorInAddingTenantIdInTargetStorage_forTesting = false;
 
         // this should succeed now
-        tpSignInUpAndGetResponse(new TenantIdentifier("127.0.0.1", null, null), "google", "googleid1", "test@example.com", process.getProcess(), SemVer.v5_0);
+        tpSignInUpAndGetResponse(new TenantIdentifier("127.0.0.1", null, null), "google", "googleid1",
+                "test@example.com", process.getProcess(), SemVer.v5_0);
     }
 
     @Test
@@ -291,7 +299,8 @@ public class TestForNoCrashDuringStartup {
         assertEquals(2, allTenants.length); // should have the new CUD
 
         Start start = (Start) StorageLayer.getBaseStorage(process.getProcess());
-        update(start, "DELETE FROM apps;", pst -> {});
+        update(start, "DELETE FROM apps;", pst -> {
+        });
 
         process.kill(false);
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
@@ -306,13 +315,15 @@ public class TestForNoCrashDuringStartup {
         MultitenancyQueries.simulateErrorInAddingTenantIdInTargetStorage_forTesting = false;
 
         // this should succeed now
-        tpSignInUpAndGetResponse(new TenantIdentifier("127.0.0.1", null, null), "google", "googleid1", "test@example.com", process.getProcess(), SemVer.v5_0);
+        tpSignInUpAndGetResponse(new TenantIdentifier("127.0.0.1", null, null), "google", "googleid1",
+                "test@example.com", process.getProcess(), SemVer.v5_0);
 
         Session.createNewSession(process.getProcess(), "userid", new JsonObject(), new JsonObject());
     }
 
     @Test
-    public void testThatCoreDoesNotCrashDuringStartupWhenAppCreationFailedToAddEntryInTheBaseTenantStorage() throws Exception {
+    public void testThatCoreDoesNotCrashDuringStartupWhenAppCreationFailedToAddEntryInTheBaseTenantStorage()
+            throws Exception {
         JsonObject coreConfig = new JsonObject();
 
         TenantIdentifier tenantIdentifier = new TenantIdentifier(null, "a1", null);
@@ -354,7 +365,8 @@ public class TestForNoCrashDuringStartup {
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
 
         // this should succeed now
-        tpSignInUpAndGetResponse(new TenantIdentifier("127.0.0.1", null, null), "google", "googleid1", "test@example.com", process.getProcess(), SemVer.v5_0);
+        tpSignInUpAndGetResponse(new TenantIdentifier("127.0.0.1", null, null), "google", "googleid1",
+                "test@example.com", process.getProcess(), SemVer.v5_0);
 
         Session.createNewSession(
                 new TenantIdentifier(null, "a1", null),
@@ -364,7 +376,8 @@ public class TestForNoCrashDuringStartup {
     }
 
     @Test
-    public void testThatCoreDoesNotCrashDuringStartupWhenCUDCreationFailedToAddTenantEntryInTargetStorageWithLoadOnlyCUDConfig() throws Exception {
+    public void testThatCoreDoesNotCrashDuringStartupWhenCUDCreationFailedToAddTenantEntryInTargetStorageWithLoadOnlyCUDConfig()
+            throws Exception {
         JsonObject coreConfig = new JsonObject();
 
         TenantIdentifier tenantIdentifier = new TenantIdentifier("127.0.0.1", null, null);
@@ -442,10 +455,12 @@ public class TestForNoCrashDuringStartup {
         assertEquals(2, allTenants.length); // should have the new CUD
 
         // this should succeed now
-        tpSignInUpAndGetResponse(new TenantIdentifier("127.0.0.1", null, null), "google", "googleid1", "test@example.com", process.getProcess(), SemVer.v5_0);
+        tpSignInUpAndGetResponse(new TenantIdentifier("127.0.0.1", null, null), "google", "googleid1",
+                "test@example.com", process.getProcess(), SemVer.v5_0);
 
         try {
-            tpSignInUpAndGetResponse(new TenantIdentifier("localhost", null, null), "google", "googleid1", "test@example.com", process.getProcess(), SemVer.v5_0);
+            tpSignInUpAndGetResponse(new TenantIdentifier("localhost", null, null), "google", "googleid1",
+                    "test@example.com", process.getProcess(), SemVer.v5_0);
             fail();
         } catch (HttpResponseException e) {
             // ignore
@@ -465,9 +480,11 @@ public class TestForNoCrashDuringStartup {
         assertEquals(2, allTenants.length); // should have the new CUD
 
         // this should succeed now
-        tpSignInUpAndGetResponse(new TenantIdentifier("localhost", null, null), "google", "googleid1", "test@example.com", process.getProcess(), SemVer.v5_0);
+        tpSignInUpAndGetResponse(new TenantIdentifier("localhost", null, null), "google", "googleid1",
+                "test@example.com", process.getProcess(), SemVer.v5_0);
         try {
-            tpSignInUpAndGetResponse(new TenantIdentifier("127.0.0.1", null, null), "google", "googleid1", "test@example.com", process.getProcess(), SemVer.v5_0);
+            tpSignInUpAndGetResponse(new TenantIdentifier("127.0.0.1", null, null), "google", "googleid1",
+                    "test@example.com", process.getProcess(), SemVer.v5_0);
             fail();
         } catch (HttpResponseException e) {
             // ignore
@@ -488,7 +505,8 @@ public class TestForNoCrashDuringStartup {
     public void testThatTenantComesToLifeOnceTheTargetDbIsUpAfterCoreRestart() throws Exception {
         Start start = ((Start) StorageLayer.getBaseStorage(process.getProcess()));
         try {
-            update(start, "DROP DATABASE st5000;", pst -> {});
+            update(start, "DROP DATABASE st5000;", pst -> {
+            });
         } catch (Exception e) {
             // ignore
         }
@@ -518,11 +536,13 @@ public class TestForNoCrashDuringStartup {
         assertEquals(2, allTenants.length); // should have the new CUD
 
         try {
-            tpSignInUpAndGetResponse(new TenantIdentifier("127.0.0.1", null, null), "google", "googleid1", "test@example.com", process.getProcess(), SemVer.v5_0);
+            tpSignInUpAndGetResponse(new TenantIdentifier("127.0.0.1", null, null), "google", "googleid1",
+                    "test@example.com", process.getProcess(), SemVer.v5_0);
             fail();
         } catch (HttpResponseException e) {
             // ignore
-            assertTrue(e.getMessage().contains("Internal Error")); // db is still down
+            assertTrue(e.getMessage().contains("Unknown database 'st5000'"));
+            assertTrue(e.getMessage().contains("Http error. Status Code: 500"));
         }
 
         process.kill(false);
@@ -537,13 +557,16 @@ public class TestForNoCrashDuringStartup {
         // the process should start successfully even though the db is down
 
         start = ((Start) StorageLayer.getBaseStorage(process.getProcess()));
-        update(start, "CREATE DATABASE st5000;", pst -> {});
+        update(start, "CREATE DATABASE st5000;", pst -> {
+        });
 
         // this should succeed now
-        tpSignInUpAndGetResponse(new TenantIdentifier("127.0.0.1", null, null), "google", "googleid1", "test@example.com", process.getProcess(), SemVer.v5_0);
+        tpSignInUpAndGetResponse(new TenantIdentifier("127.0.0.1", null, null), "google", "googleid1",
+                "test@example.com", process.getProcess(), SemVer.v5_0);
     }
 
-    public static JsonObject tpSignInUpAndGetResponse(TenantIdentifier tenantIdentifier, String thirdPartyId, String thirdPartyUserId, String email, Main main, SemVer version)
+    public static JsonObject tpSignInUpAndGetResponse(TenantIdentifier tenantIdentifier, String thirdPartyId,
+                                                      String thirdPartyUserId, String email, Main main, SemVer version)
             throws HttpResponseException, IOException {
         JsonObject emailObject = new JsonObject();
         emailObject.addProperty("id", email);

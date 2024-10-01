@@ -21,7 +21,6 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
 import com.google.gson.JsonObject;
-
 import io.supertokens.Main;
 import io.supertokens.ProcessState;
 import io.supertokens.config.Config;
@@ -66,7 +65,7 @@ public class LoggingTest {
     @Test
     public void defaultLogging() throws Exception {
         StorageLayer.close();
-        String[] args = { "../" };
+        String[] args = {"../"};
         TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
 
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
@@ -109,7 +108,7 @@ public class LoggingTest {
     @Test
     public void customLogging() throws Exception {
         try {
-            String[] args = { "../" };
+            String[] args = {"../"};
 
             Utils.setValueInConfig("info_log_path", "\"tempLogging/info.log\"");
             Utils.setValueInConfig("error_log_path", "\"tempLogging/error.log\"");
@@ -160,7 +159,7 @@ public class LoggingTest {
 
     @Test
     public void testStandardOutLoggingWithNullStr() throws Exception {
-        String[] args = { "../" };
+        String[] args = {"../"};
         ByteArrayOutputStream stdOutput = new ByteArrayOutputStream();
         ByteArrayOutputStream errorOutput = new ByteArrayOutputStream();
 
@@ -197,7 +196,7 @@ public class LoggingTest {
     @Test
     public void confirmLoggerClosed() throws Exception {
         StorageLayer.close();
-        String[] args = { "../" };
+        String[] args = {"../"};
         TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
 
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
@@ -223,7 +222,7 @@ public class LoggingTest {
 
     @Test
     public void testStandardOutLoggingWithNull() throws Exception {
-        String[] args = { "../" };
+        String[] args = {"../"};
         ByteArrayOutputStream stdOutput = new ByteArrayOutputStream();
         ByteArrayOutputStream errorOutput = new ByteArrayOutputStream();
 
@@ -260,7 +259,7 @@ public class LoggingTest {
     @Test
     public void confirmHikariLoggerClosedOnlyWhenProcessEnds() throws Exception {
         StorageLayer.close();
-        String[] args = { "../" };
+        String[] args = {"../"};
         TestingProcessManager.TestingProcess process = TestingProcessManager.start(args, false);
         FeatureFlagTestContent.getInstance(process.getProcess())
                 .setKeyValue(FeatureFlagTestContent.ENABLED_FEATURES, new EE_FEATURES[]{EE_FEATURES.MULTI_TENANCY});
@@ -314,7 +313,7 @@ public class LoggingTest {
 
     @Test
     public void testDBPasswordMaskingOnDBConnectionFailUsingConnectionUri() throws Exception {
-        String[] args = { "../" };
+        String[] args = {"../"};
 
         String dbUser = "db_user";
         String dbPassword = "db_password";
@@ -348,7 +347,7 @@ public class LoggingTest {
 
     @Test
     public void testDBPasswordMaskingOnDBConnectionFailUsingCredentials() throws Exception {
-        String[] args = { "../" };
+        String[] args = {"../"};
 
         String dbUser = "db_user";
         String dbPassword = "db_password";
@@ -382,7 +381,7 @@ public class LoggingTest {
 
     @Test
     public void testDBPasswordMasking() throws Exception {
-        String[] args = { "../" };
+        String[] args = {"../"};
 
         ByteArrayOutputStream stdOutput = new ByteArrayOutputStream();
         ByteArrayOutputStream errorOutput = new ByteArrayOutputStream();
@@ -417,7 +416,7 @@ public class LoggingTest {
 
     @Test
     public void testDBPasswordIsNotLoggedWhenProcessStartsEnds() throws Exception {
-        String[] args = { "../" };
+        String[] args = {"../"};
 
         Utils.setValueInConfig("error_log_path", "null");
         Utils.setValueInConfig("info_log_path", "null");
@@ -481,7 +480,7 @@ public class LoggingTest {
 
     @Test
     public void testDBPasswordIsNotLoggedWhenTenantIsCreated() throws Exception {
-        String[] args = { "../" };
+        String[] args = {"../"};
 
         Utils.setValueInConfig("error_log_path", "null");
         Utils.setValueInConfig("info_log_path", "null");
@@ -501,14 +500,14 @@ public class LoggingTest {
                 assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
 
                 Start start = (Start) StorageLayer.getStorage(process.getProcess());
-                MySQLConfig userConfig = io.supertokens.storage.mysql.config.Config.getConfig(start);;
+                MySQLConfig userConfig = io.supertokens.storage.mysql.config.Config.getConfig(start);
                 String dbPasswordFromConfig = userConfig.getPassword();
 
                 Main main = process.getProcess();
 
                 FeatureFlagTestContent.getInstance(main)
-                        .setKeyValue(FeatureFlagTestContent.ENABLED_FEATURES, new EE_FEATURES[] {
-                                EE_FEATURES.ACCOUNT_LINKING, EE_FEATURES.MULTI_TENANCY });
+                        .setKeyValue(FeatureFlagTestContent.ENABLED_FEATURES, new EE_FEATURES[]{
+                                EE_FEATURES.ACCOUNT_LINKING, EE_FEATURES.MULTI_TENANCY});
 
                 JsonObject config = new JsonObject();
                 TenantIdentifier tenantIdentifier = new TenantIdentifier(null, "a1", null);
@@ -549,8 +548,8 @@ public class LoggingTest {
                 Main main = process.getProcess();
 
                 FeatureFlagTestContent.getInstance(main)
-                        .setKeyValue(FeatureFlagTestContent.ENABLED_FEATURES, new EE_FEATURES[] {
-                                EE_FEATURES.ACCOUNT_LINKING, EE_FEATURES.MULTI_TENANCY });
+                        .setKeyValue(FeatureFlagTestContent.ENABLED_FEATURES, new EE_FEATURES[]{
+                                EE_FEATURES.ACCOUNT_LINKING, EE_FEATURES.MULTI_TENANCY});
 
                 TenantIdentifier tenantIdentifier = new TenantIdentifier(null, "a1", null);
                 JsonObject config = new JsonObject();
