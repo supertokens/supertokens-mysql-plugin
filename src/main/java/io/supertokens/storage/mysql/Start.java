@@ -58,7 +58,10 @@ import io.supertokens.pluginInterface.multitenancy.exceptions.DuplicateThirdPart
 import io.supertokens.pluginInterface.multitenancy.exceptions.TenantOrAppNotFoundException;
 import io.supertokens.pluginInterface.multitenancy.sqlStorage.MultitenancySQLStorage;
 import io.supertokens.pluginInterface.oauth.OAuthLogoutChallenge;
+import io.supertokens.pluginInterface.oauth.OAuthRevokeTargetType;
 import io.supertokens.pluginInterface.oauth.OAuthStorage;
+import io.supertokens.pluginInterface.oauth.exception.DuplicateOAuthLogoutChallengeException;
+import io.supertokens.pluginInterface.oauth.exception.OAuthClientNotFoundException;
 import io.supertokens.pluginInterface.passwordless.PasswordlessCode;
 import io.supertokens.pluginInterface.passwordless.PasswordlessDevice;
 import io.supertokens.pluginInterface.passwordless.exception.*;
@@ -3037,159 +3040,192 @@ public class Start
     }
 
     @Override
-    public boolean doesClientIdExistForApp(AppIdentifier appIdentifier, String clientId)
+    public boolean doesOAuthClientIdExist(AppIdentifier appIdentifier, String clientId)
             throws StorageQueryException {
         try {
-            return OAuthQueries.isClientIdForAppId(this, clientId, appIdentifier);
+            return OAuthQueries.doesOAuthClientIdExist(this, clientId, appIdentifier);
         } catch (SQLException e) {
             throw new StorageQueryException(e);
         }
     }
 
     @Override
-    public void addOrUpdateClientForApp(AppIdentifier appIdentifier, String clientId, boolean isClientCredentialsOnly)
+    public void addOrUpdateOauthClient(AppIdentifier appIdentifier, String clientId, boolean isClientCredentialsOnly)
+            throws StorageQueryException, TenantOrAppNotFoundException {
+        try {
+            OAuthQueries.addOrUpdateOauthClient(this, appIdentifier, clientId, isClientCredentialsOnly);
+        } catch (SQLException e) {
+            if (e instanceof SQLIntegrityConstraintViolationException) {
+                MySQLConfig config = Config.getConfig(this);
+                String serverMessage = e.getMessage();
+
+                if (isForeignKeyConstraintError(serverMessage, config.getAppsTable(), "app_id")) {
+                    throw new TenantOrAppNotFoundException(appIdentifier);
+                }
+            }
+            throw new StorageQueryException(e);
+        }
+    }
+
+    @Override
+    public boolean deleteOAuthClient(AppIdentifier appIdentifier, String clientId) throws StorageQueryException {
+        try {
+            return OAuthQueries.deleteOAuthClient(this, clientId, appIdentifier);
+        } catch (SQLException e) {
+            throw new StorageQueryException(e);
+        }
+    }
+
+    @Override
+    public List<String> listOAuthClients(AppIdentifier appIdentifier) throws StorageQueryException {
+        try {
+            return OAuthQueries.listOAuthClients(this, appIdentifier);
+        } catch (SQLException e) {
+            throw new StorageQueryException(e);
+        }
+    }
+
+    @Override
+    public void revokeOAuthTokensBasedOnTargetFields(AppIdentifier appIdentifier, OAuthRevokeTargetType targetType, String targetValue, long exp)
+            throws StorageQueryException, TenantOrAppNotFoundException {
+        try {
+            OAuthQueries.revokeOAuthTokensBasedOnTargetFields(this, appIdentifier, targetType, targetValue, exp);
+        } catch (SQLException e) {
+            if (e instanceof SQLIntegrityConstraintViolationException) {
+                MySQLConfig config = Config.getConfig(this);
+                String serverMessage = e.getMessage();
+
+                if (isForeignKeyConstraintError(serverMessage, config.getAppsTable(), "app_id")) {
+                    throw new TenantOrAppNotFoundException(appIdentifier);
+                }
+            }
+            throw new StorageQueryException(e);
+        }
+        
+    }
+
+    @Override
+    public boolean isOAuthTokenRevokedBasedOnTargetFields(AppIdentifier appIdentifier, OAuthRevokeTargetType[] targetTypes, String[] targetValues, long issuedAt)
             throws StorageQueryException {
         try {
-            OAuthQueries.insertClientIdForAppId(this, appIdentifier, clientId, isClientCredentialsOnly);
+            return OAuthQueries.isOAuthTokenRevokedBasedOnTargetFields(this, appIdentifier, targetTypes, targetValues, issuedAt);
         } catch (SQLException e) {
             throw new StorageQueryException(e);
         }
     }
 
     @Override
-    public boolean removeAppClientAssociation(AppIdentifier appIdentifier, String clientId)
+    public void addOAuthM2MTokenForStats(AppIdentifier appIdentifier, String clientId, long iat, long exp)
+            throws StorageQueryException, OAuthClientNotFoundException {
+        try {
+            OAuthQueries.addOAuthM2MTokenForStats(this, appIdentifier, clientId, iat, exp);
+        } catch (SQLException e) {
+            if (e instanceof SQLIntegrityConstraintViolationException) {
+                MySQLConfig config = Config.getConfig(this);
+                String serverMessage = e.getMessage();
+
+                if (isForeignKeyConstraintError(serverMessage, config.getOAuthClientsTable(), "client_id")) {
+                    throw new OAuthClientNotFoundException();
+                }
+            }
+            throw new StorageQueryException(e);
+        }
+    }
+
+    @Override
+    public void cleanUpExpiredAndRevokedOAuthTokensList() throws StorageQueryException {
+        try {
+            OAuthQueries.cleanUpExpiredAndRevokedOAuthTokensList(this);
+        } catch (SQLException e) {
+            throw new StorageQueryException(e);
+        }
+    }
+
+    @Override
+    public void addOAuthLogoutChallenge(AppIdentifier appIdentifier, String challenge, String clientId,
+            String postLogoutRedirectionUri, String sessionHandle, String state, long timeCreated)
+            throws StorageQueryException, DuplicateOAuthLogoutChallengeException, OAuthClientNotFoundException {
+        try {
+            OAuthQueries.addOAuthLogoutChallenge(this, appIdentifier, challenge, clientId, postLogoutRedirectionUri, sessionHandle, state, timeCreated);
+        } catch (SQLException e) {
+            if (e instanceof SQLIntegrityConstraintViolationException) {
+                MySQLConfig config = Config.getConfig(this);
+                String serverMessage = e.getMessage();
+                if (isPrimaryKeyError(serverMessage, config.getOAuthLogoutChallengesTable())) {
+                    throw new DuplicateOAuthLogoutChallengeException();
+                }
+                else if (isForeignKeyConstraintError(serverMessage, config.getOAuthClientsTable(), "client_id")) {
+                    throw new OAuthClientNotFoundException();
+                }
+            }
+            throw new StorageQueryException(e);
+        }
+    }
+
+    @Override
+    public OAuthLogoutChallenge getOAuthLogoutChallenge(AppIdentifier appIdentifier, String challenge) throws StorageQueryException {
+        try {
+            return OAuthQueries.getOAuthLogoutChallenge(this, appIdentifier, challenge);
+        } catch (SQLException e) {
+            throw new StorageQueryException(e);
+        }
+    }
+
+    @Override
+    public void deleteOAuthLogoutChallenge(AppIdentifier appIdentifier, String challenge) throws StorageQueryException {
+        try {
+            OAuthQueries.deleteOAuthLogoutChallenge(this, appIdentifier, challenge);
+        } catch (SQLException e) {
+            throw new StorageQueryException(e);
+        }
+    }
+
+    @Override
+    public void deleteOAuthLogoutChallengesBefore(long time) throws StorageQueryException {
+        try {
+            OAuthQueries.deleteOAuthLogoutChallengesBefore(this, time);
+        } catch (SQLException e) {
+            throw new StorageQueryException(e);
+        }
+    }
+
+    @Override
+    public int countTotalNumberOfOAuthClients(AppIdentifier appIdentifier) throws StorageQueryException {
+        try {
+            return OAuthQueries.countTotalNumberOfClients(this, appIdentifier, false);
+        } catch (SQLException e) {
+            throw new StorageQueryException(e);
+        }
+    }
+
+    @Override
+    public int countTotalNumberOfClientCredentialsOnlyOAuthClients(AppIdentifier appIdentifier)
             throws StorageQueryException {
         try {
-            return OAuthQueries.deleteClientIdForAppId(this, clientId, appIdentifier);
+            return OAuthQueries.countTotalNumberOfClients(this, appIdentifier, true);
         } catch (SQLException e) {
             throw new StorageQueryException(e);
         }
     }
 
     @Override
-    public List<String> listClientsForApp(AppIdentifier appIdentifier) throws StorageQueryException {
-        try {
-            return OAuthQueries.listClientsForApp(this, appIdentifier);
-        } catch (SQLException e) {
-            throw new StorageQueryException(e);
-        }
-    }
-
-    @Override
-    public void revoke(AppIdentifier appIdentifier, String targetType, String targetValue, long exp)
+    public int countTotalNumberOfOAuthM2MTokensCreatedSince(AppIdentifier appIdentifier, long since)
             throws StorageQueryException {
         try {
-            OAuthQueries.revoke(this, appIdentifier, targetType, targetValue, exp);
+            return OAuthQueries.countTotalNumberOfOAuthM2MTokensCreatedSince(this, appIdentifier, since);
         } catch (SQLException e) {
             throw new StorageQueryException(e);
         }
     }
 
     @Override
-    public boolean isRevoked(AppIdentifier appIdentifier, String[] targetTypes, String[] targetValues, long issuedAt)
-            throws StorageQueryException {
+    public int countTotalNumberOfOAuthM2MTokensAlive(AppIdentifier appIdentifier) throws StorageQueryException {
         try {
-            return OAuthQueries.isRevoked(this, appIdentifier, targetTypes, targetValues, issuedAt);
+            return OAuthQueries.countTotalNumberOfOAuthM2MTokensAlive(this, appIdentifier);
         } catch (SQLException e) {
             throw new StorageQueryException(e);
-        }
     }
-
-    @Override
-    public void addM2MToken(AppIdentifier appIdentifier, String clientId, long iat, long exp)
-            throws StorageQueryException {
-        try {
-            OAuthQueries.addM2MToken(this, appIdentifier, clientId, iat, exp);
-        } catch (SQLException e) {
-            throw new StorageQueryException(e);
-        }
     }
-
-    @Override
-    public void addLogoutChallenge(AppIdentifier appIdentifier, String challenge, String clientId,
-            String postLogoutRedirectionUri, String sessionHandle, String state, long timeCreated) throws StorageQueryException {
-        try {
-            OAuthQueries.addLogoutChallenge(this, appIdentifier, challenge, clientId, postLogoutRedirectionUri, sessionHandle, state, timeCreated);
-        } catch (SQLException e) {
-            throw new StorageQueryException(e);
-        }
-    }
-
-    @Override
-    public OAuthLogoutChallenge getLogoutChallenge(AppIdentifier appIdentifier, String challenge)
-            throws StorageQueryException {
-        try {
-            return OAuthQueries.getLogoutChallenge(this, appIdentifier, challenge);
-        } catch (SQLException e) {
-            throw new StorageQueryException(e);
-        }
-    }
-
-    @Override
-    public void deleteLogoutChallenge(AppIdentifier appIdentifier, String challenge) throws StorageQueryException {
-        try {
-            OAuthQueries.deleteLogoutChallenge(this, appIdentifier, challenge);
-        } catch (SQLException e) {
-            throw new StorageQueryException(e);
-        }
-    }
-
-    @Override
-    public void deleteLogoutChallengesBefore(AppIdentifier appIdentifier, long time) throws StorageQueryException {
-        try {
-            OAuthQueries.deleteLogoutChallengesBefore(this, appIdentifier, time);
-        } catch (SQLException e) {
-            throw new StorageQueryException(e);
-        }
-    }
-
-    @Override
-    public void cleanUpExpiredAndRevokedTokens(AppIdentifier appIdentifier) throws StorageQueryException {
-        try {
-            OAuthQueries.cleanUpExpiredAndRevokedTokens(this, appIdentifier);
-        } catch (SQLException e) {
-            throw new StorageQueryException(e);
-        }
-    }
-
-    @Override
-    public int countTotalNumberOfM2MTokensAlive(AppIdentifier appIdentifier) throws StorageQueryException {
-        try {
-            return OAuthQueries.countTotalNumberOfM2MTokensAlive(this, appIdentifier);
-        } catch (SQLException e) {
-            throw new StorageQueryException(e);
-        }
-    }
-
-    @Override
-    public int countTotalNumberOfM2MTokensCreatedSince(AppIdentifier appIdentifier, long since)
-            throws StorageQueryException {
-        try {
-            return OAuthQueries.countTotalNumberOfM2MTokensCreatedSince(this, appIdentifier, since);
-        } catch (SQLException e) {
-            throw new StorageQueryException(e);
-        }
-    }
-
-    @Override
-    public int countTotalNumberOfClientCredentialsOnlyClientsForApp(AppIdentifier appIdentifier)
-            throws StorageQueryException {
-        try {
-            return OAuthQueries.countTotalNumberOfClientsForApp(this, appIdentifier, true);
-        } catch (SQLException e) {
-            throw new StorageQueryException(e);
-        }
-    }
-
-    @Override
-    public int countTotalNumberOfClientsForApp(AppIdentifier appIdentifier) throws StorageQueryException {
-        try {
-            return OAuthQueries.countTotalNumberOfClientsForApp(this, appIdentifier, false);
-        } catch (SQLException e) {
-            throw new StorageQueryException(e);
-        }
-    }
-
 
     public static boolean isEnabledForDeadlockTesting() {
         return enableForDeadlockTesting;
