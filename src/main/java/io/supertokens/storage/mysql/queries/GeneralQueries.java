@@ -416,6 +416,37 @@ public class GeneralQueries {
             // index:
             update(con, TOTPQueries.getQueryToCreateUsedCodesExpiryTimeIndex(start), NO_OP_SETTER);
         }
+
+        if (!doesTableExists(start, con, Config.getConfig(start).getOAuthClientsTable())) {
+            getInstance(start).addState(CREATING_NEW_TABLE, null);
+            update(con, OAuthQueries.getQueryToCreateOAuthClientTable(start), NO_OP_SETTER);
+        }
+
+        if (!doesTableExists(start, con, Config.getConfig(start).getOAuthRevokeTable())) {
+            getInstance(start).addState(CREATING_NEW_TABLE, null);
+            update(con, OAuthQueries.getQueryToCreateOAuthRevokeTable(start), NO_OP_SETTER);
+
+            // index
+            update(con, OAuthQueries.getQueryToCreateOAuthRevokeTimestampIndex(start), NO_OP_SETTER);
+            update(con, OAuthQueries.getQueryToCreateOAuthRevokeExpIndex(start), NO_OP_SETTER);
+        }
+
+        if (!doesTableExists(start, con, Config.getConfig(start).getOAuthM2MTokensTable())) {
+            getInstance(start).addState(CREATING_NEW_TABLE, null);
+            update(con, OAuthQueries.getQueryToCreateOAuthM2MTokensTable(start), NO_OP_SETTER);
+
+            // index
+            update(con, OAuthQueries.getQueryToCreateOAuthM2MTokenIatIndex(start), NO_OP_SETTER);
+            update(con, OAuthQueries.getQueryToCreateOAuthM2MTokenExpIndex(start), NO_OP_SETTER);
+        }
+
+        if (!doesTableExists(start, con, Config.getConfig(start).getOAuthLogoutChallengesTable())) {
+            getInstance(start).addState(CREATING_NEW_TABLE, null);
+            update(con, OAuthQueries.getQueryToCreateOAuthLogoutChallengesTable(start), NO_OP_SETTER);
+
+            // index
+            update(con, OAuthQueries.getQueryToCreateOAuthLogoutChallengesTimeCreatedIndex(start), NO_OP_SETTER);
+        }
     }
 
     @TestOnly

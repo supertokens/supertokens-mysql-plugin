@@ -373,6 +373,22 @@ public class MySQLConfig {
         return addPrefixToTableName("totp_used_codes");
     }
 
+    public String getOAuthClientsTable() {
+        return addPrefixToTableName("oauth_clients");
+    }
+
+    public String getOAuthRevokeTable() {
+        return addPrefixToTableName("oauth_revoke");
+    }
+
+    public String getOAuthM2MTokensTable() {
+        return addPrefixToTableName("oauth_m2m_tokens");
+    }
+
+    public String getOAuthLogoutChallengesTable() {
+        return addPrefixToTableName("oauth_logout_challenges");
+    }
+
     private String addPrefixToTableName(String tableName) {
         return mysql_table_names_prefix + tableName;
     }
