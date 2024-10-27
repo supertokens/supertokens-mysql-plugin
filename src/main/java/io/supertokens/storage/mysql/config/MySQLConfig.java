@@ -377,12 +377,12 @@ public class MySQLConfig {
         return addPrefixToTableName("oauth_clients");
     }
 
-    public String getOAuthRevokeTable() {
-        return addPrefixToTableName("oauth_revoke");
-    }
-
     public String getOAuthM2MTokensTable() {
         return addPrefixToTableName("oauth_m2m_tokens");
+    }
+
+    public String getOAuthSessionsTable() {
+        return addPrefixToTableName("oauth_sessions");
     }
 
     public String getOAuthLogoutChallengesTable() {
@@ -714,4 +714,5 @@ public class MySQLConfig {
     public String getTablePrefix() {
         return mysql_table_names_prefix;
     }
+
 }
