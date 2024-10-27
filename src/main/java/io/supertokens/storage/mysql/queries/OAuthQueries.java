@@ -54,13 +54,13 @@ public class OAuthQueries {
 
     public static String getQueryToCreateOAuthSessionsExpIndex(Start start) {
         String oAuth2SessionTable = Config.getConfig(start).getOAuthSessionsTable();
-        return "CREATE INDEX IF NOT EXISTS oauth_session_exp_index ON "
+        return "CREATE INDEX oauth_session_exp_index ON "
                 + oAuth2SessionTable + "(exp DESC);";
     }
 
     public static String getQueryToCreateOAuthSessionsExternalRefreshTokenIndex(Start start) {
         String oAuth2SessionTable = Config.getConfig(start).getOAuthSessionsTable();
-        return "CREATE INDEX IF NOT EXISTS oauth_session_external_refresh_token_index ON "
+        return "CREATE INDEX oauth_session_external_refresh_token_index ON "
                 + oAuth2SessionTable + "(app_id, external_refresh_token DESC);";
     }
 
@@ -81,13 +81,13 @@ public class OAuthQueries {
 
     public static String getQueryToCreateOAuthM2MTokenIatIndex(Start start) {
         String oAuth2M2MTokensTable = Config.getConfig(start).getOAuthM2MTokensTable();
-        return "CREATE INDEX IF NOT EXISTS oauth_m2m_token_iat_index ON "
+        return "CREATE INDEX oauth_m2m_token_iat_index ON "
                 + oAuth2M2MTokensTable + "(iat DESC, app_id DESC);";
     }
 
     public static String getQueryToCreateOAuthM2MTokenExpIndex(Start start) {
         String oAuth2M2MTokensTable = Config.getConfig(start).getOAuthM2MTokensTable();
-        return "CREATE INDEX IF NOT EXISTS oauth_m2m_token_exp_index ON "
+        return "CREATE INDEX oauth_m2m_token_exp_index ON "
                 + oAuth2M2MTokensTable + "(exp DESC);";
     }
 
@@ -111,7 +111,7 @@ public class OAuthQueries {
 
     public static String getQueryToCreateOAuthLogoutChallengesTimeCreatedIndex(Start start) {
         String oAuth2LogoutChallengesTable = Config.getConfig(start).getOAuthLogoutChallengesTable();
-        return "CREATE INDEX IF NOT EXISTS oauth_logout_challenges_time_created_index ON "
+        return "CREATE INDEX oauth_logout_challenges_time_created_index ON "
                 + oAuth2LogoutChallengesTable + "(time_created DESC);";
     }
 
