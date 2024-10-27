@@ -422,13 +422,13 @@ public class GeneralQueries {
             update(con, OAuthQueries.getQueryToCreateOAuthClientTable(start), NO_OP_SETTER);
         }
 
-        if (!doesTableExists(start, con, Config.getConfig(start).getOAuthRevokeTable())) {
+        if (!doesTableExists(start, con, Config.getConfig(start).getOAuthSessionsTable())) {
             getInstance(start).addState(CREATING_NEW_TABLE, null);
-            update(con, OAuthQueries.getQueryToCreateOAuthRevokeTable(start), NO_OP_SETTER);
+            update(con, OAuthQueries.getQueryToCreateOAuthSessionsTable(start), NO_OP_SETTER);
 
             // index
-            update(con, OAuthQueries.getQueryToCreateOAuthRevokeTimestampIndex(start), NO_OP_SETTER);
-            update(con, OAuthQueries.getQueryToCreateOAuthRevokeExpIndex(start), NO_OP_SETTER);
+            update(con, OAuthQueries.getQueryToCreateOAuthSessionsExpIndex(start), NO_OP_SETTER);
+            update(con, OAuthQueries.getQueryToCreateOAuthSessionsExternalRefreshTokenIndex(start), NO_OP_SETTER);
         }
 
         if (!doesTableExists(start, con, Config.getConfig(start).getOAuthM2MTokensTable())) {
