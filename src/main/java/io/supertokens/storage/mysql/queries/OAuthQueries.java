@@ -133,14 +133,14 @@ public class OAuthQueries {
 
     public static void createOrUpdateOAuthSession(Start start, AppIdentifier appIdentifier, @NotNull String gid, @NotNull String clientId,
                                                   String externalRefreshToken, String internalRefreshToken, String sessionHandle,
-                                                  List<String> jtis, long exp)
+                                                  String jti, long exp)
             throws SQLException, StorageQueryException {
         String QUERY = "INSERT INTO " + Config.getConfig(start).getOAuthSessionsTable() +
                 " (gid, client_id, app_id, external_refresh_token, internal_refresh_token, session_handle, jti, exp) VALUES (?, ?, ?, ?, ?, ?, ?, ?) " +
                 "ON DUPLICATE KEY UPDATE external_refresh_token = ?, internal_refresh_token = ?, " +
-                "session_handle = ? , jti = CONCAT(jti, ',' , ?), exp = ?";
+                "session_handle = ? , jti = CONCAT(jti , ?), exp = ?";
         update(start, QUERY, pst -> {
-            String jtiDbValue = jtis == null ? null : String.join(",", jtis);
+            String jtiToInsert = jti + ","; //every jti value ends with ','
 
             pst.setString(1, gid);
             pst.setString(2, clientId);
@@ -148,13 +148,13 @@ public class OAuthQueries {
             pst.setString(4, externalRefreshToken);
             pst.setString(5, internalRefreshToken);
             pst.setString(6, sessionHandle);
-            pst.setString(7, jtiDbValue);
+            pst.setString(7, jtiToInsert); // the starting list element also has to have a comma as the delete removes "jti + ,"
             pst.setLong(8, exp);
 
             pst.setString(9, externalRefreshToken);
             pst.setString(10, internalRefreshToken);
             pst.setString(11, sessionHandle);
-            pst.setString(12, jtiDbValue);
+            pst.setString(12, jtiToInsert);
             pst.setLong(13, exp);
         });
     }
@@ -251,7 +251,7 @@ public class OAuthQueries {
                 + " SET jti = REPLACE(jti, ?, '')" // deletion means replacing the jti with empty char
                 + " WHERE app_id = ? and gid = ?";
         int numberOfRows = update(start, DELETE, pst -> {
-            pst.setString(1, jti);
+            pst.setString(1, jti + ",");
             pst.setString(2, appIdentifier.getAppId());
             pst.setString(3, gid);
         });
