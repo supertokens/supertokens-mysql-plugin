@@ -10,6 +10,65 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Adds queries for Bulk Import
 - Adds support for multithreaded bulk import
 
+## [7.2.0] - 2024-10-03
+
+- Compatible with plugin interface version 6.3
+- Adds support for OAuthStorage
+
+### Migration
+
+```sql
+CREATE TABLE IF NOT EXISTS oauth_clients (
+  app_id VARCHAR(64),
+  client_id VARCHAR(255) NOT NULL,
+  is_client_credentials_only BOOLEAN NOT NULL,
+  PRIMARY KEY (app_id, client_id),
+  FOREIGN KEY(app_id) REFERENCES apps(app_id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS oauth_sessions (
+  gid VARCHAR(255),
+  app_id VARCHAR(64) DEFAULT 'public',
+  client_id VARCHAR(255) NOT NULL,
+  session_handle VARCHAR(128),
+  external_refresh_token VARCHAR(255) UNIQUE,
+  internal_refresh_token VARCHAR(255) UNIQUE,
+  jti TEXT NOT NULL,
+  exp BIGINT NOT NULL,
+  PRIMARY KEY (gid),
+  FOREIGN KEY(app_id, client_id) REFERENCES oauth_clients(app_id, client_id) ON DELETE CASCADE
+);
+
+CREATE INDEX oauth_session_exp_index ON oauth_sessions(exp DESC);
+CREATE INDEX oauth_session_external_refresh_token_index ON oauth_sessions(app_id, external_refresh_token DESC);
+
+CREATE TABLE oauth_m2m_tokens (
+  app_id VARCHAR(64) DEFAULT 'public',
+  client_id VARCHAR(255) NOT NULL,
+  iat BIGINT UNSIGNED NOT NULL,
+  exp BIGINT UNSIGNED NOT NULL,
+  PRIMARY KEY (app_id, client_id, iat),
+  FOREIGN KEY(app_id, client_id) REFERENCES oauth_clients(app_id, client_id) ON DELETE CASCADE
+);
+
+CREATE INDEX oauth_m2m_token_iat_index ON oauth_m2m_tokens(iat DESC, app_id DESC);
+CREATE INDEX oauth_m2m_token_exp_index ON oauth_m2m_tokens(exp DESC);
+
+CREATE TABLE IF NOT EXISTS oauth_logout_challenges (
+  app_id VARCHAR(64) DEFAULT 'public',
+  challenge VARCHAR(128) NOT NULL,
+  client_id VARCHAR(255) NOT NULL,
+  post_logout_redirect_uri VARCHAR(1024),
+  session_handle VARCHAR(128),
+  state VARCHAR(128),
+  time_created BIGINT UNSIGNED NOT NULL,
+  PRIMARY KEY (app_id, challenge),
+  FOREIGN KEY(app_id, client_id) REFERENCES oauth_clients(app_id, client_id) ON DELETE CASCADE
+);
+
+CREATE INDEX oauth_logout_challenges_time_created_index ON oauth_logout_challenges(time_created ASC, app_id ASC);
+```
+
 ## [7.1.3] - 2024-09-04
 
 - Adds index on `last_active_time` for `user_last_active` table to improve the performance of MAU computation.

@@ -377,6 +377,22 @@ public class MySQLConfig {
         return addPrefixToTableName("bulk_import_users");
     }
 
+    public String getOAuthClientsTable() {
+        return addPrefixToTableName("oauth_clients");
+    }
+
+    public String getOAuthM2MTokensTable() {
+        return addPrefixToTableName("oauth_m2m_tokens");
+    }
+
+    public String getOAuthSessionsTable() {
+        return addPrefixToTableName("oauth_sessions");
+    }
+
+    public String getOAuthLogoutChallengesTable() {
+        return addPrefixToTableName("oauth_logout_challenges");
+    }
+
     private String addPrefixToTableName(String tableName) {
         return mysql_table_names_prefix + tableName;
     }
@@ -702,4 +718,5 @@ public class MySQLConfig {
     public String getTablePrefix() {
         return mysql_table_names_prefix;
     }
+
 }
