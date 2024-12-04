@@ -16,18 +16,6 @@
 
 package io.supertokens.storage.mysql.queries;
 
-import static io.supertokens.storage.mysql.QueryExecutorTemplate.update;
-import static io.supertokens.storage.mysql.QueryExecutorTemplate.execute;
-
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-
 import io.supertokens.pluginInterface.RowMapper;
 import io.supertokens.pluginInterface.bulkimport.BulkImportStorage.BULK_IMPORT_USER_STATUS;
 import io.supertokens.pluginInterface.bulkimport.BulkImportUser;
@@ -37,6 +25,19 @@ import io.supertokens.pluginInterface.multitenancy.AppIdentifier;
 import io.supertokens.storage.mysql.Start;
 import io.supertokens.storage.mysql.config.Config;
 import io.supertokens.storage.mysql.utils.Utils;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import static io.supertokens.storage.mysql.QueryExecutorTemplate.execute;
+import static io.supertokens.storage.mysql.QueryExecutorTemplate.update;
 
 public class BulkImportQueries {
     static String getQueryToCreateBulkImportUsersTable(Start start) {
@@ -134,7 +135,7 @@ public class BulkImportQueries {
                 // "SKIP LOCKED" allows other processes to skip locked rows and select the next 1000 available rows.
                 String selectQuery = "SELECT * FROM " + Config.getConfig(start).getBulkImportUsersTable()
                 + " WHERE app_id = ?"
-                + " AND (status = 'NEW' OR (status = 'PROCESSING' AND updated_at < (UNIX_TIMESTAMP() * 1000) - 10 * 60 * 1000))" /* 10 mins */
+                + " AND (status = 'NEW' OR status = 'PROCESSING')" /* 10 mins */
                 + " LIMIT ? FOR UPDATE SKIP LOCKED";
     
 
@@ -312,6 +313,32 @@ public class BulkImportQueries {
             result.next();
             return result.getLong(1);
         });
+    }
+
+    public static void updateMultipleBulkImportUsersStatusToError_Transaction(Start start, Connection con, AppIdentifier appIdentifier,
+                                                                              @Nonnull Map<String,String> bulkImportUserIdToErrorMessage)
+            throws SQLException {
+        BULK_IMPORT_USER_STATUS errorStatus = BULK_IMPORT_USER_STATUS.FAILED;
+        String query = "UPDATE " + Config.getConfig(start).getBulkImportUsersTable()
+                + " SET status = ?, error_msg = ?, updated_at = ? WHERE app_id = ? and id = ?";
+
+        PreparedStatement setErrorStatement = con.prepareStatement(query);
+
+        int counter = 0;
+        for(String bulkImportUserId : bulkImportUserIdToErrorMessage.keySet()){
+            setErrorStatement.setString(1, errorStatus.toString());
+            setErrorStatement.setString(2, bulkImportUserIdToErrorMessage.get(bulkImportUserId));
+            setErrorStatement.setLong(3, System.currentTimeMillis());
+            setErrorStatement.setString(4, appIdentifier.getAppId());
+            setErrorStatement.setString(5, bulkImportUserId);
+            setErrorStatement.addBatch();
+
+            if(counter % 100 == 0) {
+                setErrorStatement.executeBatch();
+            }
+        }
+
+        setErrorStatement.executeBatch();
     }
 
     private static class BulkImportUserRowMapper implements RowMapper<BulkImportUser, ResultSet> {

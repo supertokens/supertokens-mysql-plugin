@@ -19,12 +19,18 @@ package io.supertokens.storage.mysql.queries;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.supertokens.pluginInterface.exceptions.StorageQueryException;
+import io.supertokens.pluginInterface.exceptions.StorageTransactionLogicException;
 import io.supertokens.pluginInterface.multitenancy.AppIdentifier;
 import io.supertokens.storage.mysql.Start;
 import io.supertokens.storage.mysql.config.Config;
+import io.supertokens.storage.mysql.utils.Utils;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static io.supertokens.storage.mysql.QueryExecutorTemplate.execute;
 import static io.supertokens.storage.mysql.QueryExecutorTemplate.update;
@@ -116,6 +122,60 @@ public class UserMetadataQueries {
                 return jp.parse(result.getString("user_metadata")).getAsJsonObject();
             }
             return null;
+        });
+    }
+
+    public static void setMultipleUsersMetadatas_Transaction(Start start, Connection con, AppIdentifier appIdentifier,
+                                                             Map<String, JsonObject> metadatasByUserId)
+            throws SQLException, StorageQueryException {
+
+        String QUERY = "INSERT INTO " + getConfig(start).getUserMetadataTable()
+                + " (app_id, user_id, user_metadata) VALUES(?, ?, ?)"
+                + " ON DUPLICATE KEY UPDATE user_metadata = ?";
+        PreparedStatement insertStatement = con.prepareStatement(QUERY);
+
+        int counter = 0;
+        for(Map.Entry<String, JsonObject> metadataByUserId : metadatasByUserId.entrySet()){
+            insertStatement.setString(1, appIdentifier.getAppId());
+            insertStatement.setString(2, metadataByUserId.getKey());
+            insertStatement.setString(3, metadataByUserId.getValue().toString());
+            insertStatement.setString(4, metadataByUserId.getValue().toString());
+            insertStatement.addBatch();
+
+            counter++;
+            if(counter % 100 == 0) {
+                insertStatement.executeBatch();
+            }
+        }
+
+        insertStatement.executeBatch();
+    }
+
+    public static Map<String, JsonObject> getMultipleUsersMetadatas_Transaction(Start start, Connection con, AppIdentifier appIdentifier,
+                                                                                List<String> userIds)
+            throws SQLException, StorageQueryException {
+        String QUERY = "SELECT user_id, user_metadata FROM " + getConfig(start).getUserMetadataTable()
+                + " WHERE app_id = ? AND user_id IN (" + Utils.generateCommaSeperatedQuestionMarks(userIds.size())
+                + ") FOR UPDATE";
+        return execute(con, QUERY, pst -> {
+            pst.setString(1, appIdentifier.getAppId());
+            for (int i = 0; i< userIds.size(); i++){
+                pst.setString(2+i, userIds.get(i));
+            }
+        }, result -> {
+            Map<String, JsonObject>  userMetadataByUserId = new HashMap<>();
+            JsonParser jp = new JsonParser();
+            if (result.next()) {
+                userMetadataByUserId.put(result.getString("user_id"),
+                        jp.parse(result.getString("user_metadata")).getAsJsonObject());
+            }
+            return userMetadataByUserId;
+        });
+    }
+    public static Map<String, JsonObject> getMultipleUserMetadatas(Start start, AppIdentifier appIdentifier, List<String> userIds)
+            throws StorageQueryException, StorageTransactionLogicException {
+        return start.startTransaction(con -> {
+            return getMultipleUsersMetadatas_Transaction(start, (Connection) con.getConnection(), appIdentifier, userIds);
         });
     }
 }
