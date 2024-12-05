@@ -389,6 +389,14 @@ public class MySQLConfig {
         return addPrefixToTableName("oauth_logout_challenges");
     }
 
+    public String getWebAuthNUsersTable(){ return  addPrefixToTableName("webauthn_users");}
+
+    public String getWebAuthNUserToTenantTable(){ return  addPrefixToTableName("webauthn_user_to_tenant"); }
+
+    public String getWebAuthNGeneratedOptionsTable() { return   addPrefixToTableName("webauthn_generated_options"); }
+
+    public String getWebAuthNCredentialsTable() { return  addPrefixToTableName("webauthn_credentials"); }
+
     private String addPrefixToTableName(String tableName) {
         return mysql_table_names_prefix + tableName;
     }

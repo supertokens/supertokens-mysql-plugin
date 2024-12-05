@@ -447,6 +447,29 @@ public class GeneralQueries {
             // index
             update(con, OAuthQueries.getQueryToCreateOAuthLogoutChallengesTimeCreatedIndex(start), NO_OP_SETTER);
         }
+
+        if(!doesTableExists(start, con, Config.getConfig(start).getWebAuthNUsersTable())){
+            getInstance(start).addState(CREATING_NEW_TABLE, null);
+            update(con, WebAuthNQueries.getQueryToCreateWebAuthNUsersTable(start), NO_OP_SETTER);
+        }
+
+        if(!doesTableExists(start, con, Config.getConfig(start).getWebAuthNUserToTenantTable())){
+            getInstance(start).addState(CREATING_NEW_TABLE, null);
+            update(con, WebAuthNQueries.getQueryToCreateWebAuthNUsersToTenantTable(start), NO_OP_SETTER);
+        }
+
+        if(!doesTableExists(start, con, Config.getConfig(start).getWebAuthNGeneratedOptionsTable())){
+            getInstance(start).addState(CREATING_NEW_TABLE, null);
+            update(con, WebAuthNQueries.getQueryToCreateWebAuthNGeneratedOptionsTable(start), NO_OP_SETTER);
+            //index
+            update(con, WebAuthNQueries.getQueryToCreateWebAuthNChallengeExpiresIndex(start), NO_OP_SETTER);
+        }
+
+        if(!doesTableExists(start, con, Config.getConfig(start).getWebAuthNCredentialsTable())){
+            getInstance(start).addState(CREATING_NEW_TABLE, null);
+            update(con, WebAuthNQueries.getQueryToCreateWebAuthNCredentialsTable(start), NO_OP_SETTER);
+        }
+
     }
 
     @TestOnly
