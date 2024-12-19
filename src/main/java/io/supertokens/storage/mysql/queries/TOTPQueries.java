@@ -6,12 +6,12 @@ import io.supertokens.pluginInterface.multitenancy.AppIdentifier;
 import io.supertokens.pluginInterface.multitenancy.TenantIdentifier;
 import io.supertokens.pluginInterface.totp.TOTPDevice;
 import io.supertokens.pluginInterface.totp.TOTPUsedCode;
+import io.supertokens.storage.mysql.PreparedStatementValueSetter;
 import io.supertokens.storage.mysql.Start;
 import io.supertokens.storage.mysql.config.Config;
 import io.supertokens.storage.mysql.utils.Utils;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -19,8 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static io.supertokens.storage.mysql.QueryExecutorTemplate.execute;
-import static io.supertokens.storage.mysql.QueryExecutorTemplate.update;
+import static io.supertokens.storage.mysql.QueryExecutorTemplate.*;
 
 public class TOTPQueries {
     public static String getQueryToCreateUsersTable(Start start) {
@@ -303,38 +302,34 @@ public class TOTPQueries {
                 " (app_id, user_id, device_name, secret_key, period, skew, verified, created_at) VALUES (?, ?, ?, ?, " +
                 "?, ?, ?, ?) ON DUPLICATE KEY UPDATE secret_key = ?, period = ?, skew = ?, created_at = ?, verified = ?";
 
-        PreparedStatement insertUserStatement = sqlCon.prepareStatement(insert_user_QUERY);
-        PreparedStatement insertDeviceStatement = sqlCon.prepareStatement(insert_device_QUERY);
+        List<PreparedStatementValueSetter> insertUserSetters = new ArrayList<>();
+        List<PreparedStatementValueSetter> insertDeviceSetters = new ArrayList<>();
 
-        int counter = 0;
         for(TOTPDevice device : devices){
-            insertUserStatement.setString(1, appIdentifier.getAppId());
-            insertUserStatement.setString(2, device.userId);
-            insertUserStatement.addBatch();
+            insertUserSetters.add(pst -> {
+                pst.setString(1, appIdentifier.getAppId());
+                pst.setString(2, device.userId);
+            });
 
-            insertDeviceStatement.setString(1, appIdentifier.getAppId());
-            insertDeviceStatement.setString(2, device.userId);
-            insertDeviceStatement.setString(3, device.deviceName);
-            insertDeviceStatement.setString(4, device.secretKey);
-            insertDeviceStatement.setInt(5, device.period);
-            insertDeviceStatement.setInt(6, device.skew);
-            insertDeviceStatement.setBoolean(7, device.verified);
-            insertDeviceStatement.setLong(8, device.createdAt);
-            insertDeviceStatement.setString(9, device.secretKey);
-            insertDeviceStatement.setInt(10, device.period);
-            insertDeviceStatement.setInt(11, device.skew);
-            insertDeviceStatement.setLong(12, device.createdAt);
-            insertDeviceStatement.setBoolean(13, device.verified);
-            insertDeviceStatement.addBatch();
-            counter++;
-            if(counter % 100 == 0) {
-                insertUserStatement.executeBatch();
-                insertDeviceStatement.executeBatch();
-            }
+            insertDeviceSetters.add(insertDeviceStatement -> {
+                insertDeviceStatement.setString(1, appIdentifier.getAppId());
+                insertDeviceStatement.setString(2, device.userId);
+                insertDeviceStatement.setString(3, device.deviceName);
+                insertDeviceStatement.setString(4, device.secretKey);
+                insertDeviceStatement.setInt(5, device.period);
+                insertDeviceStatement.setInt(6, device.skew);
+                insertDeviceStatement.setBoolean(7, device.verified);
+                insertDeviceStatement.setLong(8, device.createdAt);
+                insertDeviceStatement.setString(9, device.secretKey);
+                insertDeviceStatement.setInt(10, device.period);
+                insertDeviceStatement.setInt(11, device.skew);
+                insertDeviceStatement.setLong(12, device.createdAt);
+                insertDeviceStatement.setBoolean(13, device.verified);
+            });
         }
 
-        insertUserStatement.executeBatch();
-        insertDeviceStatement.executeBatch();
+        executeBatch(sqlCon, insert_user_QUERY, insertUserSetters);
+        executeBatch(sqlCon, insert_device_QUERY, insertDeviceSetters);
     }
 
     public static Map<String, List<TOTPDevice>> getDevicesForMultipleUsers(Start start, AppIdentifier appIdentifier, List<String> userIds)

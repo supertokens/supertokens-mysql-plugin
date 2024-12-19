@@ -21,13 +21,13 @@ import io.supertokens.pluginInterface.exceptions.StorageQueryException;
 import io.supertokens.pluginInterface.multitenancy.AppIdentifier;
 import io.supertokens.pluginInterface.useridmapping.UserIdMapping;
 import io.supertokens.storage.mysql.ConnectionPool;
+import io.supertokens.storage.mysql.PreparedStatementValueSetter;
 import io.supertokens.storage.mysql.Start;
 import io.supertokens.storage.mysql.config.Config;
 import io.supertokens.storage.mysql.utils.Utils;
 
 import javax.annotation.Nullable;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -35,8 +35,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static io.supertokens.storage.mysql.QueryExecutorTemplate.execute;
-import static io.supertokens.storage.mysql.QueryExecutorTemplate.update;
+import static io.supertokens.storage.mysql.QueryExecutorTemplate.*;
 import static io.supertokens.storage.mysql.config.Config.getConfig;
 
 public class UserIdMappingQueries {
@@ -95,21 +94,16 @@ public class UserIdMappingQueries {
                 + " (app_id, supertokens_user_id, external_user_id)" + " VALUES(?, ?, ?)";
 
         Connection sqlConnection = ConnectionPool.getConnection(start);
-        PreparedStatement insertStatement = sqlConnection.prepareStatement(QUERY);
+        List<PreparedStatementValueSetter> setters = new ArrayList<>();
 
-        int counter = 0;
         for(String superTokensUserId : superTokensUserIdToExternalUserId.keySet()) {
-            insertStatement.setString(1, appIdentifier.getAppId());
-            insertStatement.setString(2, superTokensUserId);
-            insertStatement.setString(3, superTokensUserIdToExternalUserId.get(superTokensUserId));
-            insertStatement.addBatch();
-
-            counter++;
-            if(counter % 100 == 0) {
-                insertStatement.executeBatch();
-            }
+            setters.add(pst -> {
+                pst.setString(1, appIdentifier.getAppId());
+                pst.setString(2, superTokensUserId);
+                pst.setString(3, superTokensUserIdToExternalUserId.get(superTokensUserId));
+            });
         }
-        insertStatement.executeBatch();
+        executeBatch(sqlConnection, QUERY, setters);
     }
 
     public static UserIdMapping getUserIdMappingWithExternalUserId(Start start, AppIdentifier appIdentifier,
