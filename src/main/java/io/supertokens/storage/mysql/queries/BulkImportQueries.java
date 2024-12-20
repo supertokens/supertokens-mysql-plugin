@@ -135,7 +135,7 @@ public class BulkImportQueries {
                 String selectQuery = "SELECT * FROM " + Config.getConfig(start).getBulkImportUsersTable()
                 + " WHERE app_id = ?"
                 + " AND (status = 'NEW' OR status = 'PROCESSING')" /* 10 mins */
-                + " LIMIT ? FOR UPDATE SKIP LOCKED";
+                + " LIMIT ? FOR UPDATE";
     
 
                 List<BulkImportUser> bulkImportUsers = new ArrayList<>();
