@@ -21,19 +21,19 @@ import com.google.gson.JsonParser;
 import io.supertokens.pluginInterface.exceptions.StorageQueryException;
 import io.supertokens.pluginInterface.exceptions.StorageTransactionLogicException;
 import io.supertokens.pluginInterface.multitenancy.AppIdentifier;
+import io.supertokens.storage.mysql.PreparedStatementValueSetter;
 import io.supertokens.storage.mysql.Start;
 import io.supertokens.storage.mysql.config.Config;
 import io.supertokens.storage.mysql.utils.Utils;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static io.supertokens.storage.mysql.QueryExecutorTemplate.execute;
-import static io.supertokens.storage.mysql.QueryExecutorTemplate.update;
+import static io.supertokens.storage.mysql.QueryExecutorTemplate.*;
 import static io.supertokens.storage.mysql.config.Config.getConfig;
 
 public class UserMetadataQueries {
@@ -132,23 +132,18 @@ public class UserMetadataQueries {
         String QUERY = "INSERT INTO " + getConfig(start).getUserMetadataTable()
                 + " (app_id, user_id, user_metadata) VALUES(?, ?, ?)"
                 + " ON DUPLICATE KEY UPDATE user_metadata = ?";
-        PreparedStatement insertStatement = con.prepareStatement(QUERY);
 
-        int counter = 0;
+        List<PreparedStatementValueSetter> setters = new ArrayList<>();
+
         for(Map.Entry<String, JsonObject> metadataByUserId : metadatasByUserId.entrySet()){
-            insertStatement.setString(1, appIdentifier.getAppId());
-            insertStatement.setString(2, metadataByUserId.getKey());
-            insertStatement.setString(3, metadataByUserId.getValue().toString());
-            insertStatement.setString(4, metadataByUserId.getValue().toString());
-            insertStatement.addBatch();
-
-            counter++;
-            if(counter % 100 == 0) {
-                insertStatement.executeBatch();
-            }
+            setters.add(pst -> {
+                pst.setString(1, appIdentifier.getAppId());
+                pst.setString(2, metadataByUserId.getKey());
+                pst.setString(3, metadataByUserId.getValue().toString());
+                pst.setString(4, metadataByUserId.getValue().toString());
+            });
         }
-
-        insertStatement.executeBatch();
+        executeBatch(con, QUERY, setters);
     }
 
     public static Map<String, JsonObject> getMultipleUsersMetadatas_Transaction(Start start, Connection con, AppIdentifier appIdentifier,
