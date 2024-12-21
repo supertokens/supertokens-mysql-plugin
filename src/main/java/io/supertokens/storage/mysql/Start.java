@@ -25,6 +25,7 @@ import io.supertokens.pluginInterface.*;
 import io.supertokens.pluginInterface.authRecipe.AuthRecipeUserInfo;
 import io.supertokens.pluginInterface.authRecipe.LoginMethod;
 import io.supertokens.pluginInterface.authRecipe.sqlStorage.AuthRecipeSQLStorage;
+import io.supertokens.pluginInterface.bulkimport.BulkImportStorage;
 import io.supertokens.pluginInterface.bulkimport.BulkImportUser;
 import io.supertokens.pluginInterface.bulkimport.ImportUserBase;
 import io.supertokens.pluginInterface.bulkimport.exceptions.BulkImportBatchInsertException;
@@ -947,6 +948,8 @@ public class Start
             /* Since JWT recipe tables do not store userId we do not add any data to them */
         } else if (className.equals(OAuthStorage.class.getName())) {
             /* Since OAuth recipe tables do not store userId we do not add any data to them */
+        } else if (className.equals(BulkImportStorage.class.getName())){
+            //ignore
         } else if (className.equals(ActiveUsersStorage.class.getName())) {
             try {
                 ActiveUsersQueries.updateUserLastActive(this, tenantIdentifier.toAppIdentifier(), userId);
@@ -3754,7 +3757,7 @@ public class Start
         });
     }
 
-        @Override
+    @Override
     public void addBulkImportUsers(AppIdentifier appIdentifier, List<BulkImportUser> users)
             throws StorageQueryException,
             TenantOrAppNotFoundException,
