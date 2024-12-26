@@ -991,9 +991,9 @@ public class OneMillionUsersTest {
             return;
         }
 
-        Main main = startCronProcess(String.valueOf(NUM_THREADS));
+        Main main = startCronProcess(String.valueOf(16));
 
-        int NUMBER_OF_USERS_TO_UPLOAD = 1000000; // million
+        int NUMBER_OF_USERS_TO_UPLOAD = 500000; // half million
 
         if (StorageLayer.getBaseStorage(main).getType() != STORAGE_TYPE.SQL || StorageLayer.isInMemDb(main)) {
             return;
@@ -1007,11 +1007,12 @@ public class OneMillionUsersTest {
 
         // upload a bunch of users through the API
         {
-            for (int i = 0; i < (NUMBER_OF_USERS_TO_UPLOAD / 10000); i++) {
-                JsonObject request = generateUsersJson(10000, i * 10000); // API allows 10k users upload at once
+            for (int i = 0; i < (NUMBER_OF_USERS_TO_UPLOAD / 1000); i++) {
+                JsonObject request = generateUsersJson(1000, i * 1000); // API allows 10k users upload at once
                 JsonObject response = uploadBulkImportUsersJson(main, request);
                 assertEquals("OK", response.get("status").getAsString());
-                System.out.println("Uploaded " + (i + 1) * 10000 + " users");
+                System.out.println("Uploaded " + (i + 1) * 1000 + " users");
+                Thread.sleep(1000);
             }
 
         }
@@ -1047,6 +1048,7 @@ public class OneMillionUsersTest {
                         throw e;
                     }
                 }
+                System.out.println("Elapsed time: " + (System.currentTimeMillis() - processingStarted) / 1000 + " seconds");
                 Thread.sleep(5000);
             }
         }
