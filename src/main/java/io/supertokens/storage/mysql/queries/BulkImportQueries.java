@@ -127,8 +127,8 @@ public class BulkImportQueries {
                 // "SKIP LOCKED" allows other processes to skip locked rows and select the next 1000 available rows.
                 String selectQuery = "SELECT * FROM " + Config.getConfig(start).getBulkImportUsersTable()
                 + " WHERE app_id = ?"
-                + " AND (status = 'NEW' OR status = 'PROCESSING')" /* 10 mins */
-                + " LIMIT ? FOR UPDATE SKIP LOCKED";
+                + " AND (status = 'NEW' OR status = 'PROCESSING')"
+                + " LIMIT ? FOR UPDATE";
     
 
                 List<BulkImportUser> bulkImportUsers = new ArrayList<>();
