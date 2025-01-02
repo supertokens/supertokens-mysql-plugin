@@ -991,9 +991,9 @@ public class OneMillionUsersTest {
             return;
         }
 
-        Main main = startCronProcess(String.valueOf(16));
+        Main main = startCronProcess(String.valueOf(4));
 
-        int NUMBER_OF_USERS_TO_UPLOAD = 500000; // half million
+        int NUMBER_OF_USERS_TO_UPLOAD = 100000; // hundred thousand users // change this when mysql 5.7 support is dropped
 
         if (StorageLayer.getBaseStorage(main).getType() != STORAGE_TYPE.SQL || StorageLayer.isInMemDb(main)) {
             return;

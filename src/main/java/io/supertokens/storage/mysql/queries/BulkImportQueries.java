@@ -128,7 +128,7 @@ public class BulkImportQueries {
                 String selectQuery = "SELECT * FROM " + Config.getConfig(start).getBulkImportUsersTable()
                 + " WHERE app_id = ?"
                 + " AND (status = 'NEW' OR status = 'PROCESSING')"
-                + " LIMIT ? FOR UPDATE";
+                + " LIMIT ? FOR UPDATE"; // TODO: add 'SKIP LOCKED' when mysql 5.7 support is dropped
     
 
                 List<BulkImportUser> bulkImportUsers = new ArrayList<>();
@@ -148,18 +148,20 @@ public class BulkImportQueries {
                 }
 
                 String updateQuery = "UPDATE " + Config.getConfig(start).getBulkImportUsersTable()
-                        + " SET status = ?, updated_at = ? WHERE app_id = ? AND id IN (" + Utils
-                                .generateCommaSeperatedQuestionMarks(bulkImportUsers.size()) + ")";
+                        + " SET status = ?, updated_at = ? WHERE app_id = ? AND id = ?";
 
-                update(sqlCon, updateQuery, pst -> {
-                    int index = 1;
-                    pst.setString(index++, BULK_IMPORT_USER_STATUS.PROCESSING.toString());
-                    pst.setLong(index++, System.currentTimeMillis());
-                    pst.setString(index++, appIdentifier.getAppId());
-                    for (BulkImportUser user : bulkImportUsers) {
-                        pst.setObject(index++, user.id);
-                    }
-                });
+                List<PreparedStatementValueSetter> updateSetters = new ArrayList<>();
+                for(BulkImportUser user : bulkImportUsers){
+                    updateSetters.add(pst -> {
+                        pst.setString(1, BULK_IMPORT_USER_STATUS.PROCESSING.toString());
+                        pst.setLong(2, System.currentTimeMillis());
+                        pst.setString(3, appIdentifier.getAppId());
+                        pst.setObject(4, user.id);
+                    });
+                }
+
+                executeBatch(sqlCon, updateQuery, updateSetters);
+
                 return bulkImportUsers;
             } catch (SQLException throwables) {
                 throw new StorageTransactionLogicException(throwables);
