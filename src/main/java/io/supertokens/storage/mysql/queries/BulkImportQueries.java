@@ -71,31 +71,24 @@ public class BulkImportQueries {
                 + Config.getConfig(start).getBulkImportUsersTable() + " (app_id, created_at DESC, id DESC)";
     }
 
-    public static void insertBulkImportUsers(Start start, AppIdentifier appIdentifier, List<BulkImportUser> users)
+    public static void insertBulkImportUsers(Start start, Connection con, AppIdentifier appIdentifier, List<BulkImportUser> users)
             throws SQLException, StorageQueryException {
-        StringBuilder queryBuilder = new StringBuilder(
-                "INSERT INTO " + Config.getConfig(start).getBulkImportUsersTable() + " (id, app_id, raw_data, created_at, updated_at) VALUES ");
+        String queryBuilder = "INSERT INTO " + Config.getConfig(start).getBulkImportUsersTable() +
+                " (id, app_id, raw_data, created_at, updated_at) VALUES "
+                + " (?, ?, ?, ?, ?)";
 
-        int userCount = users.size();
-
-        for (int i = 0; i < userCount; i++) {
-            queryBuilder.append(" (?, ?, ?, ?, ?)");
-
-            if (i < userCount - 1) {
-                queryBuilder.append(",");
-            }
-        }
-
-        update(start, queryBuilder.toString(), pst -> {
-            int parameterIndex = 1;
+        List<PreparedStatementValueSetter> valueSetters = new ArrayList<>();
             for (BulkImportUser user : users) {
-                pst.setString(parameterIndex++, user.id);
-                pst.setString(parameterIndex++, appIdentifier.getAppId());
-                pst.setString(parameterIndex++, user.toRawDataForDbStorage());
-                pst.setLong(parameterIndex++, System.currentTimeMillis());
-                pst.setLong(parameterIndex++, System.currentTimeMillis());
+                valueSetters.add(pst -> {
+                    pst.setString(1, user.id);
+                    pst.setString(2, appIdentifier.getAppId());
+                    pst.setString(3, user.toRawDataForDbStorage());
+                    pst.setLong(4, System.currentTimeMillis());
+                    pst.setLong(5, System.currentTimeMillis());
+                });
             }
-        });
+
+        executeBatch(con, queryBuilder, valueSetters);
     }
 
     public static void updateBulkImportUserStatus_Transaction(Start start, Connection con, AppIdentifier appIdentifier,
@@ -135,7 +128,7 @@ public class BulkImportQueries {
                 String selectQuery = "SELECT * FROM " + Config.getConfig(start).getBulkImportUsersTable()
                 + " WHERE app_id = ?"
                 + " AND (status = 'NEW' OR status = 'PROCESSING')" /* 10 mins */
-                + " LIMIT ? FOR UPDATE";
+                + " LIMIT ? FOR UPDATE SKIP LOCKED";
     
 
                 List<BulkImportUser> bulkImportUsers = new ArrayList<>();

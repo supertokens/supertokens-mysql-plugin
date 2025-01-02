@@ -3759,23 +3759,32 @@ public class Start
 
     @Override
     public void addBulkImportUsers(AppIdentifier appIdentifier, List<BulkImportUser> users)
-            throws StorageQueryException,
-            TenantOrAppNotFoundException,
-            io.supertokens.pluginInterface.bulkimport.exceptions.DuplicateUserIdException {
+            throws StorageQueryException {
         try {
-            BulkImportQueries.insertBulkImportUsers(this, appIdentifier, users);
-        } catch (SQLException e) {
-            if (e instanceof SQLIntegrityConstraintViolationException) {
-                MySQLConfig config = Config.getConfig(this);
-                String errorMessage = e.getMessage();
-                if (isPrimaryKeyError(errorMessage, config.getBulkImportUsersTable())) {
-                    throw new io.supertokens.pluginInterface.bulkimport.exceptions.DuplicateUserIdException();
+            this.startTransaction(con -> {
+                try {
+                    BulkImportQueries.insertBulkImportUsers(this, (Connection) con.getConnection(), appIdentifier, users);
+                } catch (SQLException e) {
+                    if (e instanceof SQLIntegrityConstraintViolationException) {
+                        MySQLConfig config = Config.getConfig(this);
+                        String errorMessage = e.getMessage();
+                        if (isPrimaryKeyError(errorMessage, config.getBulkImportUsersTable())) {
+                            throw new StorageTransactionLogicException(new io.supertokens.pluginInterface.bulkimport.exceptions.DuplicateUserIdException());
+                        }
+                        if (isForeignKeyConstraintError(errorMessage, config.getBulkImportUsersTable(), "app_id")) {
+                            throw new TenantOrAppNotFoundException(appIdentifier);
+                        }
+                    }
+                    throw new StorageQueryException(e);
                 }
-                if (isForeignKeyConstraintError(errorMessage, config.getBulkImportUsersTable(), "app_id")) {
-                    throw new TenantOrAppNotFoundException(appIdentifier);
-                }
+                return null;
+            });
+        } catch (StorageTransactionLogicException e) {
+            if(e.actualException instanceof StorageQueryException) {
+                throw (StorageQueryException) e.actualException;
+            } else {
+                throw new StorageQueryException(e.actualException);
             }
-            throw new StorageQueryException(e);
         }
     }
 
