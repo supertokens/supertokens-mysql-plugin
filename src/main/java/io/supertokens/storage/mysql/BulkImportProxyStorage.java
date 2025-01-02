@@ -44,7 +44,7 @@ public class BulkImportProxyStorage extends Start {
         if (this.connection == null) {
             Connection con = ConnectionPool.getConnectionForProxyStorage(this);
             this.connection = new BulkImportProxyConnection(con);
-            connection.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE); // TODO: Change this to READ COMMITTED when mysql 5.7 support is dropped and SKIP LOCKED is implemented in loading the bulkimportUsers
+            connection.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE); // TODO: Change this to READ COMMITTED when mysql 5.7 support is dropped and SKIP LOCKED is implemented in loading the bulkimportUsers // https://github.com/supertokens/supertokens-mysql-plugin/issues/141
             connection.setAutoCommit(false);
         }
         return this.connection;

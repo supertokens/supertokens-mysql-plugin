@@ -3763,7 +3763,7 @@ public class Start
         try {
             this.startTransaction(con -> {
                 try {
-                    BulkImportQueries.insertBulkImportUsers(this, (Connection) con.getConnection(), appIdentifier, users);
+                    BulkImportQueries.insertBulkImportUsers_Transaction(this, (Connection) con.getConnection(), appIdentifier, users);
                 } catch (SQLException e) {
                     if (e instanceof SQLIntegrityConstraintViolationException) {
                         MySQLConfig config = Config.getConfig(this);

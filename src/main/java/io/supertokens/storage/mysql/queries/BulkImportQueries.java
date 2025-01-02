@@ -71,7 +71,7 @@ public class BulkImportQueries {
                 + Config.getConfig(start).getBulkImportUsersTable() + " (app_id, created_at DESC, id DESC)";
     }
 
-    public static void insertBulkImportUsers(Start start, Connection con, AppIdentifier appIdentifier, List<BulkImportUser> users)
+    public static void insertBulkImportUsers_Transaction(Start start, Connection con, AppIdentifier appIdentifier, List<BulkImportUser> users)
             throws SQLException, StorageQueryException {
         String queryBuilder = "INSERT INTO " + Config.getConfig(start).getBulkImportUsersTable() +
                 " (id, app_id, raw_data, created_at, updated_at) VALUES "
@@ -128,7 +128,7 @@ public class BulkImportQueries {
                 String selectQuery = "SELECT * FROM " + Config.getConfig(start).getBulkImportUsersTable()
                 + " WHERE app_id = ?"
                 + " AND (status = 'NEW' OR status = 'PROCESSING')"
-                + " LIMIT ? FOR UPDATE"; // TODO: add 'SKIP LOCKED' when mysql 5.7 support is dropped
+                + " LIMIT ? FOR UPDATE"; // TODO: add 'SKIP LOCKED' when mysql 5.7 support is dropped // https://github.com/supertokens/supertokens-mysql-plugin/issues/141
     
 
                 List<BulkImportUser> bulkImportUsers = new ArrayList<>();

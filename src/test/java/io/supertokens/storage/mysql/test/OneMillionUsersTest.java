@@ -993,7 +993,7 @@ public class OneMillionUsersTest {
 
         Main main = startCronProcess(String.valueOf(4));
 
-        int NUMBER_OF_USERS_TO_UPLOAD = 100000; // hundred thousand users // change this when mysql 5.7 support is dropped
+        int NUMBER_OF_USERS_TO_UPLOAD = 100000; // hundred thousand users // change this when mysql 5.7 support is dropped // https://github.com/supertokens/supertokens-mysql-plugin/issues/141
 
         if (StorageLayer.getBaseStorage(main).getType() != STORAGE_TYPE.SQL || StorageLayer.isInMemDb(main)) {
             return;
