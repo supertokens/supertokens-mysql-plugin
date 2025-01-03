@@ -3765,7 +3765,7 @@ public class Start
                 try {
                     BulkImportQueries.insertBulkImportUsers_Transaction(this, (Connection) con.getConnection(), appIdentifier, users);
                 } catch (SQLException e) {
-                    if (e instanceof SQLIntegrityConstraintViolationException) {
+                    if (e instanceof BatchUpdateException) {
                         MySQLConfig config = Config.getConfig(this);
                         String errorMessage = e.getMessage();
                         if (isPrimaryKeyError(errorMessage, config.getBulkImportUsersTable())) {
