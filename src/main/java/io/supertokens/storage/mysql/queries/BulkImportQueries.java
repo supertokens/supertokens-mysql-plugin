@@ -128,7 +128,7 @@ public class BulkImportQueries {
                 String selectQuery = "SELECT * FROM " + Config.getConfig(start).getBulkImportUsersTable()
                 + " WHERE app_id = ?"
                 + " AND (status = 'NEW' OR status = 'PROCESSING')"
-                + " LIMIT ? FOR UPDATE"; // TODO: add 'SKIP LOCKED' when mysql 5.7 support is dropped // https://github.com/supertokens/supertokens-mysql-plugin/issues/141
+                + " LIMIT ? FOR UPDATE SKIP LOCKED";
     
 
                 List<BulkImportUser> bulkImportUsers = new ArrayList<>();
