@@ -155,7 +155,7 @@ workflows:
             tags:
               only: /dev-v[0-9]+(\.[0-9]+)*/
             branches:
-              only: /test-cicd\/.*/
+              only: /test-ci\/.*/
       - test-onemillionusers:
           context:
             - slack-notification
@@ -163,7 +163,7 @@ workflows:
             tags:
               only: /dev-v[0-9]+(\.[0-9]+)*/
             branches:
-              only: /test-cicd\/.*/
+              only: /test-ci\/.*/
       - mark-passed:
           context:
             - slack-notification
