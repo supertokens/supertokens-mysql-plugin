@@ -373,6 +373,10 @@ public class MySQLConfig {
         return addPrefixToTableName("totp_used_codes");
     }
 
+    public String getBulkImportUsersTable() {
+        return addPrefixToTableName("bulk_import_users");
+    }
+
     public String getOAuthClientsTable() {
         return addPrefixToTableName("oauth_clients");
     }

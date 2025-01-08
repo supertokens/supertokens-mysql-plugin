@@ -4,11 +4,14 @@ import io.supertokens.pluginInterface.exceptions.StorageQueryException;
 import io.supertokens.pluginInterface.multitenancy.AppIdentifier;
 import io.supertokens.storage.mysql.Start;
 import io.supertokens.storage.mysql.config.Config;
+import io.supertokens.storage.mysql.utils.Utils;
+import org.jetbrains.annotations.TestOnly;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-
-import org.jetbrains.annotations.TestOnly;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static io.supertokens.storage.mysql.QueryExecutorTemplate.execute;
 import static io.supertokens.storage.mysql.QueryExecutorTemplate.update;
@@ -200,5 +203,29 @@ public class ActiveUsersQueries {
         }, result -> {
             return result.next() ? result.getInt("c") : 0;
         });
+    }
+
+    public static Map<String, Long> getLastActiveByMultipleUserIds(Start start, AppIdentifier appIdentifier, List<String> userIds)
+            throws StorageQueryException {
+        String QUERY = "SELECT user_id, last_active_time FROM " + Config.getConfig(start).getUserLastActiveTable()
+                + " WHERE app_id = ? AND user_id IN ( " + Utils.generateCommaSeperatedQuestionMarks(userIds.size())+ " )";
+
+        try {
+            return execute(start, QUERY, pst -> {
+                pst.setString(1, appIdentifier.getAppId());
+                for (int i = 0; i < userIds.size(); i++) {
+                    pst.setString(2+i, userIds.get(i));
+                }
+            }, res -> {
+                Map<String, Long> lastActiveByUserIds = new HashMap<>();
+                if (res.next()) {
+                    String userId = res.getString("user_id");
+                    lastActiveByUserIds.put(userId, res.getLong("last_active_time"));
+                }
+                return lastActiveByUserIds;
+            });
+        } catch (SQLException e) {
+            throw new StorageQueryException(e);
+        }
     }
 }

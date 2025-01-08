@@ -19,12 +19,14 @@ package io.supertokens.storage.mysql.queries;
 import io.supertokens.pluginInterface.RowMapper;
 import io.supertokens.pluginInterface.authRecipe.AuthRecipeUserInfo;
 import io.supertokens.pluginInterface.authRecipe.LoginMethod;
+import io.supertokens.pluginInterface.emailpassword.EmailPasswordImportUser;
 import io.supertokens.pluginInterface.emailpassword.PasswordResetTokenInfo;
 import io.supertokens.pluginInterface.emailpassword.exceptions.UnknownUserIdException;
 import io.supertokens.pluginInterface.exceptions.StorageQueryException;
 import io.supertokens.pluginInterface.exceptions.StorageTransactionLogicException;
 import io.supertokens.pluginInterface.multitenancy.AppIdentifier;
 import io.supertokens.pluginInterface.multitenancy.TenantIdentifier;
+import io.supertokens.storage.mysql.PreparedStatementValueSetter;
 import io.supertokens.storage.mysql.Start;
 import io.supertokens.storage.mysql.config.Config;
 import io.supertokens.storage.mysql.utils.Utils;
@@ -36,8 +38,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static io.supertokens.pluginInterface.RECIPE_ID.EMAIL_PASSWORD;
-import static io.supertokens.storage.mysql.QueryExecutorTemplate.execute;
-import static io.supertokens.storage.mysql.QueryExecutorTemplate.update;
+import static io.supertokens.storage.mysql.QueryExecutorTemplate.*;
 import static io.supertokens.storage.mysql.config.Config.getConfig;
 import static java.lang.System.currentTimeMillis;
 
@@ -308,6 +309,76 @@ public class EmailPasswordQueries {
                 throw new StorageTransactionLogicException(throwables);
             }
         });
+    }
+
+    public static void signUpMultipleForBulkImport_Transaction(Start start, Connection sqlCon, List<EmailPasswordImportUser> usersToSignUp)
+            throws StorageQueryException, StorageTransactionLogicException, SQLException {
+        try {
+            String app_id_to_user_id_QUERY = "INSERT INTO " + getConfig(start).getAppIdToUserIdTable()
+                    + "(app_id, user_id, primary_or_recipe_user_id, recipe_id)" + " VALUES(?, ?, ?, ?)";
+
+            String all_auth_recipe_users_QUERY = "INSERT INTO " + getConfig(start).getUsersTable() +
+                    "(app_id, tenant_id, user_id, primary_or_recipe_user_id, recipe_id, time_joined, " +
+                    "primary_or_recipe_user_time_joined)" +
+                    " VALUES(?, ?, ?, ?, ?, ?, ?)";
+
+            String emailpassword_users_QUERY = "INSERT INTO " + getConfig(start).getEmailPasswordUsersTable()
+                    + "(app_id, user_id, email, password_hash, time_joined)" + " VALUES(?, ?, ?, ?, ?)";
+
+            String emailpassword_users_to_tenant_QUERY =
+                    "INSERT INTO " + getConfig(start).getEmailPasswordUserToTenantTable()
+                            + "(app_id, tenant_id, user_id, email)" + " VALUES(?, ?, ?, ?)";
+
+            List<PreparedStatementValueSetter> appIdToUserIdSetters = new ArrayList<>();
+            List<PreparedStatementValueSetter> allAuthRecipeUsersSetters = new ArrayList<>();
+            List<PreparedStatementValueSetter> emailPasswordUsersSetters = new ArrayList<>();
+            List<PreparedStatementValueSetter> emailPasswordUsersToTenantSetters = new ArrayList<>();;
+
+            for (EmailPasswordImportUser user : usersToSignUp) {
+                String userId = user.userId;
+                TenantIdentifier tenantIdentifier = user.tenantIdentifier;
+
+                appIdToUserIdSetters.add(pst -> {
+                    pst.setString(1, tenantIdentifier.getAppId());
+                    pst.setString(2, userId);
+                    pst.setString(3, userId);
+                    pst.setString(4, EMAIL_PASSWORD.toString());
+                });
+
+                allAuthRecipeUsersSetters.add(pst -> {
+                    pst.setString(1, tenantIdentifier.getAppId());
+                    pst.setString(2, tenantIdentifier.getTenantId());
+                    pst.setString(3, userId);
+                    pst.setString(4, userId);
+                    pst.setString(5, EMAIL_PASSWORD.toString());
+                    pst.setLong(6, user.timeJoinedMSSinceEpoch);
+                    pst.setLong(7, user.timeJoinedMSSinceEpoch);
+                });
+
+                emailPasswordUsersSetters.add(pst -> {
+                    pst.setString(1, tenantIdentifier.getAppId());
+                    pst.setString(2, userId);
+                    pst.setString(3, user.email);
+                    pst.setString(4, user.passwordHash);
+                    pst.setLong(5, user.timeJoinedMSSinceEpoch);
+                });
+
+                emailPasswordUsersToTenantSetters.add(pst -> {
+                    pst.setString(1, tenantIdentifier.getAppId());
+                    pst.setString(2, tenantIdentifier.getTenantId());
+                    pst.setString(3, userId);
+                    pst.setString(4, user.email);
+                });
+            }
+
+            executeBatch(sqlCon, app_id_to_user_id_QUERY, appIdToUserIdSetters);
+            executeBatch(sqlCon, all_auth_recipe_users_QUERY, allAuthRecipeUsersSetters);
+            executeBatch(sqlCon, emailpassword_users_QUERY, emailPasswordUsersSetters);
+            executeBatch(sqlCon, emailpassword_users_to_tenant_QUERY, emailPasswordUsersToTenantSetters);
+
+        } catch (SQLException throwables) {
+            throw new StorageTransactionLogicException(throwables);
+        }
     }
 
     public static void deleteUser_Transaction(Connection sqlCon, Start start, AppIdentifier appIdentifier,

@@ -19,16 +19,20 @@ package io.supertokens.storage.mysql.queries;
 import io.supertokens.pluginInterface.exceptions.StorageQueryException;
 import io.supertokens.pluginInterface.multitenancy.AppIdentifier;
 import io.supertokens.pluginInterface.multitenancy.TenantIdentifier;
+import io.supertokens.storage.mysql.PreparedStatementValueSetter;
 import io.supertokens.storage.mysql.Start;
 import io.supertokens.storage.mysql.config.Config;
+import io.supertokens.storage.mysql.utils.Utils;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import static io.supertokens.storage.mysql.QueryExecutorTemplate.execute;
-import static io.supertokens.storage.mysql.QueryExecutorTemplate.update;
+import static io.supertokens.storage.mysql.QueryExecutorTemplate.*;
 
 public class UserRolesQueries {
     public static String getQueryToCreateRolesTable(Start start) {
@@ -341,5 +345,69 @@ public class UserRolesQueries {
             pst.setString(1, appIdentifier.getAppId());
             pst.setString(2, role);
         }) >= 1;
+    }
+
+    public static Map<String, List<String>> getRolesForUsers(Start start, AppIdentifier appIdentifier, List<String> userIds)
+            throws SQLException, StorageQueryException {
+        String QUERY = "SELECT user_id, role FROM " + Config.getConfig(start).getUserRolesTable()
+                + " WHERE app_id = ? AND user_id IN ("+ Utils.generateCommaSeperatedQuestionMarks(userIds.size())+") ;";
+
+        return execute(start, QUERY, pst -> {
+            pst.setString(1, appIdentifier.getAppId());
+            for(int i = 0; i < userIds.size(); i++) {
+                pst.setString(2+i, userIds.get(i));
+            }
+        }, result -> {
+            Map<String, List<String>> rolesByUserId = new HashMap<>();
+            while (result.next()) {
+                String userId = result.getString("user_id");
+                if(!rolesByUserId.containsKey(userId)) {
+                    rolesByUserId.put(userId, new ArrayList<>());
+                }
+                rolesByUserId.get(userId).add(result.getString("role"));
+            }
+            return rolesByUserId;
+        });
+    }
+
+    public static void addRolesToUsers_Transaction(Start start, Connection connection, Map<TenantIdentifier, Map<String, List<String>>> rolesToUserByTenants) //tenant -> user -> role
+            throws SQLException, StorageQueryException {
+        String QUERY = "INSERT INTO " + Config.getConfig(start).getUserRolesTable()
+                + "(app_id, tenant_id, user_id, role) VALUES(?, ?, ?, ?);";
+        List<PreparedStatementValueSetter> setters = new ArrayList<>();
+
+        for(Map.Entry<TenantIdentifier, Map<String, List<String>>> tenantsEntry : rolesToUserByTenants.entrySet()) {
+            for(Map.Entry<String, List<String>> rolesToUser : tenantsEntry.getValue().entrySet()) {
+                for(String roleForUser : rolesToUser.getValue()){
+                    setters.add(pst -> {
+                        pst.setString(1, tenantsEntry.getKey().getAppId());
+                        pst.setString(2, tenantsEntry.getKey().getTenantId());
+                        pst.setString(3, rolesToUser.getKey());
+                        pst.setString(4, roleForUser);
+                    });
+                }
+            }
+        }
+
+        executeBatch(connection, QUERY, setters);
+    }
+
+    public static List<String> doesMultipleRoleExist_transaction(Start start, Connection con, AppIdentifier appIdentifier,
+                                                                 List<String> roles)
+            throws SQLException, StorageQueryException {
+        String QUERY = "SELECT role FROM " + Config.getConfig(start).getRolesTable()
+                + " WHERE app_id = ? AND role IN (" +Utils.generateCommaSeperatedQuestionMarks(roles.size())+ ") FOR UPDATE";
+        return execute(con, QUERY, pst -> {
+            pst.setString(1, appIdentifier.getAppId());
+            for (int i = 0; i < roles.size(); i++) {
+                pst.setString(2+i, roles.get(i));
+            }
+        }, result -> {
+            List<String> rolesFound = new ArrayList<>();
+            while(result.next()){
+                rolesFound.add(result.getString("role"));
+            }
+            return rolesFound;
+        });
     }
 }

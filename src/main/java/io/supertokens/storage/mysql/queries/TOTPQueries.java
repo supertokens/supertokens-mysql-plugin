@@ -6,17 +6,20 @@ import io.supertokens.pluginInterface.multitenancy.AppIdentifier;
 import io.supertokens.pluginInterface.multitenancy.TenantIdentifier;
 import io.supertokens.pluginInterface.totp.TOTPDevice;
 import io.supertokens.pluginInterface.totp.TOTPUsedCode;
+import io.supertokens.storage.mysql.PreparedStatementValueSetter;
 import io.supertokens.storage.mysql.Start;
 import io.supertokens.storage.mysql.config.Config;
+import io.supertokens.storage.mysql.utils.Utils;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-import static io.supertokens.storage.mysql.QueryExecutorTemplate.execute;
-import static io.supertokens.storage.mysql.QueryExecutorTemplate.update;
+import static io.supertokens.storage.mysql.QueryExecutorTemplate.*;
 
 public class TOTPQueries {
     public static String getQueryToCreateUsersTable(Start start) {
@@ -284,6 +287,72 @@ public class TOTPQueries {
             pst.setString(1, tenantIdentifier.getAppId());
             pst.setString(2, tenantIdentifier.getTenantId());
             pst.setLong(3, expiredBefore);
+        });
+    }
+
+    public static void createDevices_Transaction(Start start, Connection sqlCon, AppIdentifier appIdentifier,
+                                                 List<TOTPDevice> devices)
+            throws SQLException, StorageQueryException {
+
+        String insert_user_QUERY = "INSERT INTO " + Config.getConfig(start).getTotpUsersTable()
+                + " (app_id, user_id) VALUES (?, ?) ON DUPLICATE KEY UPDATE user_id=user_id";
+
+        String insert_device_QUERY = "INSERT INTO " + Config.getConfig(start).getTotpUserDevicesTable()
+                +
+                " (app_id, user_id, device_name, secret_key, period, skew, verified, created_at) VALUES (?, ?, ?, ?, " +
+                "?, ?, ?, ?) ON DUPLICATE KEY UPDATE secret_key = ?, period = ?, skew = ?, created_at = ?, verified = ?";
+
+        List<PreparedStatementValueSetter> insertUserSetters = new ArrayList<>();
+        List<PreparedStatementValueSetter> insertDeviceSetters = new ArrayList<>();
+
+        for(TOTPDevice device : devices){
+            insertUserSetters.add(pst -> {
+                pst.setString(1, appIdentifier.getAppId());
+                pst.setString(2, device.userId);
+            });
+
+            insertDeviceSetters.add(insertDeviceStatement -> {
+                insertDeviceStatement.setString(1, appIdentifier.getAppId());
+                insertDeviceStatement.setString(2, device.userId);
+                insertDeviceStatement.setString(3, device.deviceName);
+                insertDeviceStatement.setString(4, device.secretKey);
+                insertDeviceStatement.setInt(5, device.period);
+                insertDeviceStatement.setInt(6, device.skew);
+                insertDeviceStatement.setBoolean(7, device.verified);
+                insertDeviceStatement.setLong(8, device.createdAt);
+                insertDeviceStatement.setString(9, device.secretKey);
+                insertDeviceStatement.setInt(10, device.period);
+                insertDeviceStatement.setInt(11, device.skew);
+                insertDeviceStatement.setLong(12, device.createdAt);
+                insertDeviceStatement.setBoolean(13, device.verified);
+            });
+        }
+
+        executeBatch(sqlCon, insert_user_QUERY, insertUserSetters);
+        executeBatch(sqlCon, insert_device_QUERY, insertDeviceSetters);
+    }
+
+    public static Map<String, List<TOTPDevice>> getDevicesForMultipleUsers(Start start, AppIdentifier appIdentifier, List<String> userIds)
+            throws StorageQueryException, SQLException {
+        String QUERY = "SELECT * FROM " + Config.getConfig(start).getTotpUserDevicesTable()
+                + " WHERE app_id = ? AND user_id IN (" + Utils.generateCommaSeperatedQuestionMarks(userIds.size()) + ");";
+
+        return execute(start, QUERY, pst -> {
+            pst.setString(1, appIdentifier.getAppId());
+            for(int i = 0; i < userIds.size(); i++) {
+                pst.setString(2+i, userIds.get(i));
+            }
+        }, result -> {
+            Map<String, List<TOTPDevice>> devicesByUserIds = new HashMap<>();
+            while (result.next()) {
+                String userId = result.getString("user_id");
+                if (!devicesByUserIds.containsKey(userId)){
+                    devicesByUserIds.put(userId, new ArrayList<>());
+                }
+                devicesByUserIds.get(userId).add(TOTPDeviceRowMapper.getInstance().map(result));
+            }
+
+            return devicesByUserIds;
         });
     }
 

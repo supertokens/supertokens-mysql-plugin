@@ -112,7 +112,7 @@ public class TestForNoCrashDuringStartup {
             fail();
         } catch (HttpResponseException e) {
             // ignore
-            assertEquals("Http error. Status Code: 500. Message: java.sql.SQLException: Simulated error in addTenantIdInTargetStorage", e.getMessage());
+            assertEquals("Http error. Status Code: 500. Message: io.supertokens.pluginInterface.exceptions.StorageQueryException: java.sql.SQLException: Simulated error in addTenantIdInTargetStorage", e.getMessage());
         }
 
         MultitenancyQueries.simulateErrorInAddingTenantIdInTargetStorage_forTesting = false;
