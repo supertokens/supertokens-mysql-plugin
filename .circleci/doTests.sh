@@ -107,7 +107,7 @@ do
     cd ../supertokens-plugin-interface
     git checkout $currTag
     cd ../supertokens-mysql-plugin
-    git checkout dev-v$pluginVersion
+    git checkout test-ci/drop-mysql57-support-ci
     cd ../
     echo $SUPERTOKENS_API_KEY > apiPassword
     ./startTestingEnv --cicd
