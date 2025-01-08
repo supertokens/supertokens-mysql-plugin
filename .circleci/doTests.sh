@@ -103,7 +103,7 @@ do
     echo -e "core,$coreVersionX2\nplugin-interface,$piVersion\nmysql-plugin,$pluginX.$pluginY" > modules.txt
     ./loadModules
     cd supertokens-core
-    git checkout $coreVersionTag
+    git checkout test-cicd/mysql8-upgrade
     cd ../supertokens-plugin-interface
     git checkout $currTag
     cd ../supertokens-mysql-plugin
