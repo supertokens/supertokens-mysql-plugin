@@ -103,11 +103,11 @@ do
     echo -e "core,$coreVersionX2\nplugin-interface,$piVersion\nmysql-plugin,$pluginX.$pluginY" > modules.txt
     ./loadModules
     cd supertokens-core
-    git checkout test-cicd/mysql8-upgrade
+    git checkout $coreVersionTag
     cd ../supertokens-plugin-interface
     git checkout $currTag
     cd ../supertokens-mysql-plugin
-    git checkout test-ci/drop-mysql57-support-ci
+    git checkout dev-v$pluginVersion
     cd ../
     echo $SUPERTOKENS_API_KEY > apiPassword
     ./startTestingEnv --cicd
