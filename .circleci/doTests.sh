@@ -111,7 +111,7 @@ do
     cd ../
     echo $SUPERTOKENS_API_KEY > apiPassword
     ./startTestingEnv --cicd
-    sed -i 's/# mysql_connection_uri:/mysql_connection_uri:"mysql:\/\/root:root@localhost:3306?rewriteBatchedStatements=true"/g' config.yaml
+    sed -i 's/# mysql_connection_uri:/mysql_connection_uri: mysql:\/\/root:root@localhost:3306?rewriteBatchedStatements=true/g' config.yaml
 
     if [[ $? -ne 0 ]]
     then
