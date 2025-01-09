@@ -110,7 +110,7 @@ do
     git checkout test-ci/drop-mysql57-support-ci
     cd ../
     echo $SUPERTOKENS_API_KEY > apiPassword
-    sed -i 's/# mysql_connection_uri:/mysql_connection_uri: "mysql:\/\/root:root@localhost:3306?rewriteBatchedStatements=true"/g' config.yaml
+    sed -i 's/# mysql_connection_uri:/mysql_connection_uri:"mysql:\/\/root:root@localhost:3306?rewriteBatchedStatements=true"/g' ../config.yaml
     ./startTestingEnv --cicd
 
     if [[ $? -ne 0 ]]
