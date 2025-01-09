@@ -101,7 +101,6 @@ do
     pluginX=$(cut -d'.' -f1 <<<"$pluginVersion")
     pluginY=$(cut -d'.' -f2 <<<"$pluginVersion")
     echo -e "core,$coreVersionX2\nplugin-interface,$piVersion\nmysql-plugin,$pluginX.$pluginY" > modules.txt
-    sed -i 's/# mysql_connection_uri:/mysql_connection_uri: "mysql:\/\/root:root@localhost:3306?rewriteBatchedStatements=true"/g' config.yaml
     ./loadModules
     cd supertokens-core
     git checkout test-cicd/mysql8-upgrade
@@ -111,6 +110,7 @@ do
     git checkout test-ci/drop-mysql57-support-ci
     cd ../
     echo $SUPERTOKENS_API_KEY > apiPassword
+    sed -i 's/# mysql_connection_uri:/mysql_connection_uri: "mysql:\/\/root:root@localhost:3306?rewriteBatchedStatements=true"/g' config.yaml
     ./startTestingEnv --cicd
 
     if [[ $? -ne 0 ]]
