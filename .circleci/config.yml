@@ -4,7 +4,7 @@ orbs:
 jobs:
   test:
     docker:
-      - image: rishabhpoddar/supertokens_core_testing
+      - image: tamassupertokens/supertokens_core_testing
       - image: rishabhpoddar/oauth-server-cicd
     resource_class: large
     steps:
@@ -72,7 +72,7 @@ jobs:
       - slack/status
   test-onemillionusers:
     docker:
-      - image: rishabhpoddar/supertokens_core_testing
+      - image: tamassupertokens/supertokens_core_testing
     resource_class: large
     steps:
       - checkout
@@ -139,7 +139,7 @@ jobs:
       - slack/status
   mark-passed:
     docker:
-      - image: rishabhpoddar/supertokens_mysql_plugin_test
+      - image: tamassupertokens/supertokens_mysql_plugin_test
     steps:
       - checkout
       - run: (cd .circleci && ./markPassed.sh)
@@ -155,7 +155,7 @@ workflows:
             tags:
               only: /dev-v[0-9]+(\.[0-9]+)*/
             branches:
-              ignore: /.*/
+              only: /test-ci\/.*/
       - test-onemillionusers:
           context:
             - slack-notification
@@ -163,7 +163,7 @@ workflows:
             tags:
               only: /dev-v[0-9]+(\.[0-9]+)*/
             branches:
-              ignore: /.*/
+              only: /test-ci\/.*/
       - mark-passed:
           context:
             - slack-notification
