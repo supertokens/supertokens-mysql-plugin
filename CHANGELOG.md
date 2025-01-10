@@ -7,7 +7,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-## [7.3.0]
+## [8.0.0]
 
 - Adds queries for Bulk Import
 - Adds support for multithreaded bulk import
