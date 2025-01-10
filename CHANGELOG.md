@@ -7,19 +7,12 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-- Adds indexing on session_info table for `user_id, app_id` columns
-
-### Migration
-
-```sql
-CREATE INDEX session_info_user_id_app_id_index ON session_info (user_id, app_id);
-```
-
 ## [7.3.0]
 
 - Adds queries for Bulk Import
 - Adds support for multithreaded bulk import
 - Optimize getUserIdMappingWithEitherSuperTokensUserIdOrExternalUserId query
+- Adds indexing on session_info table for `user_id, app_id` columns
 
 ### Migration
 
@@ -43,6 +36,8 @@ CREATE INDEX bulk_import_users_pagination_index1 ON bulk_import_users (app_id, s
  id DESC);
  
 CREATE INDEX bulk_import_users_pagination_index2 ON bulk_import_users (app_id, created_at DESC, id DESC);
+
+CREATE INDEX session_info_user_id_app_id_index ON session_info (user_id, app_id);
 ```
 
 ## [7.2.0] - 2024-10-03
