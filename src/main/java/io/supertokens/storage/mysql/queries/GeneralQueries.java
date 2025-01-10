@@ -255,6 +255,7 @@ public class GeneralQueries {
 
             // index
             update(con, getQueryToCreateSessionExpiryIndex(start), NO_OP_SETTER);
+            update(con, getQueryToCreateSessionAppIdUserIdIndex(start), NO_OP_SETTER);
         }
 
         if (!doesTableExists(start, con, Config.getConfig(start).getTenantConfigsTable())) {
