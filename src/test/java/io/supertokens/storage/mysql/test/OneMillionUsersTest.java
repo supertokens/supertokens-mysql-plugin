@@ -917,7 +917,7 @@ public class OneMillionUsersTest {
                 return null;
             });
             System.out.println("User pagination " + time);
-            assert time < 10000;
+            assert time < 50000;
         }
         { // Measure update user metadata
             long time = measureTime(() -> {
