@@ -69,6 +69,8 @@ jobs:
       - run:
           name: running tests
           command: (cd .circleci/ && ./doTests.sh)
+      - store_test_results:
+          path: ~/junit
       - slack/status
   test-onemillionusers:
     docker:
