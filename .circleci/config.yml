@@ -68,7 +68,7 @@ jobs:
             mysql -u root --password=root -e "CREATE DATABASE st50;"
       - run:
           name: running tests
-          command: (cd .circleci/ && ./doTests.sh)
+          command: (cd .circleci/ && ./doTests.sh << parameters.plugin >>)
       - store_test_results:
           path: ~/junit
       - slack/status
