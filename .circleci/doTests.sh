@@ -7,6 +7,8 @@ function cleanup {
 trap cleanup EXIT
 cleanup
 
+mkdir -p ~/junit
+
 pluginInterfaceJson=`cat ../pluginInterfaceSupported.json`
 pluginInterfaceLength=`echo $pluginInterfaceJson | jq ".versions | length"`
 pluginInterfaceArray=`echo $pluginInterfaceJson | jq ".versions"`
@@ -110,10 +112,20 @@ do
     git checkout dev-v$pluginVersion
     cd ../
     echo $SUPERTOKENS_API_KEY > apiPassword
-    ./startTestingEnv --cicd
     sed -i 's/# mysql_connection_uri:/mysql_connection_uri: mysql:\/\/root:root@localhost:3306?rewriteBatchedStatements=true/g' config.yaml
 
-    if [[ $? -ne 0 ]]
+    ./startTestingEnv --cicd
+    TEST_EXIT_CODE=$?
+
+    if [ -d ~/junit ]
+    then
+      echo "Copying output from core"
+      cp ~/supertokens-root/supertokens-core/build/test-results/test/*.xml ~/junit/
+      echo "Copying output from plugin"
+      cp ~/supertokens-root/supertokens-mysql-plugin/build/test-results/test/*.xml ~/junit/
+    fi
+
+    if [[ $TEST_EXIT_CODE -ne 0 ]]
     then
         cat logs/*
         cd ../project/
