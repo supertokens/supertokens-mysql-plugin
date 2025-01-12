@@ -39,7 +39,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Adds mysql host to devConfig.yaml
-        run: "sed -i 's/# mysql_host:/mysql_host: mysql/g' ./devConfig.yaml"
+        run: "sed -i 's/# mysql_connection_uri:/mysql_connection_uri: mysql:\/\/root:root@mysql:3306?rewriteBatchedStatements=true/g' ./devConfig.yaml"
       - name: Cloning supertokens-root
         run: cd ../ && git clone https://github.com/supertokens/supertokens-root.git
       - name: Update Java 1

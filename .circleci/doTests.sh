@@ -112,7 +112,6 @@ do
     git checkout dev-v$pluginVersion
     cd ../
     echo $SUPERTOKENS_API_KEY > apiPassword
-    sed -i 's/# mysql_connection_uri:/mysql_connection_uri: mysql:\/\/root:root@localhost:3306?rewriteBatchedStatements=true/g' config.yaml
 
     ./startTestingEnv --cicd
     TEST_EXIT_CODE=$?
