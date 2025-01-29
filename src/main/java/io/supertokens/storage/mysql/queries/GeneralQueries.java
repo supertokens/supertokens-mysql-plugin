@@ -288,12 +288,18 @@ public class GeneralQueries {
         if (!doesTableExists(start, con, Config.getConfig(start).getEmailPasswordUsersTable())) {
             getInstance(start).addState(CREATING_NEW_TABLE, null);
             update(con, EmailPasswordQueries.getQueryToCreateUsersTable(start), NO_OP_SETTER);
+
+            // index
+            update(con, EmailPasswordQueries.getQueryToCreateEmailPasswordUsersEmailIndex(start), NO_OP_SETTER);
         }
 
         if (!doesTableExists(start, con, Config.getConfig(start).getEmailPasswordUserToTenantTable())) {
             getInstance(start).addState(CREATING_NEW_TABLE, null);
             update(con, EmailPasswordQueries.getQueryToCreateEmailPasswordUserToTenantTable(start),
                     NO_OP_SETTER);
+
+            // index
+            update(con, EmailPasswordQueries.getQueryToCreateEmailPasswordUserToTenantEmailIndex(start), NO_OP_SETTER);
         }
 
         if (!doesTableExists(start, con, Config.getConfig(start).getPasswordResetTokensTable())) {
@@ -326,6 +332,9 @@ public class GeneralQueries {
         if (!doesTableExists(start, con, Config.getConfig(start).getThirdPartyUserToTenantTable())) {
             getInstance(start).addState(CREATING_NEW_TABLE, null);
             update(con, ThirdPartyQueries.getQueryToCreateThirdPartyUserToTenantTable(start), NO_OP_SETTER);
+
+            // index
+            update(con, ThirdPartyQueries.getQueryToCreateThirdPartyUserToTenantThirdPartyUserIdIndex(start), NO_OP_SETTER);
         }
 
         if (!doesTableExists(start, con, Config.getConfig(start).getJWTSigningKeysTable())) {
@@ -336,12 +345,20 @@ public class GeneralQueries {
         if (!doesTableExists(start, con, Config.getConfig(start).getPasswordlessUsersTable())) {
             getInstance(start).addState(CREATING_NEW_TABLE, null);
             update(con, PasswordlessQueries.getQueryToCreateUsersTable(start), NO_OP_SETTER);
+
+            // index
+            update(con, PasswordlessQueries.getQueryToCreatePasswordlessUsersEmailIndex(start), NO_OP_SETTER);
+            update(con, PasswordlessQueries.getQueryToCreatePasswordlessUsersPhoneNumberIndex(start), NO_OP_SETTER);
         }
 
         if (!doesTableExists(start, con, Config.getConfig(start).getPasswordlessUserToTenantTable())) {
             getInstance(start).addState(CREATING_NEW_TABLE, null);
             update(con, PasswordlessQueries.getQueryToCreatePasswordlessUserToTenantTable(start),
                     NO_OP_SETTER);
+
+            // index
+            update(con, PasswordlessQueries.getQueryToCreatePasswordlessUserToTenantEmailIndex(start), NO_OP_SETTER);
+            update(con, PasswordlessQueries.getQueryToCreatePasswordlessUserToTenantPhoneNumberIndex(start), NO_OP_SETTER);
         }
 
         if (!doesTableExists(start, con, Config.getConfig(start).getPasswordlessDevicesTable())) {
