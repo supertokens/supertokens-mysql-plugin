@@ -23,6 +23,7 @@ import io.supertokens.pluginInterface.authRecipe.AuthRecipeUserInfo;
 import io.supertokens.pluginInterface.authRecipe.LoginMethod;
 import io.supertokens.pluginInterface.dashboard.DashboardSearchTags;
 import io.supertokens.pluginInterface.exceptions.StorageQueryException;
+import io.supertokens.pluginInterface.exceptions.StorageTransactionLogicException;
 import io.supertokens.pluginInterface.multitenancy.AppIdentifier;
 import io.supertokens.pluginInterface.multitenancy.TenantIdentifier;
 import io.supertokens.storage.mysql.ConnectionPool;
@@ -468,6 +469,15 @@ public class GeneralQueries {
         if(!doesTableExists(start, con, Config.getConfig(start).getWebAuthNCredentialsTable())){
             getInstance(start).addState(CREATING_NEW_TABLE, null);
             update(con, WebAuthNQueries.getQueryToCreateWebAuthNCredentialsTable(start), NO_OP_SETTER);
+        }
+
+        if(!doesTableExists(start, con, Config.getConfig(start).getWebAuthNAccountRecoveryTokenTable())){
+            getInstance(start).addState(CREATING_NEW_TABLE, null);
+            update(start, WebAuthNQueries.getQueryToCreateWebAuthNAccountRecoveryTokenTable(start), NO_OP_SETTER);
+            //index
+            update(start, WebAuthNQueries.getQueryToCreateWebAuthNAccountRecoveryTokenTokenIndex(start), NO_OP_SETTER);
+            update(start, WebAuthNQueries.getQueryToCreateWebAuthNAccountRecoveryTokenEmailIndex(start), NO_OP_SETTER);
+            update(start, WebAuthNQueries.getQueryToCreateWebAuthNAccountRecoveryTokenExpiresAtIndex(start), NO_OP_SETTER);
         }
 
     }
@@ -1158,6 +1168,11 @@ public class GeneralQueries {
 
         userIds.addAll(ThirdPartyQueries.getPrimaryUserIdUsingEmail_Transaction(start, sqlCon, appIdentifier, email));
 
+        String webauthnUserId = WebAuthNQueries.getPrimaryUserIdUsingEmail_Transaction(start, sqlCon, appIdentifier, email);
+        if(webauthnUserId != null) {
+            userIds.add(webauthnUserId);
+        }
+
         // remove duplicates from userIds
         Set<String> userIdsSet = new HashSet<>(userIds);
         userIds = new ArrayList<>(userIdsSet);
@@ -1188,6 +1203,11 @@ public class GeneralQueries {
         }
 
         userIds.addAll(ThirdPartyQueries.getPrimaryUserIdUsingEmail(start, tenantIdentifier, email));
+
+        String webauthnUserId = WebAuthNQueries.getPrimaryUserIdUsingEmail(start, tenantIdentifier.toAppIdentifier(), email);
+        if(webauthnUserId != null) {
+            userIds.add(webauthnUserId);
+        }
 
         // remove duplicates from userIds
         Set<String> userIdsSet = new HashSet<>(userIds);
@@ -1231,6 +1251,23 @@ public class GeneralQueries {
         String userId = ThirdPartyQueries.getUserIdByThirdPartyInfo(start, tenantIdentifier,
                 thirdPartyId, thirdPartyUserId);
         return getPrimaryUserInfoForUserId(start, tenantIdentifier.toAppIdentifier(), userId);
+    }
+
+    public static AuthRecipeUserInfo getPrimaryUserByWebauthNCredentialId(Start start,
+                                                                          TenantIdentifier tenantIdentifier,
+                                                                          String credentialId)
+            throws StorageQueryException, SQLException, StorageTransactionLogicException {
+        // TODO: revisit this. Seems like we are loading the same data multiple times
+        AuthRecipeUserInfo webauthnUser = start.startTransaction(con -> {
+            try {
+                Connection sqlCon = (Connection) con.getConnection();
+                return WebAuthNQueries.getUserInfoByCredentialId_Transaction(start, sqlCon, tenantIdentifier,
+                        credentialId);
+            } catch (SQLException e) {
+                throw new StorageQueryException(e);
+            }
+        });
+        return getPrimaryUserInfoForUserId(start, tenantIdentifier.toAppIdentifier(), webauthnUser.getSupertokensUserId());
     }
 
     public static String getPrimaryUserIdStrForUserId(Start start, AppIdentifier appIdentifier, String id)
@@ -1336,6 +1373,8 @@ public class GeneralQueries {
         loginMethods.addAll(
                 PasswordlessQueries.getUsersInfoUsingIdList(start, recipeUserIdsToFetch, appIdentifier));
 
+        loginMethods.addAll(WebAuthNQueries.getUsersInfoUsingIdList(start, recipeUserIdsToFetch, appIdentifier));
+
         Map<String, LoginMethod> recipeUserIdToLoginMethodMap = new HashMap<>();
         for (LoginMethod loginMethod : loginMethods) {
             recipeUserIdToLoginMethodMap.put(loginMethod.getSupertokensUserId(), loginMethod);
@@ -1434,6 +1473,8 @@ public class GeneralQueries {
         loginMethods.addAll(
                 PasswordlessQueries.getUsersInfoUsingIdList_Transaction(start, sqlCon, recipeUserIdsToFetch,
                         appIdentifier));
+        loginMethods.addAll(WebAuthNQueries.getUsersInfoUsingIdList_Transaction(start, sqlCon, recipeUserIdsToFetch,
+                appIdentifier));
 
         Map<String, LoginMethod> recipeUserIdToLoginMethodMap = new HashMap<>();
         for (LoginMethod loginMethod : loginMethods) {

@@ -401,6 +401,8 @@ public class MySQLConfig {
         return mysql_table_names_prefix + tableName;
     }
 
+    public String getWebAuthNAccountRecoveryTokenTable() { return   addPrefixToTableName("webauthn_account_recovery_tokens"); }
+
     public static ArrayList<ConfigFieldInfo> getConfigFieldsInfoForDashboard(Start start) {
         ArrayList<ConfigFieldInfo> result = new ArrayList<ConfigFieldInfo>();
 
