@@ -50,6 +50,12 @@ public class WebAuthNQueries {
                 ");";
     }
 
+    public static String getQueryToCreateWebAuthNUserToTenantEmailIndex(Start start) {
+        return "CREATE INDEX webauthn_user_to_tenant_email_index ON " +
+                Config.getConfig(start).getWebAuthNUserToTenantTable() +
+                " (app_id, email);";
+    }
+
     static String getQueryToCreateWebAuthNGeneratedOptionsTable(Start start){
         String webAuthNGeneratedOptionsTable = Config.getConfig(start).getWebAuthNGeneratedOptionsTable();
         return  "CREATE TABLE IF NOT EXISTS " + webAuthNGeneratedOptionsTable + "(" +
