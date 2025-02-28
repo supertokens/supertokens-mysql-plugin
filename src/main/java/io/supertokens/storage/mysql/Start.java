@@ -3587,6 +3587,30 @@ public class Start
     }
 
     @Override
+    public void updateUserEmail_Transaction(TenantIdentifier tenantIdentifier, TransactionConnection con, String userId,
+                                            String newEmail)
+            throws StorageQueryException, io.supertokens.pluginInterface.webauthn.exceptions.UserIdNotFoundException,
+            DuplicateUserEmailException {
+        try {
+            Connection sqlCon = (Connection) con.getConnection();
+            WebAuthNQueries.updateUserEmail_Transaction(this, sqlCon, tenantIdentifier, userId, newEmail);
+        } catch (StorageQueryException e) {
+            if (e.getCause() instanceof SQLException){
+                String errorMessage = e.getCause().getMessage();
+                MySQLConfig config = Config.getConfig(this);
+                if (isUniqueConstraintError(errorMessage, config.getWebAuthNUserToTenantTable(),
+                        "email")) {
+                    throw new DuplicateUserEmailException();
+                } else if (isForeignKeyConstraintError(errorMessage,config.getWebAuthNUserToTenantTable(),"user_id")) {
+                    throw new io.supertokens.pluginInterface.webauthn.exceptions.UserIdNotFoundException();
+                }
+            }
+            throw new StorageQueryException(e);
+        }
+
+    }
+
+    @Override
     public AccountRecoveryTokenInfo getAccountRecoveryTokenInfoByToken_Transaction(TenantIdentifier tenantIdentifier,
                                                                                    TransactionConnection con,
                                                                                    String token)

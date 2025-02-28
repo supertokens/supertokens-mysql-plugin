@@ -23,14 +23,11 @@ import io.supertokens.pluginInterface.authRecipe.LoginMethod;
 import io.supertokens.pluginInterface.exceptions.StorageQueryException;
 import io.supertokens.pluginInterface.exceptions.StorageTransactionLogicException;
 import io.supertokens.pluginInterface.multitenancy.AppIdentifier;
+import io.supertokens.pluginInterface.multitenancy.TenantIdentifier;
 import io.supertokens.pluginInterface.webauthn.AccountRecoveryTokenInfo;
 import io.supertokens.pluginInterface.webauthn.WebAuthNOptions;
-import io.supertokens.pluginInterface.multitenancy.TenantIdentifier;
 import io.supertokens.pluginInterface.webauthn.WebAuthNStoredCredential;
 import io.supertokens.storage.mysql.Start;
-
-import static io.supertokens.storage.mysql.QueryExecutorTemplate.update;
-import static io.supertokens.storage.mysql.QueryExecutorTemplate.execute;
 import io.supertokens.storage.mysql.config.Config;
 import io.supertokens.storage.mysql.utils.Utils;
 import org.jetbrains.annotations.Nullable;
@@ -41,6 +38,8 @@ import java.sql.SQLException;
 import java.util.*;
 
 import static io.supertokens.pluginInterface.RECIPE_ID.WEBAUTHN;
+import static io.supertokens.storage.mysql.QueryExecutorTemplate.execute;
+import static io.supertokens.storage.mysql.QueryExecutorTemplate.update;
 
 public class WebAuthNQueries {
 
@@ -113,7 +112,7 @@ public class WebAuthNQueries {
                 " rp_id VARCHAR(256)," +
                 " user_id CHAR(36)," +
                 " counter BIGINT NOT NULL," +
-                " public_key BYTEA NOT NULL," +
+                " public_key BLOB NOT NULL," +
                 " transports TEXT NOT NULL," +
                 " created_at BIGINT NOT NULL," +
                 " updated_at BIGINT NOT NULL," +
@@ -121,6 +120,12 @@ public class WebAuthNQueries {
                 " FOREIGN KEY (app_id, user_id) REFERENCES " +
                 Config.getConfig(start).getWebAuthNUsersTable() + " (app_id, user_id) ON DELETE CASCADE" +
                 ");";
+    }
+
+    public static String getQueryToCreateWebAuthNCredentialsUserIdIndex(Start start) {
+        return "CREATE INDEX IF NOT EXISTS webauthn_credentials_user_id_index ON " +
+                Config.getConfig(start).getWebAuthNCredentialsTable() +
+                " (user_id);";
     }
 
     public static String getQueryToCreateWebAuthNAccountRecoveryTokenTable(Start start) {
@@ -591,32 +596,36 @@ public class WebAuthNQueries {
             throws StorageQueryException {
         try {
             start.startTransaction(con -> {
-                Connection sqlConnection = (Connection) con.getConnection();
-                try {
-                    String UPDATE_USER_TO_TENANT_QUERY =
-                            "UPDATE " + Config.getConfig(start).getWebAuthNUserToTenantTable() +
-                                    " SET email = ? WHERE app_id = ? AND tenant_id = ? AND user_id = ?";
-                    String UPDATE_USER_QUERY = "UPDATE " + Config.getConfig(start).getWebAuthNUsersTable() +
-                            " SET email = ? WHERE app_id = ? AND user_id = ?";
-
-                    update(sqlConnection, UPDATE_USER_TO_TENANT_QUERY, pst -> {
-                        pst.setString(1, newEmail);
-                        pst.setString(2, tenantIdentifier.getAppId());
-                        pst.setString(3, tenantIdentifier.getTenantId());
-                        pst.setString(4, userId);
-                    });
-
-                    update(sqlConnection, UPDATE_USER_QUERY, pst -> {
-                        pst.setString(1, newEmail);
-                        pst.setString(2, tenantIdentifier.getAppId());
-                        pst.setString(3, userId);
-                    });
-                } catch (SQLException e) {
-                    throw new StorageQueryException(e);
-                }
+                updateUserEmail_Transaction(start, (Connection) con.getConnection(), tenantIdentifier, userId, newEmail);
                 return null;
             });
         } catch (StorageTransactionLogicException e) {
+            throw new StorageQueryException(e);
+        }
+    }
+
+    public static void updateUserEmail_Transaction(Start start, Connection sqlConnection, TenantIdentifier tenantIdentifier, String userId, String newEmail)
+            throws StorageQueryException {
+        try {
+            String UPDATE_USER_TO_TENANT_QUERY =
+                    "UPDATE " + Config.getConfig(start).getWebAuthNUserToTenantTable() +
+                            " SET email = ? WHERE app_id = ? AND tenant_id = ? AND user_id = ?";
+            String UPDATE_USER_QUERY = "UPDATE " + Config.getConfig(start).getWebAuthNUsersTable() +
+                    " SET email = ? WHERE app_id = ? AND user_id = ?";
+
+            update(sqlConnection, UPDATE_USER_TO_TENANT_QUERY, pst -> {
+                pst.setString(1, newEmail);
+                pst.setString(2, tenantIdentifier.getAppId());
+                pst.setString(3, tenantIdentifier.getTenantId());
+                pst.setString(4, userId);
+            });
+
+            update(sqlConnection, UPDATE_USER_QUERY, pst -> {
+                pst.setString(1, newEmail);
+                pst.setString(2, tenantIdentifier.getAppId());
+                pst.setString(3, userId);
+            });
+        } catch (SQLException e) {
             throw new StorageQueryException(e);
         }
     }

@@ -475,6 +475,9 @@ public class GeneralQueries {
         if(!doesTableExists(start, con, Config.getConfig(start).getWebAuthNCredentialsTable())){
             getInstance(start).addState(CREATING_NEW_TABLE, null);
             update(con, WebAuthNQueries.getQueryToCreateWebAuthNCredentialsTable(start), NO_OP_SETTER);
+
+            //index
+            update(con, WebAuthNQueries.getQueryToCreateWebAuthNCredentialsUserIdIndex(start), NO_OP_SETTER);
         }
 
         if(!doesTableExists(start, con, Config.getConfig(start).getWebAuthNAccountRecoveryTokenTable())){
