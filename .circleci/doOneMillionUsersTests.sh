@@ -111,7 +111,9 @@ do
     cd ../
     echo $SUPERTOKENS_API_KEY > apiPassword
     export ONE_MILLION_USERS_TEST=1
+
     ./utils/setupTestEnv --cicd
+    sed -i 's/# mysql_connection_uri:/mysql_connection_uri: mysql:\/\/root:root@localhost:3306?rewriteBatchedStatements=true/g' temp/config.yaml
     ./gradlew :supertokens-mysql-plugin:test --tests io.supertokens.storage.mysql.test.OneMillionUsersTest
 
     if [[ $? -ne 0 ]]
