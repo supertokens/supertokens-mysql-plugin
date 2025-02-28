@@ -4060,8 +4060,9 @@ public class Start
             if (e.getCause() instanceof SQLException){
                 String errorMessage = e.getCause().getMessage();
                 MySQLConfig config = Config.getConfig(this);
-                if (isUniqueConstraintError(errorMessage, config.getWebAuthNUserToTenantTable(),
-                        "email")) {
+                if (isUniqueConstraintError(errorMessage, config.getWebAuthNUserToTenantTable(),"app_id")
+                        || isUniqueConstraintError(errorMessage, config.getWebAuthNUserToTenantTable(),"tenant_id")
+                        || isUniqueConstraintError(errorMessage, config.getWebAuthNUserToTenantTable(),"email")) {
                     throw new DuplicateUserEmailException();
                 } else if (isForeignKeyConstraintError(errorMessage,config.getWebAuthNUserToTenantTable(),"user_id")) {
                     throw new io.supertokens.pluginInterface.webauthn.exceptions.UserIdNotFoundException();
@@ -4083,8 +4084,9 @@ public class Start
             if (e.getCause() instanceof SQLException){
                 String errorMessage = e.getCause().getMessage();
                 MySQLConfig config = Config.getConfig(this);
-                if (isUniqueConstraintError(errorMessage, config.getWebAuthNUserToTenantTable(),
-                        "email")) {
+                if (isUniqueConstraintError(errorMessage, config.getWebAuthNUserToTenantTable(),"app_id")
+                || isUniqueConstraintError(errorMessage, config.getWebAuthNUserToTenantTable(),"tenant_id")
+                || isUniqueConstraintError(errorMessage, config.getWebAuthNUserToTenantTable(),"email")) {
                     throw new DuplicateUserEmailException();
                 } else if (isForeignKeyConstraintError(errorMessage,config.getWebAuthNUserToTenantTable(),"user_id")) {
                     throw new io.supertokens.pluginInterface.webauthn.exceptions.UserIdNotFoundException();

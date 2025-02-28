@@ -123,7 +123,7 @@ public class WebAuthNQueries {
     }
 
     public static String getQueryToCreateWebAuthNCredentialsUserIdIndex(Start start) {
-        return "CREATE INDEX IF NOT EXISTS webauthn_credentials_user_id_index ON " +
+        return "CREATE INDEX webauthn_credentials_user_id_index ON " +
                 Config.getConfig(start).getWebAuthNCredentialsTable() +
                 " (user_id);";
     }
