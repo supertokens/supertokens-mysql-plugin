@@ -238,7 +238,7 @@ public class ThirdPartyQueries {
     public static List<LoginMethod> getUsersInfoUsingIdList(Start start, Set<String> ids,
                                                             AppIdentifier appIdentifier)
             throws SQLException, StorageQueryException {
-        if (ids.size() > 0) {
+        if (ids != null && !ids.isEmpty()) {
             String QUERY = "SELECT user_id, third_party_id, third_party_user_id, email, time_joined "
                     + "FROM " + Config.getConfig(start).getThirdPartyUsersTable() + " WHERE user_id IN (" +
                     Utils.generateCommaSeperatedQuestionMarks(ids.size()) + ") AND app_id = ?";
@@ -270,7 +270,7 @@ public class ThirdPartyQueries {
     public static List<LoginMethod> getUsersInfoUsingIdList_Transaction(Start start, Connection con, Set<String> ids,
                                                                         AppIdentifier appIdentifier)
             throws SQLException, StorageQueryException {
-        if (ids.size() > 0) {
+        if (ids != null && !ids.isEmpty()) {
             String QUERY = "SELECT user_id, third_party_id, third_party_user_id, email, time_joined "
                     + "FROM " + Config.getConfig(start).getThirdPartyUsersTable() + " WHERE user_id IN (" +
                     Utils.generateCommaSeperatedQuestionMarks(ids.size()) + ") AND app_id = ?";
