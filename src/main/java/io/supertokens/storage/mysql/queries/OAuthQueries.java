@@ -161,7 +161,7 @@ public class OAuthQueries {
 
     public static List<OAuthClient> getOAuthClients(Start start, AppIdentifier appIdentifier, List<String> clientIds)
             throws SQLException, StorageQueryException {
-        if(clientIds.isEmpty()){
+        if(clientIds == null || clientIds.isEmpty()){
             return Collections.emptyList();
         }
         String QUERY = "SELECT * FROM " + Config.getConfig(start).getOAuthClientsTable()

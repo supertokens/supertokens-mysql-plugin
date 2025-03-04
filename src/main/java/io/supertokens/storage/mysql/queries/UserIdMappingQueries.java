@@ -127,6 +127,9 @@ public class UserIdMappingQueries {
                                                                                              AppIdentifier appIdentifier,
                                                                                              List<String> userId)
             throws SQLException, StorageQueryException {
+        if(userId == null || userId.isEmpty()){
+            return new ArrayList<>();
+        }
         String QUERY = "SELECT * FROM " + Config.getConfig(start).getUserIdMappingTable()
                 + " WHERE app_id = ? AND external_user_id IN ( "+ Utils.generateCommaSeperatedQuestionMarks(
                 userId.size()) + " )";
@@ -149,6 +152,9 @@ public class UserIdMappingQueries {
                                                                                                 AppIdentifier appIdentifier,
                                                                                                 List<String> userId)
             throws SQLException, StorageQueryException {
+        if(userId == null || userId.isEmpty()){
+            return new ArrayList<>();
+        }
         String QUERY = "SELECT * FROM " + Config.getConfig(start).getUserIdMappingTable()
                 + " WHERE app_id = ? AND supertokens_user_id IN ( "+ Utils.generateCommaSeperatedQuestionMarks(
                 userId.size()) + " )";
