@@ -103,10 +103,7 @@ import io.supertokens.pluginInterface.userroles.sqlStorage.UserRolesSQLStorage;
 import io.supertokens.pluginInterface.webauthn.AccountRecoveryTokenInfo;
 import io.supertokens.pluginInterface.webauthn.WebAuthNOptions;
 import io.supertokens.pluginInterface.webauthn.WebAuthNStoredCredential;
-import io.supertokens.pluginInterface.webauthn.exceptions.DuplicateRecoverAccountTokenException;
-import io.supertokens.pluginInterface.webauthn.exceptions.DuplicateUserEmailException;
-import io.supertokens.pluginInterface.webauthn.exceptions.WebauthNCredentialNotExistsException;
-import io.supertokens.pluginInterface.webauthn.exceptions.WebauthNOptionsNotExistsException;
+import io.supertokens.pluginInterface.webauthn.exceptions.*;
 import io.supertokens.pluginInterface.webauthn.slqStorage.WebAuthNSQLStorage;
 import io.supertokens.storage.mysql.config.Config;
 import io.supertokens.storage.mysql.config.MySQLConfig;
@@ -3792,19 +3789,56 @@ public class Start
 
     @Override
     public WebAuthNStoredCredential saveCredentials(TenantIdentifier tenantIdentifier, WebAuthNStoredCredential credential)
-            throws StorageQueryException {
+            throws StorageQueryException, DuplicateCredentialException, TenantOrAppNotFoundException,
+            io.supertokens.pluginInterface.webauthn.exceptions.UserIdNotFoundException {
         try {
             return WebAuthNQueries.saveCredential(this, tenantIdentifier, credential);
         } catch (SQLException e) {
+            String errorMessage = e.getMessage();
+            MySQLConfig config = Config.getConfig(this);
+            if (isPrimaryKeyError(errorMessage, config.getWebAuthNCredentialsTable())) {
+                throw new io.supertokens.pluginInterface.webauthn.exceptions.DuplicateCredentialException();
+            } else if (isForeignKeyConstraintError(
+                    errorMessage,
+                    config.getWebAuthNCredentialsTable(),
+                    "user_id")) {
+                throw new io.supertokens.pluginInterface.webauthn.exceptions.UserIdNotFoundException();
+            } else if (isForeignKeyConstraintError(
+                    errorMessage,
+                    config.getAppsTable(),
+                    "app_id")) {
+                throw new TenantOrAppNotFoundException(tenantIdentifier.toAppIdentifier());
+            } else if (isForeignKeyConstraintError(
+                    errorMessage,
+                    config.getTenantsTable(),
+                    "tenant_id")) {
+                throw new TenantOrAppNotFoundException(tenantIdentifier);
+            }
             throw new StorageQueryException(e);
         }
     }
 
     @Override
-    public WebAuthNOptions saveGeneratedOptions(TenantIdentifier tenantIdentifier, WebAuthNOptions optionsToSave) throws StorageQueryException {
+    public WebAuthNOptions saveGeneratedOptions(TenantIdentifier tenantIdentifier, WebAuthNOptions optionsToSave)
+            throws StorageQueryException, DuplicateOptionsIdException, TenantOrAppNotFoundException {
         try {
             return WebAuthNQueries.saveOptions(this, tenantIdentifier, optionsToSave);
         } catch (SQLException e) {
+            String errorMessage = e.getMessage();
+            MySQLConfig config = Config.getConfig(this);
+            if (isPrimaryKeyError(errorMessage, config.getWebAuthNGeneratedOptionsTable(), "id")) {
+                throw new io.supertokens.pluginInterface.webauthn.exceptions.DuplicateOptionsIdException();
+            } else if (isForeignKeyConstraintError(
+                    errorMessage,
+                    config.getAppsTable(),
+                    "app_id")) {
+                throw new TenantOrAppNotFoundException(tenantIdentifier.toAppIdentifier());
+            } else if (isForeignKeyConstraintError(
+                    errorMessage,
+                    config.getTenantsTable(),
+                    "tenant_id")) {
+                throw new TenantOrAppNotFoundException(tenantIdentifier);
+            }
             throw new StorageQueryException(e);
         }
     }
@@ -3824,19 +3858,6 @@ public class Start
             throws StorageQueryException {
         try {
             return WebAuthNQueries.loadCredentialByIdForUser(this, tenantIdentifier, credentialId, recipeUserId);
-        } catch (SQLException e) {
-            throw new StorageQueryException(e);
-        }
-    }
-
-    @Override
-    public WebAuthNStoredCredential saveCredentials_Transaction(TenantIdentifier tenantIdentifier,
-                                                                TransactionConnection con,
-                                                                WebAuthNStoredCredential credential)
-            throws StorageQueryException {
-        Connection sqlCon = (Connection) con.getConnection();
-        try {
-            return WebAuthNQueries.saveCredential_Transaction(this, sqlCon, tenantIdentifier, credential);
         } catch (SQLException e) {
             throw new StorageQueryException(e);
         }
