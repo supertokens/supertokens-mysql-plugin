@@ -3794,27 +3794,25 @@ public class Start
         try {
             return WebAuthNQueries.saveCredential(this, tenantIdentifier, credential);
         } catch (SQLException e) {
-            if (e instanceof SQLException) {
-                String errorMessage = e.getMessage();
-                MySQLConfig config = Config.getConfig(this);
-                if (isPrimaryKeyError(errorMessage, config.getWebAuthNCredentialsTable())) {
-                    throw new io.supertokens.pluginInterface.webauthn.exceptions.DuplicateCredentialException();
-                } else if (isForeignKeyConstraintError(
-                        errorMessage,
-                        config.getWebAuthNCredentialsTable(),
-                        "user_id")) {
-                    throw new io.supertokens.pluginInterface.webauthn.exceptions.UserIdNotFoundException();
-                } else if (isForeignKeyConstraintError(
-                        errorMessage,
-                        config.getAppsTable(),
-                        "app_id")) {
-                    throw new TenantOrAppNotFoundException(tenantIdentifier.toAppIdentifier());
-                } else if (isForeignKeyConstraintError(
-                        errorMessage,
-                        config.getTenantsTable(),
-                        "tenant_id")) {
-                    throw new TenantOrAppNotFoundException(tenantIdentifier);
-                }
+            String errorMessage = e.getMessage();
+            MySQLConfig config = Config.getConfig(this);
+            if (isPrimaryKeyError(errorMessage, config.getWebAuthNCredentialsTable())) {
+                throw new io.supertokens.pluginInterface.webauthn.exceptions.DuplicateCredentialException();
+            } else if (isForeignKeyConstraintError(
+                    errorMessage,
+                    config.getWebAuthNCredentialsTable(),
+                    "user_id")) {
+                throw new io.supertokens.pluginInterface.webauthn.exceptions.UserIdNotFoundException();
+            } else if (isForeignKeyConstraintError(
+                    errorMessage,
+                    config.getAppsTable(),
+                    "app_id")) {
+                throw new TenantOrAppNotFoundException(tenantIdentifier.toAppIdentifier());
+            } else if (isForeignKeyConstraintError(
+                    errorMessage,
+                    config.getTenantsTable(),
+                    "tenant_id")) {
+                throw new TenantOrAppNotFoundException(tenantIdentifier);
             }
             throw new StorageQueryException(e);
         }
@@ -3826,22 +3824,20 @@ public class Start
         try {
             return WebAuthNQueries.saveOptions(this, tenantIdentifier, optionsToSave);
         } catch (SQLException e) {
-            if (e instanceof SQLException) {
-                String errorMessage = e.getMessage();
-                MySQLConfig config = Config.getConfig(this);
-                if (isPrimaryKeyError(errorMessage, config.getWebAuthNGeneratedOptionsTable(), "id")) {
-                    throw new io.supertokens.pluginInterface.webauthn.exceptions.DuplicateOptionsIdException();
-                } else if (isForeignKeyConstraintError(
-                        errorMessage,
-                        config.getAppsTable(),
-                        "app_id")) {
-                    throw new TenantOrAppNotFoundException(tenantIdentifier.toAppIdentifier());
-                } else if (isForeignKeyConstraintError(
-                        errorMessage,
-                        config.getTenantsTable(),
-                        "tenant_id")) {
-                    throw new TenantOrAppNotFoundException(tenantIdentifier);
-                }
+            String errorMessage = e.getMessage();
+            MySQLConfig config = Config.getConfig(this);
+            if (isPrimaryKeyError(errorMessage, config.getWebAuthNGeneratedOptionsTable(), "id")) {
+                throw new io.supertokens.pluginInterface.webauthn.exceptions.DuplicateOptionsIdException();
+            } else if (isForeignKeyConstraintError(
+                    errorMessage,
+                    config.getAppsTable(),
+                    "app_id")) {
+                throw new TenantOrAppNotFoundException(tenantIdentifier.toAppIdentifier());
+            } else if (isForeignKeyConstraintError(
+                    errorMessage,
+                    config.getTenantsTable(),
+                    "tenant_id")) {
+                throw new TenantOrAppNotFoundException(tenantIdentifier);
             }
             throw new StorageQueryException(e);
         }
