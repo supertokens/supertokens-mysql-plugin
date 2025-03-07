@@ -3821,10 +3821,28 @@ public class Start
     }
 
     @Override
-    public WebAuthNOptions saveGeneratedOptions(TenantIdentifier tenantIdentifier, WebAuthNOptions optionsToSave) throws StorageQueryException {
+    public WebAuthNOptions saveGeneratedOptions(TenantIdentifier tenantIdentifier, WebAuthNOptions optionsToSave)
+            throws StorageQueryException, DuplicateOptionsIdException, TenantOrAppNotFoundException {
         try {
             return WebAuthNQueries.saveOptions(this, tenantIdentifier, optionsToSave);
         } catch (SQLException e) {
+            if (e instanceof SQLException) {
+                String errorMessage = e.getMessage();
+                MySQLConfig config = Config.getConfig(this);
+                if (isPrimaryKeyError(errorMessage, config.getWebAuthNGeneratedOptionsTable(), "id")) {
+                    throw new io.supertokens.pluginInterface.webauthn.exceptions.DuplicateOptionsIdException();
+                } else if (isForeignKeyConstraintError(
+                        errorMessage,
+                        config.getAppsTable(),
+                        "app_id")) {
+                    throw new TenantOrAppNotFoundException(tenantIdentifier.toAppIdentifier());
+                } else if (isForeignKeyConstraintError(
+                        errorMessage,
+                        config.getTenantsTable(),
+                        "tenant_id")) {
+                    throw new TenantOrAppNotFoundException(tenantIdentifier);
+                }
+            }
             throw new StorageQueryException(e);
         }
     }
