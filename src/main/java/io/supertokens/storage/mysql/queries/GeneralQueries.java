@@ -1451,7 +1451,7 @@ public class GeneralQueries {
                                                                          AppIdentifier appIdentifier,
                                                                          List<String> userIds)
             throws StorageQueryException, SQLException {
-        if (userIds.size() == 0) {
+        if (userIds == null || userIds.isEmpty()) {
             return new ArrayList<>();
         }
 
@@ -1560,7 +1560,7 @@ public class GeneralQueries {
                                                                                      AppIdentifier appIdentifier,
                                                                                      List<String> userIds)
             throws StorageQueryException, SQLException {
-        if (userIds.size() == 0) {
+        if (userIds == null || userIds.isEmpty()) {
             return new ArrayList<>();
         }
 
@@ -1894,6 +1894,9 @@ public class GeneralQueries {
 
     public static List<String> findUserIdsThatExist(Start start, AppIdentifier appIdentifier, List<String> userIds)
             throws SQLException, StorageQueryException {
+        if(userIds == null || userIds.isEmpty()) {
+            return new ArrayList<>();
+        }
         String QUERY = "SELECT user_id FROM " + Config.getConfig(start).getAppIdToUserIdTable()
                 + " WHERE app_id = ? AND user_id IN ("+ Utils.generateCommaSeperatedQuestionMarks(userIds.size()) +")";
         return execute(start, QUERY, pst -> {

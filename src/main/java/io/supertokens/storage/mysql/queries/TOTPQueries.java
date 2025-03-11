@@ -334,6 +334,9 @@ public class TOTPQueries {
 
     public static Map<String, List<TOTPDevice>> getDevicesForMultipleUsers(Start start, AppIdentifier appIdentifier, List<String> userIds)
             throws StorageQueryException, SQLException {
+        if(userIds == null || userIds.isEmpty()){
+            return new HashMap<>();
+        }
         String QUERY = "SELECT * FROM " + Config.getConfig(start).getTotpUserDevicesTable()
                 + " WHERE app_id = ? AND user_id IN (" + Utils.generateCommaSeperatedQuestionMarks(userIds.size()) + ");";
 

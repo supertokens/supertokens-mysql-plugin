@@ -349,6 +349,9 @@ public class UserRolesQueries {
 
     public static Map<String, List<String>> getRolesForUsers(Start start, AppIdentifier appIdentifier, List<String> userIds)
             throws SQLException, StorageQueryException {
+        if(userIds == null || userIds.isEmpty()){
+            return new HashMap<>();
+        }
         String QUERY = "SELECT user_id, role FROM " + Config.getConfig(start).getUserRolesTable()
                 + " WHERE app_id = ? AND user_id IN ("+ Utils.generateCommaSeperatedQuestionMarks(userIds.size())+") ;";
 
@@ -395,6 +398,9 @@ public class UserRolesQueries {
     public static List<String> doesMultipleRoleExist_transaction(Start start, Connection con, AppIdentifier appIdentifier,
                                                                  List<String> roles)
             throws SQLException, StorageQueryException {
+        if(roles == null || roles.isEmpty()){
+            return new ArrayList<>();
+        }
         String QUERY = "SELECT role FROM " + Config.getConfig(start).getRolesTable()
                 + " WHERE app_id = ? AND role IN (" +Utils.generateCommaSeperatedQuestionMarks(roles.size())+ ") FOR UPDATE";
         return execute(con, QUERY, pst -> {

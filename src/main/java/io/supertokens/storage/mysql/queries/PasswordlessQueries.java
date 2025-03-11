@@ -767,7 +767,7 @@ public class PasswordlessQueries {
     public static List<LoginMethod> getUsersInfoUsingIdList(Start start, Set<String> ids,
                                                             AppIdentifier appIdentifier)
             throws SQLException, StorageQueryException {
-        if (ids.size() > 0) {
+        if (ids != null && !ids.isEmpty()) {
             if (Start.isEnabledForDeadlockTesting()) {
                 assert (Start.isTesting);
                 // we don't want the following query to be optimized while doing a deadlock testing
@@ -824,7 +824,7 @@ public class PasswordlessQueries {
     public static List<LoginMethod> getUsersInfoUsingIdList_Transaction(Start start, Connection con, Set<String> ids,
                                                                         AppIdentifier appIdentifier)
             throws SQLException, StorageQueryException {
-        if (ids.size() > 0) {
+        if (ids != null && !ids.isEmpty()) {
             // No need to filter based on tenantId because the id list is already filtered for a tenant
             String QUERY = "SELECT user_id, email, phone_number, time_joined "
                     + "FROM " + getConfig(start).getPasswordlessUsersTable() + " WHERE user_id IN (" +

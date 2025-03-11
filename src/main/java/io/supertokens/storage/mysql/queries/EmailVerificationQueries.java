@@ -276,7 +276,7 @@ public class EmailVerificationQueries {
     public static List<String> isEmailVerified_transaction(Start start, Connection sqlCon, AppIdentifier appIdentifier,
                                                            List<UserIdAndEmail> userIdAndEmail)
             throws SQLException, StorageQueryException {
-        if (userIdAndEmail.isEmpty()) {
+        if (userIdAndEmail == null || userIdAndEmail.isEmpty()) {
             return new ArrayList<>();
         }
         List<String> emails = new ArrayList<>();
@@ -348,7 +348,7 @@ public class EmailVerificationQueries {
     public static List<String> isEmailVerified(Start start, AppIdentifier appIdentifier,
                                                List<UserIdAndEmail> userIdAndEmail)
             throws SQLException, StorageQueryException {
-        if (userIdAndEmail.isEmpty()) {
+        if (userIdAndEmail == null || userIdAndEmail.isEmpty()) {
             return new ArrayList<>();
         }
         List<String> emails = new ArrayList<>();
@@ -527,6 +527,10 @@ public class EmailVerificationQueries {
 
     public static Set<String> findUserIdsBeingUsedForEmailVerification(Start start, AppIdentifier appIdentifier, List<String> userIds)
             throws SQLException, StorageQueryException {
+
+        if(userIds == null || userIds.isEmpty()){
+            return new HashSet<>();
+        }
 
         Set<String> foundUserIds = new HashSet<>();
 
