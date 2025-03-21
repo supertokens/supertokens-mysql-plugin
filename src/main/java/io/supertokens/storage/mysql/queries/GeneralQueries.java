@@ -1963,6 +1963,40 @@ public class GeneralQueries {
         });
     }
 
+    public static AuthRecipeUserInfo[] listPrimaryUsersByMultipleEmailsOrPhonesOrThirdParty_Transaction(Start start,
+                                                                                                        Connection sqlCon,
+                                                                                                        AppIdentifier appIdentifier,
+                                                                                                        List<String> emails,
+                                                                                                        List<String> phones, Map<String, String> thirdpartyIdToThirdpartyUserId)
+            throws SQLException, StorageQueryException {
+        Set<String> userIds = new HashSet<>();
+
+        //I am not really sure this is really needed..
+        EmailPasswordQueries.lockEmail_Transaction(start, sqlCon, appIdentifier, emails);
+        ThirdPartyQueries.lockEmail_Transaction(start, sqlCon, appIdentifier, emails);
+        PasswordlessQueries.lockEmail_Transaction(start, sqlCon, appIdentifier, emails);
+        PasswordlessQueries.lockPhoneAndTenant_Transaction(start, sqlCon, appIdentifier, phones);
+        ThirdPartyQueries.lockThirdPartyInfoAndTenant_Transaction(start, sqlCon, appIdentifier, thirdpartyIdToThirdpartyUserId);
+
+        //collect ids by email
+        userIds.addAll(EmailPasswordQueries.getPrimaryUserIdsUsingMultipleEmails_Transaction(start, sqlCon, appIdentifier,
+                emails));
+        userIds.addAll(PasswordlessQueries.getPrimaryUserIdsUsingMultipleEmails_Transaction(start, sqlCon, appIdentifier,
+                emails));
+        userIds.addAll(ThirdPartyQueries.getPrimaryUserIdsUsingMultipleEmails_Transaction(start, sqlCon, appIdentifier, emails));
+
+        //collect ids by phone
+        userIds.addAll(PasswordlessQueries.listUserIdsByMultiplePhoneNumber_Transaction(start, sqlCon, appIdentifier, phones));
+
+        //collect ids by thirdparty
+        userIds.addAll(ThirdPartyQueries.listUserIdsByMultipleThirdPartyInfo_Transaction(start, sqlCon, appIdentifier, thirdpartyIdToThirdpartyUserId));
+
+        List<AuthRecipeUserInfo> result = getPrimaryUserInfoForUserIds_Transaction(start, sqlCon, appIdentifier,
+                new ArrayList<>(userIds));
+
+        return result.toArray(new AuthRecipeUserInfo[0]);
+    }
+
     private static class AllAuthRecipeUsersResultHolder {
         String userId;
         String tenantId;

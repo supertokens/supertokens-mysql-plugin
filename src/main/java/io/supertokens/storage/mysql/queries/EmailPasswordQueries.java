@@ -740,6 +740,57 @@ public class EmailPasswordQueries {
         return userInfos;
     }
 
+    public static List<String> lockEmail_Transaction(Start start, Connection con,
+                                                     AppIdentifier appIdentifier,
+                                                     List<String> emails)
+            throws StorageQueryException, SQLException {
+        if(emails == null || emails.isEmpty()){
+            return new ArrayList<>();
+        }
+        String QUERY = "SELECT user_id FROM " + getConfig(start).getEmailPasswordUsersTable() +
+                " WHERE app_id = ? AND email IN (" + Utils.generateCommaSeperatedQuestionMarks(emails.size()) + ") FOR UPDATE";
+
+        return execute(con, QUERY, pst -> {
+            pst.setString(1, appIdentifier.getAppId());
+            for (int i = 0; i < emails.size(); i++) {
+                pst.setString(2 + i, emails.get(i));
+            }
+        }, result -> {
+            List<String> results = new ArrayList<>();
+            while (result.next()) {
+                results.add(result.getString("user_id"));
+            }
+            return results;
+        });
+    }
+
+    public static List<String> getPrimaryUserIdsUsingMultipleEmails_Transaction(Start start, Connection con,
+                                                                                AppIdentifier appIdentifier,
+                                                                                List<String> emails)
+            throws StorageQueryException, SQLException {
+        if(emails == null || emails.isEmpty()){
+            return new ArrayList<>();
+        }
+        String QUERY = "SELECT DISTINCT all_users.primary_or_recipe_user_id AS user_id "
+                + "FROM " + getConfig(start).getEmailPasswordUsersTable() + " AS ep" +
+                " JOIN " + getConfig(start).getAppIdToUserIdTable() + " AS all_users" +
+                " ON ep.app_id = all_users.app_id AND ep.user_id = all_users.user_id" +
+                " WHERE ep.app_id = ? AND ep.email IN ( " + Utils.generateCommaSeperatedQuestionMarks(emails.size()) + " )";
+
+        return execute(con, QUERY, pst -> {
+            pst.setString(1, appIdentifier.getAppId());
+            for (int i = 0; i < emails.size(); i++) {
+                pst.setString(2+i, emails.get(i));
+            }
+        }, result -> {
+            List<String> userIds = new ArrayList<>();
+            while (result.next()) {
+                userIds.add(result.getString("user_id"));
+            }
+            return userIds;
+        });
+    }
+
     private static List<UserInfoPartial> fillUserInfoWithTenantIds(Start start,
                                                                    AppIdentifier appIdentifier,
                                                                    List<UserInfoPartial> userInfos)
