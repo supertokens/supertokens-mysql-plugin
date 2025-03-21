@@ -1471,8 +1471,37 @@ public class Start
             Connection sqlCon = (Connection) con.getConnection();
             ThirdPartyQueries.importUser_Transaction(this, sqlCon, usersToImport);
         } catch (SQLException e) {
-            //TODO!!
-            throw new StorageTransactionLogicException(e);
+            Throwable actual = e.getCause();
+            if (actual instanceof BatchUpdateException) {
+                BatchUpdateException batchUpdateException = (BatchUpdateException) actual;
+                Map<String, Exception> errorByPosition = new HashMap<>();
+
+                MySQLConfig config = Config.getConfig(this);
+                String serverMessage = batchUpdateException.getMessage();
+
+                Integer position = getErroneousEntryPosition(batchUpdateException, usersToImport);
+                if (isUniqueConstraintError(serverMessage, config.getEmailPasswordUserToTenantTable(),
+                        "third_party_user_id")) {
+
+                    errorByPosition.put(usersToImport.get(position).userId, new DuplicateThirdPartyUserException());
+
+                } else if (isPrimaryKeyError(serverMessage, config.getThirdPartyUsersTable())
+                        || isPrimaryKeyError(serverMessage, config.getUsersTable())
+                        || isPrimaryKeyError(serverMessage, config.getThirdPartyUserToTenantTable())
+                        || isPrimaryKeyError(serverMessage, config.getAppIdToUserIdTable())) {
+                    errorByPosition.put(usersToImport.get(position).userId,
+                            new io.supertokens.pluginInterface.thirdparty.exception.DuplicateUserIdException());
+                }
+                else if (isForeignKeyConstraintError(serverMessage, config.getAppIdToUserIdTable(), "app_id")) {
+                    throw new TenantOrAppNotFoundException(usersToImport.get(position).tenantIdentifier.toAppIdentifier());
+
+                } else if (isForeignKeyConstraintError(serverMessage, config.getUsersTable(), "tenant_id")) {
+                    throw new TenantOrAppNotFoundException(usersToImport.get(position).tenantIdentifier);
+                }
+
+                throw new StorageTransactionLogicException(new BulkImportBatchInsertException("thirdparty errors", errorByPosition));
+            }
+            throw new StorageQueryException(e);
         }
     }
 
@@ -3272,7 +3301,13 @@ public class Start
     public AuthRecipeUserInfo[] listPrimaryUsersByMultipleEmailsOrPhoneNumbersOrThirdparty_Transaction(
             AppIdentifier appIdentifier, TransactionConnection con, List<String> emails, List<String> phones,
             Map<String, String> thirdpartyIdToThirdpartyUserId) throws StorageQueryException {
-        return new AuthRecipeUserInfo[0];
+        try {
+            Connection sqlCon = (Connection) con.getConnection();
+            return GeneralQueries.listPrimaryUsersByMultipleEmailsOrPhonesOrThirdParty_Transaction(this, sqlCon,
+                    appIdentifier, emails, phones, thirdpartyIdToThirdpartyUserId);
+        } catch (SQLException e) {
+            throw new StorageQueryException(e);
+        }
     }
 
     @Override
