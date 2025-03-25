@@ -1971,13 +1971,6 @@ public class GeneralQueries {
             throws SQLException, StorageQueryException {
         Set<String> userIds = new HashSet<>();
 
-        //I am not really sure this is really needed..
-        EmailPasswordQueries.lockEmail_Transaction(start, sqlCon, appIdentifier, emails);
-        ThirdPartyQueries.lockEmail_Transaction(start, sqlCon, appIdentifier, emails);
-        PasswordlessQueries.lockEmail_Transaction(start, sqlCon, appIdentifier, emails);
-        PasswordlessQueries.lockPhoneAndTenant_Transaction(start, sqlCon, appIdentifier, phones);
-        ThirdPartyQueries.lockThirdPartyInfoAndTenant_Transaction(start, sqlCon, appIdentifier, thirdpartyIdToThirdpartyUserId);
-
         //collect ids by email
         userIds.addAll(EmailPasswordQueries.getPrimaryUserIdsUsingMultipleEmails_Transaction(start, sqlCon, appIdentifier,
                 emails));
