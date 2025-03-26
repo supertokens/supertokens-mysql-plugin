@@ -1,6 +1,11 @@
 docker run --rm -d -p 3306:3306 --name mysql --volume ~/Desktop/db/mysql:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=root mysql
 
 sleep 5
+while ! docker exec mysql mysqladmin -u root -proot ping --silent; do
+    echo "Waiting for MySQL to be ready..."
+    sleep 2
+done
+
 
 docker exec mysql mysql -u root -proot -e 'create database supertokens;'
 docker exec mysql mysql -u root -proot -e 'create database st0;'
