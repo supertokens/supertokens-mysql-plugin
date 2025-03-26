@@ -7,6 +7,18 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [8.1.2]
+
+- Adds user_id index to the user roles table
+- Removes unnecessary locks while bulk importing, which was resulting in deadlocks
+
+### Migration
+
+```sql
+CREATE INDEX user_roles_app_id_user_id_index ON user_roles (app_id, user_id);
+```
+
+
 ## [8.1.1]
 
 - Adds more null and empty checks for bulk migration
