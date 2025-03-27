@@ -1,4 +1,8 @@
-docker run --rm -d -p 3306:3306 --name mysql --volume ~/Desktop/db/mysql:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=root mysql
+docker run --rm -d -p 3306:3306 --name mysql \
+  --volume ~/Desktop/db/mysql:/var/lib/mysql \
+  -e MYSQL_ROOT_PASSWORD=root \
+  -e MYSQL_MAX_CONNECTIONS=1000 \
+  mysql:latest --max-connections=1000
 
 sleep 30
 
