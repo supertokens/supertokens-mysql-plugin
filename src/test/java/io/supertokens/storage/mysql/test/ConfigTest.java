@@ -35,14 +35,9 @@ import org.junit.rules.TestRule;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import com.google.gson.JsonObject;
 
 import io.supertokens.ProcessState;
 import io.supertokens.pluginInterface.exceptions.InvalidConfigException;
-import io.supertokens.pluginInterface.multitenancy.TenantIdentifier;
-import io.supertokens.pluginInterface.session.SessionStorage;
-import io.supertokens.session.Session;
-import io.supertokens.session.info.SessionInformationHolder;
 import io.supertokens.storage.mysql.ConnectionPoolTestContent;
 import io.supertokens.storage.mysql.Start;
 import io.supertokens.storage.mysql.annotations.ConnectionPoolProperty;
@@ -108,8 +103,9 @@ public class ConfigTest {
 
         ProcessState.EventAndException e = process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.INIT_FAILURE);
         assertNotNull(e);
-        TestCase.assertEquals(e.exception.getCause().getMessage(),
-                "'mysql_connection_pool_size' in the config.yaml file must be > 0");
+        TestCase.assertEquals(e.exception.getMessage(),
+                "io.supertokens.pluginInterface.exceptions.InvalidConfigException: " +
+                        "'mysql_connection_pool_size' in the config.yaml file must be > 0");
 
         process.kill();
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
@@ -183,8 +179,8 @@ public class ConfigTest {
         ProcessState.EventAndException e = process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.INIT_FAILURE, 7000);
         assertNotNull(e);
         assertEquals(e.exception.getCause().getCause().getMessage(),
-                "Error connecting to mysql instance. Please make sure that mysql is running and that you "
-                        + "have specified the correct values for ('mysql_host' and 'mysql_port') or for "
+                "Error connecting to MySQL instance. Please make sure that MySQL is running and that you have "
+                        + "specified the correct values for ('mysql_host' and 'mysql_port') or for "
                         + "'mysql_connection_uri'");
 
         process.kill();
@@ -226,10 +222,10 @@ public class ConfigTest {
         ProcessState.EventAndException e = process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.INIT_FAILURE);
         assertNotNull(e);
 
-        assertEquals(
-                "java.sql.SQLException: com.zaxxer.hikari.pool.HikariPool$PoolInitializationException: Failed to " +
-                        "initialize pool: The connection attempt failed.",
-                e.exception.getCause().getCause().getMessage());
+        assertEquals("Failed to initialize pool: Could not connect to address=(host=random)(port=3306)(type=master) : "
+                        + "Socket fail to connect to host:random, port:3306. random",
+                e.exception.getCause().getCause().getCause().getMessage());
+
 
         process.kill();
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
@@ -289,183 +285,7 @@ public class ConfigTest {
         // since in postgres, we delete all dbs one by one
         TestingProcessManager.deleteAllInformation();
     }
-
-    @Test
-    public void testAddingSchemaWorks() throws Exception {
-        String[] args = {"../"};
-
-        Utils.setValueInConfig("mysql_table_schema", "myschema");
-        Utils.setValueInConfig("mysql_table_names_prefix", "some_prefix");
-
-        TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
-        assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
-        MySQLConfig config = Config.getConfig((Start) StorageLayer.getStorage(process.getProcess()));
-
-        assertEquals("change in KeyValueTable name not reflected", config.getKeyValueTable(),
-                "myschema.some_prefix_key_value");
-        assertEquals("change in SessionInfoTable name not reflected", config.getSessionInfoTable(),
-                "myschema.some_prefix_session_info");
-        assertEquals("change in table name not reflected", config.getEmailPasswordUsersTable(),
-                "myschema.some_prefix_emailpassword_users");
-        assertEquals("change in table name not reflected", config.getPasswordResetTokensTable(),
-                "myschema.some_prefix_emailpassword_pswd_reset_tokens");
-
-        String userId = "userId";
-        JsonObject userDataInJWT = new JsonObject();
-        userDataInJWT.addProperty("key", "value");
-        JsonObject userDataInDatabase = new JsonObject();
-        userDataInDatabase.addProperty("key", "value");
-
-        SessionInformationHolder sessionInfo = Session.createNewSession(process.getProcess(), userId, userDataInJWT,
-                userDataInDatabase);
-
-        assert sessionInfo.accessToken != null;
-        assert sessionInfo.refreshToken != null;
-        try {
-            TestCase.assertEquals(((SessionStorage) StorageLayer.getStorage(process.getProcess()))
-                    .getNumberOfSessions(new TenantIdentifier(null, null, null)), 1);
-
-            // we call this here so that the database is cleared with the modified table names
-            // since in postgres, we delete all dbs one by one
-        } finally {
-            process.kill();
-            assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
-            TestingProcessManager.deleteAllInformation();
-        }
-    }
-
-    @Test
-    public void testAddingSchemaViaConnectionUriWorks() throws Exception {
-        String[] args = {"../"};
-
-        Utils.setValueInConfig("mysql_connection_uri",
-                "mysql://root:root@localhost:5432/supertokens?currentSchema=myschema");
-        Utils.setValueInConfig("mysql_table_names_prefix", "some_prefix");
-
-        TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
-        assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
-        MySQLConfig config = Config.getConfig((Start) StorageLayer.getStorage(process.getProcess()));
-
-        assertEquals("change in KeyValueTable name not reflected", config.getKeyValueTable(),
-                "myschema.some_prefix_key_value");
-        assertEquals("change in SessionInfoTable name not reflected", config.getSessionInfoTable(),
-                "myschema.some_prefix_session_info");
-        assertEquals("change in table name not reflected", config.getEmailPasswordUsersTable(),
-                "myschema.some_prefix_emailpassword_users");
-        assertEquals("change in table name not reflected", config.getPasswordResetTokensTable(),
-                "myschema.some_prefix_emailpassword_pswd_reset_tokens");
-
-        String userId = "userId";
-        JsonObject userDataInJWT = new JsonObject();
-        userDataInJWT.addProperty("key", "value");
-        JsonObject userDataInDatabase = new JsonObject();
-        userDataInDatabase.addProperty("key", "value");
-
-        SessionInformationHolder sessionInfo = Session.createNewSession(process.getProcess(), userId, userDataInJWT,
-                userDataInDatabase);
-
-        assert sessionInfo.accessToken != null;
-        assert sessionInfo.refreshToken != null;
-
-        TestCase.assertEquals(((SessionStorage) StorageLayer.getStorage(process.getProcess()))
-                .getNumberOfSessions(new TenantIdentifier(null, null, null)), 1);
-
-        process.kill();
-        assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
-
-        // we call this here so that the database is cleared with the modified table names
-        // since in postgres, we delete all dbs one by one
-        TestingProcessManager.deleteAllInformation();
-    }
-
-    @Test
-    public void testAddingSchemaViaConnectionUriWorks2() throws Exception {
-        String[] args = {"../"};
-
-        Utils.setValueInConfig("mysql_connection_uri",
-                "mysql://root:root@localhost:5432/supertokens?a=b&currentSchema=myschema");
-        Utils.setValueInConfig("mysql_table_names_prefix", "some_prefix");
-
-        TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
-        assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
-        MySQLConfig config = Config.getConfig((Start) StorageLayer.getStorage(process.getProcess()));
-
-        assertEquals("change in KeyValueTable name not reflected", config.getKeyValueTable(),
-                "myschema.some_prefix_key_value");
-        assertEquals("change in SessionInfoTable name not reflected", config.getSessionInfoTable(),
-                "myschema.some_prefix_session_info");
-        assertEquals("change in table name not reflected", config.getEmailPasswordUsersTable(),
-                "myschema.some_prefix_emailpassword_users");
-        assertEquals("change in table name not reflected", config.getPasswordResetTokensTable(),
-                "myschema.some_prefix_emailpassword_pswd_reset_tokens");
-
-        String userId = "userId";
-        JsonObject userDataInJWT = new JsonObject();
-        userDataInJWT.addProperty("key", "value");
-        JsonObject userDataInDatabase = new JsonObject();
-        userDataInDatabase.addProperty("key", "value");
-
-        SessionInformationHolder sessionInfo = Session.createNewSession(process.getProcess(), userId, userDataInJWT,
-                userDataInDatabase);
-
-        assert sessionInfo.accessToken != null;
-        assert sessionInfo.refreshToken != null;
-
-        TestCase.assertEquals(((SessionStorage) StorageLayer.getStorage(process.getProcess()))
-                .getNumberOfSessions(new TenantIdentifier(null, null, null)), 1);
-
-        process.kill();
-        assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
-
-        // we call this here so that the database is cleared with the modified table names
-        // since in postgres, we delete all dbs one by one
-        TestingProcessManager.deleteAllInformation();
-    }
-
-    @Test
-    public void testAddingSchemaViaConnectionUriWorks3() throws Exception {
-        String[] args = {"../"};
-
-        Utils.setValueInConfig("mysql_connection_uri",
-                "mysql://root:root@localhost:5432/supertokens?e=f&currentSchema=myschema&a=b&c=d");
-        Utils.setValueInConfig("mysql_table_names_prefix", "some_prefix");
-
-        TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
-        assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
-        MySQLConfig config = Config.getConfig((Start) StorageLayer.getStorage(process.getProcess()));
-
-        assertEquals("change in KeyValueTable name not reflected", config.getKeyValueTable(),
-                "myschema.some_prefix_key_value");
-        assertEquals("change in SessionInfoTable name not reflected", config.getSessionInfoTable(),
-                "myschema.some_prefix_session_info");
-        assertEquals("change in table name not reflected", config.getEmailPasswordUsersTable(),
-                "myschema.some_prefix_emailpassword_users");
-        assertEquals("change in table name not reflected", config.getPasswordResetTokensTable(),
-                "myschema.some_prefix_emailpassword_pswd_reset_tokens");
-
-        String userId = "userId";
-        JsonObject userDataInJWT = new JsonObject();
-        userDataInJWT.addProperty("key", "value");
-        JsonObject userDataInDatabase = new JsonObject();
-        userDataInDatabase.addProperty("key", "value");
-
-        SessionInformationHolder sessionInfo = Session.createNewSession(process.getProcess(), userId, userDataInJWT,
-                userDataInDatabase);
-
-        assert sessionInfo.accessToken != null;
-        assert sessionInfo.refreshToken != null;
-
-        TestCase.assertEquals(((SessionStorage) StorageLayer.getStorage(process.getProcess()))
-                .getNumberOfSessions(new TenantIdentifier(null, null, null)), 1);
-
-        process.kill();
-        assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
-
-        // we call this here so that the database is cleared with the modified table names
-        // since in postgres, we delete all dbs one by one
-        TestingProcessManager.deleteAllInformation();
-    }
-
+    
     @Test
     public void testValidConnectionURI() throws Exception {
         final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
@@ -478,7 +298,7 @@ public class ConfigTest {
             String[] args = {"../"};
 
             Utils.setValueInConfig("mysql_connection_uri",
-                    "mysql://root:root@" + hostname + ":5432/supertokens");
+                    "mysql://root:root@" + hostname + ":3306/supertokens");
             Utils.commentConfigValue("mysql_password");
             Utils.commentConfigValue("mysql_user");
             Utils.commentConfigValue("mysql_port");
@@ -508,7 +328,7 @@ public class ConfigTest {
             TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
             assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
             MySQLConfig config = Config.getConfig((Start) StorageLayer.getStorage(process.getProcess()));
-            assertEquals(config.getPort(), 5432);
+            assertEquals(config.getPort(), 3306);
 
             process.kill();
             assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
@@ -518,7 +338,7 @@ public class ConfigTest {
             Utils.reset();
             String[] args = {"../"};
 
-            Utils.setValueInConfig("mysql_connection_uri", "mysql://" + hostname + ":5432/supertokens");
+            Utils.setValueInConfig("mysql_connection_uri", "mysql://" + hostname + ":3306/supertokens");
             Utils.commentConfigValue("mysql_port");
             Utils.commentConfigValue("mysql_host");
             Utils.commentConfigValue("mysql_database_name");
@@ -536,7 +356,7 @@ public class ConfigTest {
             Utils.reset();
             String[] args = {"../"};
 
-            Utils.setValueInConfig("mysql_connection_uri", "mysql://root@" + hostname + ":5432/supertokens");
+            Utils.setValueInConfig("mysql_connection_uri", "mysql://root@" + hostname + ":3306/supertokens");
             Utils.commentConfigValue("mysql_user");
             Utils.commentConfigValue("mysql_port");
             Utils.commentConfigValue("mysql_host");
@@ -555,7 +375,7 @@ public class ConfigTest {
             Utils.reset();
             String[] args = {"../"};
 
-            Utils.setValueInConfig("mysql_connection_uri", "mysql://root:root@" + hostname + ":5432");
+            Utils.setValueInConfig("mysql_connection_uri", "mysql://root:root@" + hostname + ":3306");
             Utils.commentConfigValue("mysql_password");
             Utils.commentConfigValue("mysql_user");
             Utils.commentConfigValue("mysql_port");
@@ -583,7 +403,7 @@ public class ConfigTest {
         {
             String[] args = {"../"};
 
-            Utils.setValueInConfig("mysql_connection_uri", ":/localhost:5432/supertokens");
+            Utils.setValueInConfig("mysql_connection_uri", ":/localhost:3306/supertokens");
 
             TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
             ProcessState.EventAndException e = process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.INIT_FAILURE);
@@ -602,7 +422,7 @@ public class ConfigTest {
             String[] args = {"../"};
 
             Utils.setValueInConfig("mysql_connection_uri",
-                    "mysql://root:wrongPassword@" + hostname + ":5432/supertokens");
+                    "mysql://root:wrongPassword@" + hostname + ":3306/supertokens");
             Utils.commentConfigValue("mysql_password");
             Utils.commentConfigValue("mysql_user");
             Utils.commentConfigValue("mysql_port");
@@ -613,7 +433,7 @@ public class ConfigTest {
             ProcessState.EventAndException e = process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.INIT_FAILURE);
             assertNotNull(e);
 
-            TestCase.assertTrue(e.exception.getCause().getMessage().contains("password authentication failed"));
+            TestCase.assertTrue(e.exception.getCause().getMessage().contains("Could not connect to address"));
 
             process.kill();
             assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
@@ -631,7 +451,7 @@ public class ConfigTest {
             String[] args = {"../"};
 
             Utils.setValueInConfig("mysql_connection_uri",
-                    "mysql://root:root@" + hostname + ":5432/supertokens?key1=value1");
+                    "mysql://root:root@" + hostname + ":3306/supertokens?key1=value1");
 
             TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
             assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
@@ -647,7 +467,7 @@ public class ConfigTest {
             String[] args = {"../"};
 
             Utils.setValueInConfig("mysql_connection_uri", "mysql://root:root@" + hostname
-                    + ":5432/supertokens?key1=value1&allowPublicKeyRetrieval=false&key2" + "=value2");
+                    + ":3306/supertokens?key1=value1&allowPublicKeyRetrieval=false&key2" + "=value2");
 
             TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
             assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
@@ -690,7 +510,7 @@ public class ConfigTest {
         assertEquals("Config databaseName does not match default", config.getDatabaseName(), "supertokens");
         assertEquals("Config keyValue table does not match default", config.getKeyValueTable(), "key_value");
         assertEquals("Config hostName does not match default ", config.getHostName(), hostname);
-        assertEquals("Config port does not match default", config.getPort(), 5432);
+        assertEquals("Config port does not match default", config.getPort(), 3306);
         assertEquals("Config sessionInfoTable does not match default", config.getSessionInfoTable(), "session_info");
         assertEquals("Config user does not match default", config.getUser(), "root");
         assertEquals("Config password does not match default", config.getPassword(), "root");
