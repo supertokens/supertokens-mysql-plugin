@@ -87,17 +87,13 @@ public class ConfigTest {
     public void testThatCustomConfigLoadsCorrectly() throws Exception {
         String[] args = {"../"};
 
-        Utils.setValueInConfig("postgresql_connection_pool_size", "5");
-        Utils.setValueInConfig("postgresql_key_value_table_name", "\"temp_name\"");
+        Utils.setValueInConfig("mysql_connection_pool_size", "5");
 
         TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
 
         MySQLConfig config = Config.getConfig((Start) StorageLayer.getStorage(process.getProcess()));
         assertEquals(config.getConnectionPoolSize(), 5);
-        assertEquals(config.getKeyValueTable(), "temp_name");
-
-        process.getProcess().deleteAllInformationForTesting();
 
         process.kill();
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
@@ -107,13 +103,13 @@ public class ConfigTest {
     public void testThatInvalidConfigThrowsRightError() throws Exception {
         String[] args = {"../"};
 
-        Utils.setValueInConfig("postgresql_connection_pool_size", "-1");
+        Utils.setValueInConfig("mysql_connection_pool_size", "-1");
         TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
 
         ProcessState.EventAndException e = process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.INIT_FAILURE);
         assertNotNull(e);
         TestCase.assertEquals(e.exception.getCause().getMessage(),
-                "'postgresql_connection_pool_size' in the config.yaml file must be > 0");
+                "'mysql_connection_pool_size' in the config.yaml file must be > 0");
 
         process.kill();
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
@@ -172,7 +168,7 @@ public class ConfigTest {
     public void testBadPortInput() throws Exception {
         String[] args = {"../"};
 
-        Utils.setValueInConfig("postgresql_port", "8989");
+        Utils.setValueInConfig("mysql_port", "8989");
         TestingProcessManager.TestingProcess process = TestingProcessManager.start(args, false);
         process.getProcess().waitToInitStorageModule();
         process.startProcess();
@@ -188,8 +184,8 @@ public class ConfigTest {
         assertNotNull(e);
         assertEquals(e.exception.getCause().getCause().getMessage(),
                 "Error connecting to mysql instance. Please make sure that mysql is running and that you "
-                        + "have specified the correct values for ('postgresql_host' and 'postgresql_port') or for "
-                        + "'postgresql_connection_uri'");
+                        + "have specified the correct values for ('mysql_host' and 'mysql_port') or for "
+                        + "'mysql_connection_uri'");
 
         process.kill();
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
@@ -224,7 +220,7 @@ public class ConfigTest {
     public void testBadHostInput() throws Exception {
         String[] args = {"../"};
 
-        Utils.setValueInConfig("postgresql_host", "random");
+        Utils.setValueInConfig("mysql_host", "random");
 
         TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
         ProcessState.EventAndException e = process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.INIT_FAILURE);
@@ -244,10 +240,10 @@ public class ConfigTest {
     public void testThatChangeInTableNameIsCorrect() throws Exception {
         String[] args = {"../"};
 
-        Utils.setValueInConfig("postgresql_key_value_table_name", "key_value_table");
-        Utils.setValueInConfig("postgresql_session_info_table_name", "session_info_table");
-        Utils.setValueInConfig("postgresql_emailpassword_users_table_name", "users");
-        Utils.setValueInConfig("postgresql_emailpassword_pswd_reset_tokens_table_name", "password_reset");
+        Utils.setValueInConfig("mysql_key_value_table_name", "key_value_table");
+        Utils.setValueInConfig("mysql_session_info_table_name", "session_info_table");
+        Utils.setValueInConfig("mysql_emailpassword_users_table_name", "users");
+        Utils.setValueInConfig("mysql_emailpassword_pswd_reset_tokens_table_name", "password_reset");
 
         TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
@@ -271,8 +267,8 @@ public class ConfigTest {
     public void testAddingTableNamePrefixWorks() throws Exception {
         String[] args = {"../"};
 
-        Utils.setValueInConfig("postgresql_key_value_table_name", "key_value_table");
-        Utils.setValueInConfig("postgresql_table_names_prefix", "some_prefix");
+        Utils.setValueInConfig("mysql_key_value_table_name", "key_value_table");
+        Utils.setValueInConfig("mysql_table_names_prefix", "some_prefix");
 
         TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
@@ -298,8 +294,8 @@ public class ConfigTest {
     public void testAddingSchemaWorks() throws Exception {
         String[] args = {"../"};
 
-        Utils.setValueInConfig("postgresql_table_schema", "myschema");
-        Utils.setValueInConfig("postgresql_table_names_prefix", "some_prefix");
+        Utils.setValueInConfig("mysql_table_schema", "myschema");
+        Utils.setValueInConfig("mysql_table_names_prefix", "some_prefix");
 
         TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
@@ -342,9 +338,9 @@ public class ConfigTest {
     public void testAddingSchemaViaConnectionUriWorks() throws Exception {
         String[] args = {"../"};
 
-        Utils.setValueInConfig("postgresql_connection_uri",
+        Utils.setValueInConfig("mysql_connection_uri",
                 "mysql://root:root@localhost:5432/supertokens?currentSchema=myschema");
-        Utils.setValueInConfig("postgresql_table_names_prefix", "some_prefix");
+        Utils.setValueInConfig("mysql_table_names_prefix", "some_prefix");
 
         TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
@@ -386,9 +382,9 @@ public class ConfigTest {
     public void testAddingSchemaViaConnectionUriWorks2() throws Exception {
         String[] args = {"../"};
 
-        Utils.setValueInConfig("postgresql_connection_uri",
+        Utils.setValueInConfig("mysql_connection_uri",
                 "mysql://root:root@localhost:5432/supertokens?a=b&currentSchema=myschema");
-        Utils.setValueInConfig("postgresql_table_names_prefix", "some_prefix");
+        Utils.setValueInConfig("mysql_table_names_prefix", "some_prefix");
 
         TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
@@ -430,9 +426,9 @@ public class ConfigTest {
     public void testAddingSchemaViaConnectionUriWorks3() throws Exception {
         String[] args = {"../"};
 
-        Utils.setValueInConfig("postgresql_connection_uri",
+        Utils.setValueInConfig("mysql_connection_uri",
                 "mysql://root:root@localhost:5432/supertokens?e=f&currentSchema=myschema&a=b&c=d");
-        Utils.setValueInConfig("postgresql_table_names_prefix", "some_prefix");
+        Utils.setValueInConfig("mysql_table_names_prefix", "some_prefix");
 
         TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
@@ -481,13 +477,13 @@ public class ConfigTest {
         {
             String[] args = {"../"};
 
-            Utils.setValueInConfig("postgresql_connection_uri",
+            Utils.setValueInConfig("mysql_connection_uri",
                     "mysql://root:root@" + hostname + ":5432/supertokens");
-            Utils.commentConfigValue("postgresql_password");
-            Utils.commentConfigValue("postgresql_user");
-            Utils.commentConfigValue("postgresql_port");
-            Utils.commentConfigValue("postgresql_host");
-            Utils.commentConfigValue("postgresql_database_name");
+            Utils.commentConfigValue("mysql_password");
+            Utils.commentConfigValue("mysql_user");
+            Utils.commentConfigValue("mysql_port");
+            Utils.commentConfigValue("mysql_host");
+            Utils.commentConfigValue("mysql_database_name");
 
             TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
             assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
@@ -502,12 +498,12 @@ public class ConfigTest {
             Utils.reset();
             String[] args = {"../"};
 
-            Utils.setValueInConfig("postgresql_connection_uri", "mysql://root:root@" + hostname + "/supertokens");
-            Utils.commentConfigValue("postgresql_password");
-            Utils.commentConfigValue("postgresql_user");
-            Utils.commentConfigValue("postgresql_port");
-            Utils.commentConfigValue("postgresql_host");
-            Utils.commentConfigValue("postgresql_database_name");
+            Utils.setValueInConfig("mysql_connection_uri", "mysql://root:root@" + hostname + "/supertokens");
+            Utils.commentConfigValue("mysql_password");
+            Utils.commentConfigValue("mysql_user");
+            Utils.commentConfigValue("mysql_port");
+            Utils.commentConfigValue("mysql_host");
+            Utils.commentConfigValue("mysql_database_name");
 
             TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
             assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
@@ -522,10 +518,10 @@ public class ConfigTest {
             Utils.reset();
             String[] args = {"../"};
 
-            Utils.setValueInConfig("postgresql_connection_uri", "mysql://" + hostname + ":5432/supertokens");
-            Utils.commentConfigValue("postgresql_port");
-            Utils.commentConfigValue("postgresql_host");
-            Utils.commentConfigValue("postgresql_database_name");
+            Utils.setValueInConfig("mysql_connection_uri", "mysql://" + hostname + ":5432/supertokens");
+            Utils.commentConfigValue("mysql_port");
+            Utils.commentConfigValue("mysql_host");
+            Utils.commentConfigValue("mysql_database_name");
 
             TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
             assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
@@ -540,11 +536,11 @@ public class ConfigTest {
             Utils.reset();
             String[] args = {"../"};
 
-            Utils.setValueInConfig("postgresql_connection_uri", "mysql://root@" + hostname + ":5432/supertokens");
-            Utils.commentConfigValue("postgresql_user");
-            Utils.commentConfigValue("postgresql_port");
-            Utils.commentConfigValue("postgresql_host");
-            Utils.commentConfigValue("postgresql_database_name");
+            Utils.setValueInConfig("mysql_connection_uri", "mysql://root@" + hostname + ":5432/supertokens");
+            Utils.commentConfigValue("mysql_user");
+            Utils.commentConfigValue("mysql_port");
+            Utils.commentConfigValue("mysql_host");
+            Utils.commentConfigValue("mysql_database_name");
 
             TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
             assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
@@ -559,12 +555,12 @@ public class ConfigTest {
             Utils.reset();
             String[] args = {"../"};
 
-            Utils.setValueInConfig("postgresql_connection_uri", "mysql://root:root@" + hostname + ":5432");
-            Utils.commentConfigValue("postgresql_password");
-            Utils.commentConfigValue("postgresql_user");
-            Utils.commentConfigValue("postgresql_port");
-            Utils.commentConfigValue("postgresql_host");
-            Utils.commentConfigValue("postgresql_database_name");
+            Utils.setValueInConfig("mysql_connection_uri", "mysql://root:root@" + hostname + ":5432");
+            Utils.commentConfigValue("mysql_password");
+            Utils.commentConfigValue("mysql_user");
+            Utils.commentConfigValue("mysql_port");
+            Utils.commentConfigValue("mysql_host");
+            Utils.commentConfigValue("mysql_database_name");
 
             TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
             assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STARTED));
@@ -587,7 +583,7 @@ public class ConfigTest {
         {
             String[] args = {"../"};
 
-            Utils.setValueInConfig("postgresql_connection_uri", ":/localhost:5432/supertokens");
+            Utils.setValueInConfig("mysql_connection_uri", ":/localhost:5432/supertokens");
 
             TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
             ProcessState.EventAndException e = process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.INIT_FAILURE);
@@ -605,13 +601,13 @@ public class ConfigTest {
             Utils.reset();
             String[] args = {"../"};
 
-            Utils.setValueInConfig("postgresql_connection_uri",
+            Utils.setValueInConfig("mysql_connection_uri",
                     "mysql://root:wrongPassword@" + hostname + ":5432/supertokens");
-            Utils.commentConfigValue("postgresql_password");
-            Utils.commentConfigValue("postgresql_user");
-            Utils.commentConfigValue("postgresql_port");
-            Utils.commentConfigValue("postgresql_host");
-            Utils.commentConfigValue("postgresql_database_name");
+            Utils.commentConfigValue("mysql_password");
+            Utils.commentConfigValue("mysql_user");
+            Utils.commentConfigValue("mysql_port");
+            Utils.commentConfigValue("mysql_host");
+            Utils.commentConfigValue("mysql_database_name");
 
             TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
             ProcessState.EventAndException e = process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.INIT_FAILURE);
@@ -634,7 +630,7 @@ public class ConfigTest {
         {
             String[] args = {"../"};
 
-            Utils.setValueInConfig("postgresql_connection_uri",
+            Utils.setValueInConfig("mysql_connection_uri",
                     "mysql://root:root@" + hostname + ":5432/supertokens?key1=value1");
 
             TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
@@ -650,7 +646,7 @@ public class ConfigTest {
             Utils.reset();
             String[] args = {"../"};
 
-            Utils.setValueInConfig("postgresql_connection_uri", "mysql://root:root@" + hostname
+            Utils.setValueInConfig("mysql_connection_uri", "mysql://root:root@" + hostname
                     + ":5432/supertokens?key1=value1&allowPublicKeyRetrieval=false&key2" + "=value2");
 
             TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
