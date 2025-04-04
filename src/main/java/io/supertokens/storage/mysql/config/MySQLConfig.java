@@ -59,7 +59,7 @@ public class MySQLConfig {
     @UserPoolProperty
     @DashboardInfo(description = "Specify the port to use when connecting to MySQL instance.", defaultValue = "3306",
             isOptional = true)
-    private int mysql_port = 3306;
+    private int mysql_port = -1;
 
     @JsonProperty
     @ConnectionPoolProperty
@@ -622,7 +622,7 @@ public class MySQLConfig {
 
         { // mysql_port
             if (mysql_port < 0) {
-                mysql_port = 3306;
+                mysql_port = Integer.parseInt(System.getProperty("ST_MYSQL_PLUGIN_SERVER_PORT", "3306"));
             }
         }
 
