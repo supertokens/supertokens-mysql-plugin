@@ -7,6 +7,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [8.1.4]
+
+- Migrates to github actions for test
+
 ## [8.1.3]
 
 - Version bump for re-release
