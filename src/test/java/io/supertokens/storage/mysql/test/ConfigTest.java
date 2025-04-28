@@ -17,30 +17,35 @@
 
 package io.supertokens.storage.mysql.test;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import io.supertokens.ProcessState;
-import io.supertokens.storage.mysql.ConnectionPoolTestContent;
-import io.supertokens.storage.mysql.Start;
-import io.supertokens.storage.mysql.annotations.ConnectionPoolProperty;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
+
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Field;
+
 import io.supertokens.storage.mysql.annotations.IgnoreForAnnotationCheck;
-import io.supertokens.storage.mysql.annotations.NotConflictingWithinUserPool;
-import io.supertokens.storage.mysql.annotations.UserPoolProperty;
 import io.supertokens.storage.mysql.config.Config;
-import io.supertokens.storage.mysql.config.MySQLConfig;
-import io.supertokens.storageLayer.StorageLayer;
-import junit.framework.TestCase;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.Field;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
-import static org.junit.Assert.*;
+import io.supertokens.ProcessState;
+import io.supertokens.pluginInterface.exceptions.InvalidConfigException;
+import io.supertokens.storage.mysql.ConnectionPoolTestContent;
+import io.supertokens.storage.mysql.Start;
+import io.supertokens.storage.mysql.annotations.ConnectionPoolProperty;
+import io.supertokens.storage.mysql.annotations.NotConflictingWithinUserPool;
+import io.supertokens.storage.mysql.annotations.UserPoolProperty;
+import io.supertokens.storage.mysql.config.MySQLConfig;
+import io.supertokens.storageLayer.StorageLayer;
+import junit.framework.TestCase;
 
 public class ConfigTest {
 
@@ -93,8 +98,6 @@ public class ConfigTest {
     public void testThatInvalidConfigThrowsRightError() throws Exception {
         String[] args = {"../"};
 
-        // mysql_connection_pool_size is not set properly in the config file
-
         Utils.setValueInConfig("mysql_connection_pool_size", "-1");
         TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
 
@@ -113,17 +116,18 @@ public class ConfigTest {
     public void testThatMissingConfigFileThrowsError() throws Exception {
         String[] args = {"../"};
 
-        ProcessBuilder pb = new ProcessBuilder("rm", "-r", "config.yaml");
+        TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
+
+        String workerId = System.getProperty("org.gradle.test.worker");
+        ProcessBuilder pb = new ProcessBuilder("rm", "-r", "config" + workerId + ".yaml");
         pb.directory(new File(args[0]));
         Process process1 = pb.start();
         process1.waitFor();
 
-        TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
-
         ProcessState.EventAndException e = process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.INIT_FAILURE);
         assertNotNull(e);
         TestCase.assertEquals(e.exception.getMessage(),
-                "../config.yaml (No such file or directory)");
+                "../config" + workerId + ".yaml (No such file or directory)");
 
         process.kill();
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
@@ -222,6 +226,7 @@ public class ConfigTest {
                         + "Socket fail to connect to host:random, port:3306. random",
                 e.exception.getCause().getCause().getCause().getMessage());
 
+
         process.kill();
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
 
@@ -248,6 +253,10 @@ public class ConfigTest {
 
         process.kill();
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
+
+        // we call this here so that the database is cleared with the modified table names
+        // since in postgres, we delete all dbs one by one
+        TestingProcessManager.deleteAllInformation();
     }
 
     @Test
@@ -271,17 +280,25 @@ public class ConfigTest {
 
         process.kill();
         assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
-    }
 
+        // we call this here so that the database is cleared with the modified table names
+        // since in postgres, we delete all dbs one by one
+        TestingProcessManager.deleteAllInformation();
+    }
+    
     @Test
     public void testValidConnectionURI() throws Exception {
         final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
-        MySQLConfig userConfig = mapper.readValue(new File("../config.yaml"), MySQLConfig.class);
+        String workerId = System.getProperty("org.gradle.test.worker");
+        MySQLConfig userConfig = mapper.readValue(new File("../config" + workerId + ".yaml"), MySQLConfig.class);
+        userConfig.validateAndNormalise();
+
         String hostname = userConfig.getHostName();
         {
             String[] args = {"../"};
 
-            Utils.setValueInConfig("mysql_connection_uri", "mysql://root:root@" + hostname + ":3306/supertokens");
+            Utils.setValueInConfig("mysql_connection_uri",
+                    "mysql://root:root@" + hostname + ":3306/supertokens");
             Utils.commentConfigValue("mysql_password");
             Utils.commentConfigValue("mysql_user");
             Utils.commentConfigValue("mysql_port");
@@ -378,21 +395,23 @@ public class ConfigTest {
     @Test
     public void testInvalidConnectionURI() throws Exception {
         final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
-        MySQLConfig userConfig = mapper.readValue(new File("../config.yaml"), MySQLConfig.class);
+        String workerId = System.getProperty("org.gradle.test.worker");
+        MySQLConfig userConfig = mapper.readValue(new File("../config" + workerId + ".yaml"), MySQLConfig.class);
+        userConfig.validateAndNormalise();
+
         String hostname = userConfig.getHostName();
         {
             String[] args = {"../"};
 
-            Utils.setValueInConfig("mysql_connection_uri", ":/" + hostname + ":3306/supertokens");
+            Utils.setValueInConfig("mysql_connection_uri", ":/localhost:3306/supertokens");
 
             TestingProcessManager.TestingProcess process = TestingProcessManager.start(args);
             ProcessState.EventAndException e = process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.INIT_FAILURE);
             assertNotNull(e);
             assertEquals(
-                    "io.supertokens.pluginInterface.exceptions.InvalidConfigException: "
-                            + "The provided mysql connection URI has an incorrect format. Please use a format like "
+                    "The provided mysql connection URI has an incorrect format. Please use a format like "
                             + "mysql://[user[:[password]]@]host[:port][/dbname][?attr1=val1&attr2=val2...",
-                    e.exception.getMessage());
+                    e.exception.getCause().getMessage());
 
             process.kill();
             assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
@@ -414,7 +433,7 @@ public class ConfigTest {
             ProcessState.EventAndException e = process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.INIT_FAILURE);
             assertNotNull(e);
 
-            TestCase.assertTrue(e.exception.getMessage().contains("Could not connect to address"));
+            TestCase.assertTrue(e.exception.getCause().getMessage().contains("Could not connect to address"));
 
             process.kill();
             assertNotNull(process.checkOrWaitForEvent(ProcessState.PROCESS_STATE.STOPPED));
@@ -424,7 +443,9 @@ public class ConfigTest {
     @Test
     public void testValidConnectionURIAttributes() throws Exception {
         final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
-        MySQLConfig userConfig = mapper.readValue(new File("../config.yaml"), MySQLConfig.class);
+        String workerId = System.getProperty("org.gradle.test.worker");
+        MySQLConfig userConfig = mapper.readValue(new File("../config" + workerId + ".yaml"), MySQLConfig.class);
+        userConfig.validateAndNormalise();
         String hostname = userConfig.getHostName();
         {
             String[] args = {"../"};
@@ -458,9 +479,29 @@ public class ConfigTest {
         }
     }
 
-    public static void checkConfig(MySQLConfig config) throws IOException {
+    @Test
+    public void testAllConfigsHaveAnAnnotation() throws Exception {
+        for (Field field : MySQLConfig.class.getDeclaredFields()) {
+            if (field.isAnnotationPresent(IgnoreForAnnotationCheck.class)) {
+                continue;
+            }
+
+            if (!(field.isAnnotationPresent(UserPoolProperty.class) ||
+                    field.isAnnotationPresent(ConnectionPoolProperty.class) || field.isAnnotationPresent(
+                    NotConflictingWithinUserPool.class))) {
+                fail(field.getName() +
+                        " does not have UserPoolProperty, ConnectionPoolProperty or NotConflictingWithinUserPool " +
+                        "annotation");
+            }
+        }
+    }
+
+    public static void checkConfig(MySQLConfig config) throws IOException, InvalidConfigException {
         final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
-        MySQLConfig userConfig = mapper.readValue(new File("../config.yaml"), MySQLConfig.class);
+        String workerId = System.getProperty("org.gradle.test.worker");
+        MySQLConfig userConfig = mapper.readValue(new File("../config" + workerId + ".yaml"), MySQLConfig.class);
+        userConfig.validateAndNormalise();
+
         String hostname = userConfig.getHostName();
         assertEquals("Config getAttributes did not match default", config.getConnectionAttributes(),
                 "allowPublicKeyRetrieval=true");
@@ -479,20 +520,4 @@ public class ConfigTest {
                 "emailpassword_pswd_reset_tokens");
     }
 
-    @Test
-    public void testAllConfigsHaveAnAnnotation() throws Exception {
-        for (Field field : MySQLConfig.class.getDeclaredFields()) {
-            if (field.isAnnotationPresent(IgnoreForAnnotationCheck.class)) {
-                continue;
-            }
-
-            if (!(field.isAnnotationPresent(UserPoolProperty.class) ||
-                    field.isAnnotationPresent(ConnectionPoolProperty.class) || field.isAnnotationPresent(
-                    NotConflictingWithinUserPool.class))) {
-                fail(field.getName() +
-                        " does not have UserPoolProperty, ConnectionPoolProperty or NotConflictingWithinUserPool " +
-                        "annotation");
-            }
-        }
-    }
 }
