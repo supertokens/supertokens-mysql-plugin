@@ -91,6 +91,7 @@ public class ConnectionPool extends ResourceDistributor.SingletonResource {
         config.addDataSourceProperty("cachePrepStmts", "true");
         config.addDataSourceProperty("prepStmtCacheSize", "250");
         config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
+        config.addDataSourceProperty("tcpKeepAlive", "true");
         // TODO: set maxLifetimeValue to lesser than 10 mins so that the following error doesnt happen:
         // io.supertokens.storage.mysql.HikariLoggingAppender.doAppend(HikariLoggingAppender.java:117) | SuperTokens
         // - Failed to validate connection org.mariadb.jdbc.MariaDbConnection@79af83ae (Connection.setNetworkTimeout

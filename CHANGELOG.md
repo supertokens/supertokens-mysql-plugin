@@ -7,6 +7,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [8.1.4]
+
+- Adds tcpKeepAlive config to the database connection pool
+
 ## [8.1.3]
 
 - Version bump for re-release
